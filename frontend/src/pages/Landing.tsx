@@ -169,7 +169,6 @@ export function Landing() {
                 let cls = 'chiron-hero-choice';
                 if (heroAnswered && c.correct) cls += ' is-correct';
                 if (heroAnswered && c.letter === 'A') cls += ' is-selected-wrong';
-                if (!heroAnswered && c.letter === 'A') cls += ' is-selected';
                 return (
                   <button
                     key={c.letter}
