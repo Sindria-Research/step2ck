@@ -739,26 +739,27 @@ select:focus-visible {
 }
 
 .chiron-hero .chiron-panel {
+  opacity: 0;
+  animation: chiron-entrance-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   animation-delay: calc(var(--entrance-order, 0) * 120ms + 350ms);
 }
 
-/* Subtle float for hero mockup */
+/* Subtle float after entrance */
 @keyframes chiron-float {
 
   0%,
   100% {
-    transform: translateY(0);
+    translate: 0 0;
   }
 
   50% {
-    transform: translateY(-8px);
+    translate: 0 -8px;
   }
 }
 
-.chiron-hero .chiron-panel {
-  animation: chiron-entrance-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    chiron-float 6s ease-in-out 1.2s infinite;
-  opacity: 0;
+.chiron-hero .chiron-panel.is-floating {
+  animation: chiron-float 6s ease-in-out infinite;
+  opacity: 1;
 }
 
 /* ── Scroll reveal ── */
