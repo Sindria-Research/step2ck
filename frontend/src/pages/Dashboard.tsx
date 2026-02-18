@@ -180,7 +180,7 @@ export function Dashboard() {
           <div className="max-w-4xl">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
               <div>
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-white border border-[var(--color-border)] text-[0.7rem] font-bold tracking-wider text-[var(--color-text-secondary)] uppercase mb-6 shadow-sm">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-[0.7rem] font-bold tracking-wider text-[var(--color-text-secondary)] uppercase mb-6 shadow-sm">
                   Dashboard
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.04]">
@@ -213,15 +213,15 @@ export function Dashboard() {
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
+              <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
                 <Clock3 className="w-4 h-4 text-[var(--color-text-muted)]" />
                 <span>{total} answered</span>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
+              <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
                 <Target className="w-4 h-4 text-[var(--color-text-muted)]" />
                 <span>{accuracy}% accuracy</span>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
+              <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
                 <Activity className="w-4 h-4 text-[var(--color-text-muted)]" />
                 <span>{goalPct}% of goal</span>
               </div>
@@ -245,7 +245,7 @@ export function Dashboard() {
             <StatPanel label="Accuracy" value={hasData ? `${accuracy}%` : '—'} icon={TrendingUp} color="var(--color-brand-blue)" />
 
             {/* Goal Card */}
-            <div className="dash-card flex flex-col items-center justify-center p-6 bg-white border border-[var(--color-border)] rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="dash-card flex flex-col items-center justify-center p-6 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm hover:shadow-md transition-shadow">
               <CircularProgress
                 value={goalPct}
                 label=""
@@ -287,7 +287,7 @@ export function Dashboard() {
               <select
                 value={sectionFilter}
                 onChange={(e) => setSectionFilter(e.target.value)}
-                className="pl-9 pr-8 py-2 rounded-lg border border-[var(--color-border)] bg-white text-sm font-medium text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] appearance-none cursor-pointer hover:border-[var(--color-border-hover)] min-w-[180px]"
+                className="pl-9 pr-8 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm font-medium text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] appearance-none cursor-pointer hover:border-[var(--color-border-hover)] min-w-[180px]"
               >
                 <option value="all">All Sections</option>
                 {availableSections.map(s => (
@@ -319,7 +319,7 @@ export function Dashboard() {
                   Identifying weak spots is the fastest way to improve. Focus your review on sections with high volume but lower accuracy.
                 </p>
 
-                <div className="mt-8 bg-white border border-[var(--color-border)] rounded-xl p-5 shadow-sm">
+                <div className="mt-8 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-4">
                     <AlertTriangle className="w-4 h-4 text-[var(--color-warning)]" />
                     <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Focus areas</h3>
@@ -350,7 +350,7 @@ export function Dashboard() {
                 </div>
               </div>
 
-              <div className="bg-white border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
+              <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg-secondary)]/30">
                   <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">All Sections</span>
                   <div className="flex items-center gap-4 text-xs font-medium">
@@ -392,7 +392,7 @@ export function Dashboard() {
               </p>
             </div>
 
-            <div className="bg-white border border-[var(--color-border)] rounded-xl shadow-sm p-4 space-y-2">
+            <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm p-4 space-y-2">
               <ActionRow label="Configure new test" onClick={() => navigate('/exam/config')} />
               <ActionRow label="Reference lab values" onClick={() => navigate('/lab-values')} icon={FlaskConical} />
               {hasData && focusAreas.length > 0 && (
@@ -407,7 +407,7 @@ export function Dashboard() {
       {!hasData && (
         <section className="py-14 border-t border-[var(--color-border)] chiron-reveal" data-reveal>
           <div className="container">
-            <div className="bg-white border border-[var(--color-border)] rounded-xl shadow-sm max-w-2xl mx-auto p-8">
+            <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm max-w-2xl mx-auto p-8">
               <EmptyState
                 icon={Target}
                 title="No progress yet"
@@ -441,7 +441,7 @@ function StatPanel({
   color: string;
 }) {
   return (
-    <div className="dash-card bg-white border border-[var(--color-border)] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-32">
+    <div className="dash-card bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-32">
       <div className="flex items-start justify-between">
         <div
           className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
