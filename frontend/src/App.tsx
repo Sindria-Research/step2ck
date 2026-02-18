@@ -6,6 +6,7 @@ import { ExamProvider } from './context/ExamContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 import { ExamLayoutWrapper } from './components/ExamLayoutWrapper';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { Login } from './pages/Login';
 import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
@@ -15,11 +16,12 @@ import { Settings } from './pages/Settings';
 
 function App() {
   return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <SidebarProvider>
-          <Routes>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ThemeProvider>
+          <AuthProvider>
+            <SidebarProvider>
+            <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route
@@ -73,11 +75,12 @@ function App() {
               }
             />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-          </SidebarProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+            </Routes>
+            </SidebarProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

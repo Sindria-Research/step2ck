@@ -1,6 +1,6 @@
 # Future work
 
-- [ ] Remove "no questions available in the databse, run make __ etc."; in prod this shouldn't be a problem.
+- [x] In prod build, "no questions" shows short message only; dev shows full make/seed instructions (see ExamConfig).
 
 
 ## Auth

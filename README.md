@@ -78,7 +78,9 @@ make seed
 
 ## Auth and users
 
-- **Google OAuth:** Placeholder only for now (“Sign in with Google (coming soon)” on the login page). Backend `POST /auth/google` and user fields (`auth_provider`, `google_id`) are in place for when you enable it; set `GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID` and wire the frontend button to `loginWithGoogle(idToken)`.
+- **Authorization:** The frontend sends `Authorization: Bearer <token>` on all API calls except login. The backend uses this to identify the user and scope progress/stats/exams to them. See **[docs/AUTH.md](docs/AUTH.md)** for the full flow and how to require auth in production or add Google OAuth.
+- **Google OAuth:** Placeholder only for now (“Sign in with Google (coming soon)” on the login page). Backend `POST /auth/google` and user fields (`auth_provider`, `google_id`) are in place; see `docs/AUTH.md` for what to do when you enable it.
+- **Plans / tiers:** There are no account levels (e.g. free vs pro) today; all users have the same access. See **[docs/PLANS_AND_TIERS.md](docs/PLANS_AND_TIERS.md)** for how to add tiers later (User.plan, limits, feature gating, billing).
 - **Email/password:** Backend support exists; registration UI can be added.
 - **Demo mode:** Without a token, the app uses a single shared demo user. Progress for the demo user is stored in the DB.
 - **User-specific data:** Stats, progress, and exam modes (e.g. “unused” / “incorrect”) are scoped to the current user. Each user has their own progress records and dashboard stats.
@@ -113,7 +115,10 @@ make seed
 
 ## Production
 
+See **[DEPLOY.md](DEPLOY.md)** for a full production checklist (must-have, should-have, env vars, deploy order).
+
+Summary:
 - Set `DATABASE_URL` to a Postgres URL and run `alembic upgrade head`.
 - Set `SECRET_KEY` (e.g. `openssl rand -hex 32`).
-- Set `CORS_ORIGINS` to your frontend origin(s).
-- Build frontend: `cd frontend && npm run build`. Serve `dist/` and point `VITE_API_URL` to your backend.
+- Set `CORS_ORIGINS` to your frontend origin(s) (comma-separated: `https://app.com,https://www.app.com`).
+- Build frontend with `VITE_API_URL` set; serve `dist/` and enforce HTTPS.

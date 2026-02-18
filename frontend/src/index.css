@@ -409,6 +409,38 @@ select:focus-visible {
   background-size: 200% 100%;
 }
 
+/* Thinking animation on text (gradient shimmer on “Thinking…” / “Explaining…”) */
+.thinking-text {
+  background: linear-gradient(
+    90deg,
+    #111827 0%,
+    #4b5563 20%,
+    #9ca3af 50%,
+    #4b5563 80%,
+    #111827 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: thinking-gradient 1.5s ease-in-out infinite;
+}
+
+:root.dark .thinking-text {
+  background: linear-gradient(
+    90deg,
+    #404040 0%,
+    #525252 25%,
+    #404040 50%,
+    #525252 75%,
+    #404040 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 /* ========== Exam: text streaming (cursor) ========== */
 @keyframes stream-cursor-blink {
   0%, 50% { opacity: 1; }

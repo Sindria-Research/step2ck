@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, ChevronRight } from 'lucide-react';
+import { Wand2, ChevronRight } from 'lucide-react';
 import { useExam } from '../../context/ExamContext';
 import { StreamingText } from '../common/StreamingText';
 
@@ -57,14 +57,13 @@ export function ExplanationPanel() {
             onClick={() => setAiExplainActive(true)}
             className="flex items-center gap-2 text-sm font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors focus-ring rounded-md py-1.5"
           >
-            <Sparkles className="w-4 h-4" />
+            <Wand2 className="w-4 h-4" />
             Explain with AI
           </button>
           {aiExplainActive && (
             <div className="mt-4 p-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)]">
               <div className="flex items-center gap-3 mb-2">
-                <div className="thinking-gradient w-6 h-6 rounded-full flex-shrink-0" />
-                <span className="text-sm font-medium text-[var(--color-text-primary)]">
+                <span className="text-sm font-medium thinking-text">
                   Thinking…
                 </span>
               </div>

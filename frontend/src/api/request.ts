@@ -23,6 +23,7 @@ export async function request<T>(
     'Content-Type': 'application/json',
     ...((fetchOptions.headers as Record<string, string>) ?? {}),
   };
+  // Send JWT for all requests except login (skipAuth). Backend uses it to scope data to the current user.
   if (!skipAuth) {
     const token = getToken();
     if (token) (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;

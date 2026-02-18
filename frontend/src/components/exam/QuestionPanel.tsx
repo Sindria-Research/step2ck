@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Highlighter, Sparkles } from 'lucide-react';
+import { Highlighter, Wand2 } from 'lucide-react';
 import { useExam } from '../../context/ExamContext';
 import { StreamingText } from '../common/StreamingText';
 import { getSelectionOffsets, segmentTextWithRanges } from '../../utils/selectionUtils';
@@ -133,7 +133,7 @@ export function QuestionPanel() {
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
             title="Explain selection (AI)"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+            <Wand2 className="w-3.5 h-3.5 text-[var(--color-accent)]" />
             Explain selection
           </button>
           <button
@@ -153,8 +153,7 @@ export function QuestionPanel() {
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-30 rounded-lg">
           <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-6 max-w-md shadow-xl">
             <div className="flex items-center gap-3 mb-3">
-              <div className="thinking-gradient w-8 h-8 rounded-full flex-shrink-0" />
-              <span className="text-sm font-medium text-[var(--color-text-primary)]">
+              <span className="text-sm font-medium thinking-text">
                 Explaining selection…
               </span>
             </div>

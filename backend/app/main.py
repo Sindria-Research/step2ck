@@ -18,6 +18,12 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    settings = get_settings()
+    if "change-me-in-production" in settings.SECRET_KEY and "sqlite" not in settings.DATABASE_URL:
+        logger.warning(
+            "SECRET_KEY appears to be the default while using non-SQLite DB. "
+            "Set SECRET_KEY in production (e.g. openssl rand -hex 32)."
+        )
     logger.info("Application startup")
     yield
     logger.info("Application shutdown")
