@@ -549,7 +549,7 @@ export function Landing() {
             </div>
           </div>
           <div className="border-t border-[var(--color-border)] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
-            <span>&copy; {new Date().getFullYear()} {APP_NAME}. All rights reserved.</span>
+            <span>&copy; {new Date().getFullYear()} {APP_NAME}. All rights reserved. Powered by Sindria.</span>
             <button
               type="button"
               onClick={toggleTheme}
