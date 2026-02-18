@@ -528,24 +528,33 @@ We win by:
 
 ## 15. V1 Roadmap
 
-### Phase 1
+### Phase 1 — COMPLETE
 
-* onboarding
-* diagnostic
-* case engine
-* AI explanations
+* ~~onboarding~~ (demo mode active; full onboarding planned)
+* ~~diagnostic~~ → exam engine with multiple modes (all / unused / incorrect / personalized)
+* ~~case engine~~ → question bank with section-filtered exams
+* ~~AI explanations~~ → OpenAI integration with contextual explanations and fallback
 
-### Phase 2
+### Phase 2 — IN PROGRESS
 
-* analytics dashboard
-* study planner
-* retention system
+* ~~analytics dashboard~~ → Dashboard + dedicated Performance page with trend charts, section breakdown, focus areas
+* study planner → planned
+* ~~retention system~~ → Flashcards with SM-2 spaced repetition (decks, cards, due-card review)
 
-### Phase 3
+### Phase 2.5 — COMPLETE (additional features)
+
+* Previous Tests — exam session history with review, retake, delete
+* Search — keyword + section search across question bank
+* Notes — personal notes (freeform or question-linked)
+* Bookmarks — save questions for later review
+* Lab Values — reference values page
+
+### Phase 3 — PLANNED
 
 * score prediction
-* exam simulation
+* exam simulation (timed mode, block structure)
 * residency targeting
+* onboarding flow (exam date, target score, specialty)
 
 ---
 
