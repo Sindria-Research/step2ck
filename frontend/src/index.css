@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
 /* ========== Design tokens (FRONTEND.md) ========== */
 :root {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'DM Sans', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   --color-bg-primary: #ffffff;
@@ -100,16 +104,45 @@
 }
 
 /* Dark overrides for hardcoded Tailwind (use tokens going forward) */
-:root.dark .bg-white { background-color: var(--color-bg-primary) !important; }
-:root.dark .bg-gray-50 { background-color: var(--color-bg-secondary) !important; }
-:root.dark .bg-gray-100 { background-color: var(--color-bg-tertiary) !important; }
-:root.dark .text-gray-900 { color: var(--color-text-primary) !important; }
-:root.dark .text-gray-800 { color: var(--color-text-primary) !important; }
-:root.dark .text-gray-600 { color: var(--color-text-secondary) !important; }
-:root.dark .text-gray-500 { color: var(--color-text-tertiary) !important; }
-:root.dark .text-gray-400 { color: var(--color-text-muted) !important; }
-:root.dark .border-gray-200 { border-color: var(--color-border) !important; }
-:root.dark .border-gray-300 { border-color: var(--color-border-hover) !important; }
+:root.dark .bg-white {
+  background-color: var(--color-bg-primary) !important;
+}
+
+:root.dark .bg-gray-50 {
+  background-color: var(--color-bg-secondary) !important;
+}
+
+:root.dark .bg-gray-100 {
+  background-color: var(--color-bg-tertiary) !important;
+}
+
+:root.dark .text-gray-900 {
+  color: var(--color-text-primary) !important;
+}
+
+:root.dark .text-gray-800 {
+  color: var(--color-text-primary) !important;
+}
+
+:root.dark .text-gray-600 {
+  color: var(--color-text-secondary) !important;
+}
+
+:root.dark .text-gray-500 {
+  color: var(--color-text-tertiary) !important;
+}
+
+:root.dark .text-gray-400 {
+  color: var(--color-text-muted) !important;
+}
+
+:root.dark .border-gray-200 {
+  border-color: var(--color-border) !important;
+}
+
+:root.dark .border-gray-300 {
+  border-color: var(--color-border-hover) !important;
+}
 
 /* ========== Layout ========== */
 .container {
@@ -120,8 +153,12 @@
   padding-left: 1rem;
   padding-right: 1rem;
 }
+
 @media (min-width: 768px) {
-  .container { padding-left: 1.5rem; padding-right: 1.5rem; }
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
 }
 
 /* ========== Base ========== */
@@ -129,7 +166,8 @@ html {
   scroll-behavior: smooth;
 }
 
-html, body {
+html,
+body {
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
@@ -143,6 +181,7 @@ body {
 }
 
 .font-display {
+  font-family: var(--font-display);
   letter-spacing: -0.02em;
 }
 
@@ -156,6 +195,7 @@ body {
 .focus-ring:focus {
   outline: none;
 }
+
 .focus-ring:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
@@ -338,8 +378,13 @@ select:focus-visible {
 }
 
 @keyframes slide-in-right {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
 /* ========== Decorative ========== */
@@ -367,8 +412,15 @@ select:focus-visible {
 
 /* ========== Skeleton (shimmer 1.5s ease-in-out infinite) ========== */
 @keyframes skeleton-shimmer {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .skeleton {
@@ -387,60 +439,69 @@ select:focus-visible {
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ========== Exam: AI “thinking” gradient (ChatGPT-style white/grey) ========== */
 @keyframes thinking-gradient {
-  0%, 100% {
+
+  0%,
+  100% {
     background-position: 200% 50%;
   }
+
   50% {
     background-position: 0% 50%;
   }
 }
 
 .thinking-gradient {
-  background: linear-gradient(
-    90deg,
-    #e5e5e5 0%,
-    #f5f5f5 25%,
-    #e8e8e8 50%,
-    #f5f5f5 75%,
-    #e5e5e5 100%
-  );
+  background: linear-gradient(90deg,
+      #e5e5e5 0%,
+      #f5f5f5 25%,
+      #e8e8e8 50%,
+      #f5f5f5 75%,
+      #e5e5e5 100%);
   background-size: 200% 100%;
   animation: thinking-gradient 1.5s ease-in-out infinite;
 }
 
 :root.dark .thinking-gradient {
-  background: linear-gradient(
-    90deg,
-    #404040 0%,
-    #525252 25%,
-    #404040 50%,
-    #525252 75%,
-    #404040 100%
-  );
+  background: linear-gradient(90deg,
+      #404040 0%,
+      #525252 25%,
+      #404040 50%,
+      #525252 75%,
+      #404040 100%);
   background-size: 200% 100%;
 }
 
 /* Thinking animation on text (gradient shimmer on “Thinking…” / “Explaining…”) */
 .thinking-text {
-  background: linear-gradient(
-    90deg,
-    #111827 0%,
-    #4b5563 20%,
-    #9ca3af 50%,
-    #4b5563 80%,
-    #111827 100%
-  );
+  background: linear-gradient(90deg,
+      #111827 0%,
+      #4b5563 20%,
+      #9ca3af 50%,
+      #4b5563 80%,
+      #111827 100%);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -449,14 +510,12 @@ select:focus-visible {
 }
 
 :root.dark .thinking-text {
-  background: linear-gradient(
-    90deg,
-    #404040 0%,
-    #525252 25%,
-    #404040 50%,
-    #525252 75%,
-    #404040 100%
-  );
+  background: linear-gradient(90deg,
+      #404040 0%,
+      #525252 25%,
+      #404040 50%,
+      #525252 75%,
+      #404040 100%);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -465,8 +524,16 @@ select:focus-visible {
 
 /* ========== Exam: text streaming (cursor) ========== */
 @keyframes stream-cursor-blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
 }
 
 .streaming-cursor::after {
@@ -494,7 +561,7 @@ select:focus-visible {
 /* ========== Dashboard (Chiron style) ========== */
 .chiron-dash {
   position: relative;
-  overflow: clip;
+  overflow-x: clip;
   background:
     radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--color-brand-bone) 80%, transparent) 0%, transparent 42%),
     radial-gradient(circle at 85% 0%, color-mix(in srgb, var(--color-brand-glow) 85%, transparent) 0%, transparent 35%),
@@ -729,7 +796,7 @@ select:focus-visible {
     direction: rtl;
   }
 
-  .chiron-feature-grid-reverse > * {
+  .chiron-feature-grid-reverse>* {
     direction: ltr;
   }
 }
@@ -915,7 +982,9 @@ select:focus-visible {
 }
 
 @keyframes chiron-fill-grow {
-  to { width: var(--fill-target); }
+  to {
+    width: var(--fill-target);
+  }
 }
 
 /* ── Review tabs + items ── */
@@ -974,11 +1043,9 @@ select:focus-visible {
   justify-content: center;
   border-radius: 0.55rem;
   border: 1px solid color-mix(in srgb, var(--color-brand-blue) 35%, var(--color-border));
-  background: linear-gradient(
-    140deg,
-    color-mix(in srgb, var(--color-brand-blue) 22%, var(--color-bg-primary)) 0%,
-    color-mix(in srgb, var(--color-brand-copper) 18%, var(--color-bg-primary)) 100%
-  );
+  background: linear-gradient(140deg,
+      color-mix(in srgb, var(--color-brand-blue) 22%, var(--color-bg-primary)) 0%,
+      color-mix(in srgb, var(--color-brand-copper) 18%, var(--color-bg-primary)) 100%);
   color: var(--color-brand-ink);
   font-size: 0.87rem;
   font-weight: 700;
@@ -1148,11 +1215,9 @@ select:focus-visible {
 .chiron-meter-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--color-brand-blue) 62%, var(--color-brand-ink)) 0%,
-    color-mix(in srgb, var(--color-brand-copper) 62%, var(--color-brand-blue)) 100%
-  );
+  background: linear-gradient(90deg,
+      color-mix(in srgb, var(--color-brand-blue) 62%, var(--color-brand-ink)) 0%,
+      color-mix(in srgb, var(--color-brand-copper) 62%, var(--color-brand-blue)) 100%);
   transition: width 220ms ease-out;
 }
 
@@ -1181,11 +1246,9 @@ select:focus-visible {
   justify-content: space-between;
   gap: 1rem;
   background:
-    linear-gradient(
-      140deg,
+    linear-gradient(140deg,
       color-mix(in srgb, var(--color-brand-bone) 65%, var(--color-bg-primary)) 0%,
-      color-mix(in srgb, var(--color-bg-primary) 88%, transparent) 70%
-    );
+      color-mix(in srgb, var(--color-bg-primary) 88%, transparent) 70%);
 }
 
 @media (max-width: 768px) {
@@ -1196,21 +1259,39 @@ select:focus-visible {
 }
 
 @keyframes chiron-drift-1 {
-  from { transform: translate(0, 0); }
-  to { transform: translate(2rem, 1.5rem); }
+  from {
+    transform: translate(0, 0);
+  }
+
+  to {
+    transform: translate(2rem, 1.5rem);
+  }
 }
 
 @keyframes chiron-drift-2 {
-  from { transform: translate(0, 0); }
-  to { transform: translate(-1.5rem, 2.25rem); }
+  from {
+    transform: translate(0, 0);
+  }
+
+  to {
+    transform: translate(-1.5rem, 2.25rem);
+  }
 }
 
 @keyframes chiron-pill-fade {
-  0%, 100% { opacity: 0.75; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .chiron-ambient-glow-one,
   .chiron-ambient-glow-two,
   .chiron-stat-pill,
