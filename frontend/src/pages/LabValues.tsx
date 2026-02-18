@@ -1,11 +1,32 @@
-import { FlaskConical, ArrowLeft } from 'lucide-react';
+import { FlaskConical, ArrowLeft, Search as SearchIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { LAB_SECTIONS } from '../data/labValues';
-import { useEffect, useRef } from 'react';
+import type { LabValueRow } from '../data/labValues';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+function matchesRow(row: LabValueRow, q: string): boolean {
+  const lower = q.toLowerCase();
+  return (
+    row.name.toLowerCase().includes(lower) ||
+    row.normal.toLowerCase().includes(lower) ||
+    row.unit.toLowerCase().includes(lower) ||
+    (row.notes?.toLowerCase().includes(lower) ?? false)
+  );
+}
 
 export function LabValues() {
   const navigate = useNavigate();
   const rootRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredSections = useMemo(() => {
+    const q = searchQuery.trim();
+    if (!q) return LAB_SECTIONS;
+    return LAB_SECTIONS.map((section) => {
+      const rows = section.rows.filter((row) => matchesRow(row, q));
+      return rows.length ? { ...section, rows } : null;
+    }).filter((s): s is NonNullable<typeof s> => s !== null);
+  }, [searchQuery]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -48,6 +69,24 @@ export function LabValues() {
           <p className="mt-2 text-sm text-[var(--color-text-secondary)] max-w-lg leading-relaxed">
             Reference ranges for common labs. For study use only.
           </p>
+
+          {/* Search */}
+          <div className="mt-6 max-w-md">
+            <label htmlFor="lab-values-search" className="sr-only">
+              Search lab values
+            </label>
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-tertiary)]" aria-hidden />
+              <input
+                id="lab-values-search"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name, range, unit..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent transition-colors"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -55,7 +94,12 @@ export function LabValues() {
       <section className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-reveal" data-reveal>
         <div className="container">
           <div className="grid gap-8 max-w-5xl">
-            {LAB_SECTIONS.map((section) => (
+            {filteredSections.length === 0 ? (
+              <p className="text-sm text-[var(--color-text-tertiary)] py-8 text-center col-span-full">
+                No lab values match &quot;{searchQuery}&quot;. Try a different term.
+              </p>
+            ) : (
+            filteredSections.map((section) => (
               <div key={section.title} className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center gap-3 bg-[var(--color-bg-secondary)]/30">
                   <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-[var(--color-text-secondary)]">
@@ -107,7 +151,8 @@ export function LabValues() {
                   </table>
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </div>
       </section>

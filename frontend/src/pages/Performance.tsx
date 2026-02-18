@@ -22,7 +22,7 @@ export function Performance() {
   const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
 
   return (
-    <div className="chiron-dash min-h-screen">
+    <div className="chiron-dash flex-1 overflow-y-auto min-h-full">
       <div className="dash-glow" />
 
       <section className="py-14 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>

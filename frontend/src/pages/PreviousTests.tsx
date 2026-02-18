@@ -29,7 +29,7 @@ export function PreviousTests() {
   };
 
   return (
-    <div className="chiron-dash min-h-screen">
+    <div className="chiron-dash flex-1 overflow-y-auto min-h-full">
       <div className="dash-glow" />
 
       <section className="py-14 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>

@@ -1,5 +1,6 @@
 """API routes for exam sessions (previous tests)."""
 from datetime import datetime, timezone
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -20,7 +21,7 @@ router = APIRouter()
 
 @router.get("", response_model=list[ExamSessionResponse])
 def list_sessions(
-    status_filter: str | None = None,
+    status_filter: Optional[str] = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):

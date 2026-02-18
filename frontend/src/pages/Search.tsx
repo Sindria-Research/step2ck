@@ -1,7 +1,9 @@
-import { useState, useCallback } from 'react';
-import { Search as SearchIcon, BookOpen, ChevronRight } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { Search as SearchIcon, BookOpen, ChevronRight, Check } from 'lucide-react';
 import { api } from '../api/api';
 import type { Question } from '../api/types';
+
+const CHOICE_ORDER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
 export function Search() {
   const [query, setQuery] = useState('');
@@ -12,9 +14,9 @@ export function Search() {
   const [sections, setSections] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     api.questions.sections().then((r) => setSections(r.sections)).catch(() => {});
-  });
+  }, []);
 
   const handleSearch = useCallback(async () => {
     setLoading(true);
@@ -40,7 +42,7 @@ export function Search() {
   }, [query, selectedSection]);
 
   return (
-    <div className="chiron-dash min-h-screen">
+    <div className="chiron-dash flex-1 overflow-y-auto min-h-0">
       <div className="dash-glow" />
 
       <section className="py-14 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>
@@ -98,34 +100,69 @@ export function Search() {
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {results.map((q) => (
-                    <button
-                      key={q.id}
-                      type="button"
-                      onClick={() => setExpandedId(expandedId === q.id ? null : q.id)}
-                      className="w-full text-left chiron-progress-row hover:bg-[var(--color-bg-secondary)]/50 transition-colors"
-                    >
-                      <div className="flex items-start gap-3">
-                        <BookOpen className="w-4 h-4 text-[var(--color-brand-blue)] mt-0.5 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--color-brand-blue)]">
-                              {q.section}
-                            </span>
-                            {q.subsection && (
-                              <span className="text-[0.65rem] text-[var(--color-text-muted)]">
-                                &middot; {q.subsection}
-                              </span>
-                            )}
+                  {results.map((q) => {
+                    const isExpanded = expandedId === q.id;
+                    const choiceKeys = CHOICE_ORDER.filter((k) => k in (q.choices || {}));
+                    return (
+                      <div
+                        key={q.id}
+                        className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] overflow-hidden"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setExpandedId(isExpanded ? null : q.id)}
+                          className="w-full text-left chiron-progress-row hover:bg-[var(--color-bg-secondary)]/50 transition-colors px-4 py-3"
+                        >
+                          <div className="flex items-start gap-3">
+                            <BookOpen className="w-4 h-4 text-[var(--color-brand-blue)] mt-0.5 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--color-brand-blue)]">
+                                  {q.section}
+                                </span>
+                                {q.subsection && (
+                                  <span className="text-[0.65rem] text-[var(--color-text-muted)]">
+                                    &middot; {q.subsection}
+                                  </span>
+                                )}
+                              </div>
+                              <p className={`text-sm text-[var(--color-text-primary)] ${isExpanded ? '' : 'line-clamp-2'}`}>
+                                {q.question_stem}
+                              </p>
+                            </div>
+                            <ChevronRight className={`w-4 h-4 text-[var(--color-text-muted)] shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                           </div>
-                          <p className={`text-sm text-[var(--color-text-primary)] ${expandedId === q.id ? '' : 'line-clamp-2'}`}>
-                            {q.question_stem}
-                          </p>
-                        </div>
-                        <ChevronRight className={`w-4 h-4 text-[var(--color-text-muted)] shrink-0 transition-transform ${expandedId === q.id ? 'rotate-90' : ''}`} />
+                        </button>
+                        {isExpanded && (
+                          <div className="px-4 pb-4 pt-0 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]/30">
+                            <p className="text-sm font-medium text-[var(--color-text-tertiary)] mb-2 mt-2">Answer choices</p>
+                            <ul className="space-y-2">
+                              {choiceKeys.map((key) => {
+                                const label = q.choices[key];
+                                const isCorrect = q.correct_answer === key;
+                                return (
+                                  <li
+                                    key={key}
+                                    className={`flex items-start gap-2 text-sm ${isCorrect ? 'text-[var(--color-success)]' : 'text-[var(--color-text-secondary)]'}`}
+                                  >
+                                    <span className="font-medium shrink-0 w-5">{key}.</span>
+                                    <span className={isCorrect ? 'font-medium' : ''}>
+                                      {label}
+                                      {isCorrect && (
+                                        <span className="inline-flex items-center gap-1 ml-2 text-[0.65rem] uppercase tracking-wider text-[var(--color-success)]">
+                                          <Check className="w-3 h-3" /> Correct
+                                        </span>
+                                      )}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        )}
                       </div>
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

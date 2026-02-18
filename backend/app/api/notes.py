@@ -1,4 +1,6 @@
 """API routes for notes."""
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -13,8 +15,8 @@ router = APIRouter()
 
 @router.get("", response_model=list[NoteResponse])
 def list_notes(
-    question_id: str | None = None,
-    section: str | None = None,
+    question_id: Optional[str] = None,
+    section: Optional[str] = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):

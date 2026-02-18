@@ -37,7 +37,7 @@ interface ExamContextValue {
   goToQuestion: (index: number) => void;
   nextQuestion: () => void;
   prevQuestion: () => void;
-  finishExam: () => void;
+  finishExam: () => Promise<void>;
   registerFinishHandler: (fn: () => void) => () => void;
   getProgress: (sectionQuestions: Question[]) => { completed: number; total: number };
   loadExam: (config: ExamConfig) => Promise<void>;
@@ -62,13 +62,37 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isPersonalizedMode, setIsPersonalizedMode] = useState(false);
   const [highlightsByQuestionId, setHighlightsByQuestionId] = useState<Map<string, HighlightRange[]>>(new Map());
+  const [sessionId, setSessionId] = useState<number | null>(null);
   const finishHandlerRef = useRef<(() => void) | null>(null);
 
   const currentQuestion = questions[currentQuestionIndex] ?? null;
 
-  const finishExam = useCallback(() => {
+  const finishExam = useCallback(async () => {
+    if (sessionId != null) {
+      const total = questions.length;
+      let correctCount = 0;
+      let incorrectCount = 0;
+      answeredQuestions.forEach(({ correct }) => {
+        if (correct) correctCount++;
+        else incorrectCount++;
+      });
+      const unansweredCount = total - answeredQuestions.size;
+      const accuracy = total > 0 ? (correctCount / total) * 100 : 0;
+      try {
+        await api.examSessions.update(sessionId, {
+          status: 'completed',
+          correct_count: correctCount,
+          incorrect_count: incorrectCount,
+          unanswered_count: unansweredCount,
+          accuracy,
+        });
+      } catch (e) {
+        console.error('Failed to save exam session', e);
+      }
+      setSessionId(null);
+    }
     finishHandlerRef.current?.();
-  }, []);
+  }, [sessionId, questions.length, answeredQuestions]);
 
   const registerFinishHandler = useCallback((fn: () => void) => {
     finishHandlerRef.current = fn;
@@ -85,6 +109,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     setStruckThroughChoices(new Set());
     setAnsweredQuestions(new Map());
     setHighlightsByQuestionId(new Map());
+    setSessionId(null);
     try {
       sessionStorage.removeItem('examConfig');
     } catch {
@@ -130,19 +155,35 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
   const loadExam = useCallback(async (config: ExamConfig) => {
     setLoading(true);
     setLoadError(null);
+    setSessionId(null);
     try {
       const res = await api.exams.generate({
         subjects: config.subjects,
         mode: config.mode,
         count: config.count,
       });
-      setQuestions(res.questions ?? []);
+      const questionList = res.questions ?? [];
+      setQuestions(questionList);
       setCurrentQuestionIndex(0);
       setSelectedAnswer(null);
       setIsSubmitted(false);
       setStruckThroughChoices(new Set());
       setAnsweredQuestions(new Map());
       setIsPersonalizedMode(config.mode === 'personalized');
+
+      if (config.mode !== 'personalized' && questionList.length > 0) {
+        try {
+          const session = await api.examSessions.create({
+            mode: config.mode,
+            total_questions: questionList.length,
+            subjects: config.subjects?.join(', ') ?? undefined,
+            question_ids: questionList.map((q) => q.id),
+          });
+          setSessionId(session.id);
+        } catch (e) {
+          console.error('Failed to create exam session', e);
+        }
+      }
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'Failed to load exam');
       setQuestions([]);

@@ -49,7 +49,7 @@ export function AppLayout({
           {showSidebar && isExamPage && examContext && (
             <Sidebar examContext={examContext} />
           )}
-          <main className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden" role="main">
+          <main className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto" role="main">
             {children}
           </main>
         </div>
