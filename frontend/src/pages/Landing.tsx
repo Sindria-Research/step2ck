@@ -73,10 +73,10 @@ export function Landing() {
   useEffect(() => {
     const root = landingRef.current;
     if (!root) return;
-    const targets = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]'));
     let ticking = false;
 
     const checkVisibility = () => {
+      const targets = root.querySelectorAll<HTMLElement>('[data-reveal]');
       const vh = window.innerHeight;
       targets.forEach((el) => {
         const rect = el.getBoundingClientRect();
@@ -100,6 +100,7 @@ export function Landing() {
     // Check on mount + listen for scroll
     checkVisibility();
     window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('scroll', onScroll, { passive: true });
 
     // Start float animation on hero panel after entrance completes
     const panel = root.querySelector<HTMLElement>('.chiron-hero .chiron-panel');
@@ -109,9 +110,10 @@ export function Landing() {
 
     return () => {
       window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('scroll', onScroll);
       clearTimeout(floatTimer);
     };
-  }, []);
+  }, [loading, user]);
 
   if (loading) {
     return (
