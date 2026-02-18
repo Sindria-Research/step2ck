@@ -50,3 +50,131 @@ export interface ExamGenerateResponse {
   questions: Question[];
   total: number;
 }
+
+export interface AIExplainRequest {
+  question_id: string;
+  selected_answer?: string;
+  selection_text?: string;
+}
+
+export interface AIExplainResponse {
+  explanation: string;
+  model: string;
+  fallback_used: boolean;
+}
+
+// ── Exam Sessions ──
+
+export interface ExamSessionAnswer {
+  id: number;
+  question_id: string;
+  answer_selected: string | null;
+  correct: boolean | null;
+  time_spent_seconds: number | null;
+  flagged: boolean;
+  order_index: number;
+}
+
+export interface ExamSession {
+  id: number;
+  user_id: string;
+  mode: string;
+  total_questions: number;
+  correct_count: number;
+  incorrect_count: number;
+  unanswered_count: number;
+  accuracy: number | null;
+  subjects: string | null;
+  status: string;
+  started_at: string;
+  completed_at: string | null;
+}
+
+export interface ExamSessionDetail extends ExamSession {
+  answers: ExamSessionAnswer[];
+}
+
+export interface ExamSessionCreateRequest {
+  mode: string;
+  total_questions: number;
+  subjects?: string;
+  question_ids: string[];
+}
+
+// ── Notes ──
+
+export interface NoteResponse {
+  id: number;
+  user_id: string;
+  question_id: string | null;
+  title: string;
+  content: string;
+  section: string | null;
+  tags: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NoteCreateRequest {
+  title?: string;
+  content?: string;
+  question_id?: string;
+  section?: string;
+  tags?: string;
+}
+
+export interface NoteUpdateRequest {
+  title?: string;
+  content?: string;
+  tags?: string;
+}
+
+// ── Flashcards ──
+
+export interface FlashcardDeckResponse {
+  id: number;
+  user_id: string;
+  name: string;
+  description: string | null;
+  section: string | null;
+  card_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FlashcardResponse {
+  id: number;
+  deck_id: number;
+  user_id: string;
+  front: string;
+  back: string;
+  question_id: string | null;
+  ease_factor: number;
+  interval_days: number;
+  repetitions: number;
+  next_review: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FlashcardDeckCreateRequest {
+  name: string;
+  description?: string;
+  section?: string;
+}
+
+export interface FlashcardCreateRequest {
+  deck_id: number;
+  front: string;
+  back: string;
+  question_id?: string;
+}
+
+// ── Bookmarks ──
+
+export interface BookmarkResponse {
+  id: number;
+  user_id: string;
+  question_id: string;
+  created_at: string;
+}
