@@ -19,8 +19,19 @@ import type { FlashcardDeckResponse, FlashcardResponse } from '../api/types';
 import { EmptyState } from '../components/common';
 import { Modal } from '../components/common/Modal';
 import { parseFlashcardText, exportCardsAsText } from '../utils/importFlashcards';
+import { formatFlashcardContent } from '../utils/formatFlashcardContent';
 
 type View = 'decks' | 'cards' | 'review';
+
+function FlashcardContent({ text, className = '' }: { text: string; className?: string }) {
+  const html = formatFlashcardContent(text);
+  return (
+    <div
+      className={`flashcard-content ${className}`.trim()}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
 
 export function Flashcards() {
   const [view, setView] = useState<View>('decks');
@@ -660,25 +671,28 @@ export function Flashcards() {
                 </span>
                 <div className="flex-1 max-w-[8rem] h-1.5 rounded-full bg-[var(--color-bg-tertiary)] overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-[var(--color-brand-blue)] transition-[width] duration-200"
+                    className="h-full rounded-full bg-[var(--color-brand-blue)] transition-[width] duration-300 ease-out"
                     style={{ width: `${((reviewIndex + 1) / reviewCards.length) * 100}%` }}
                   />
                 </div>
               </div>
 
               <div className="py-10 px-2">
-                <div className="min-h-[120px] flex flex-col justify-center">
-                  <p className="text-xl font-medium text-[var(--color-text-primary)] leading-relaxed text-center">
-                    {reviewCards[reviewIndex].front}
-                  </p>
+                <div
+                  key={`card-${reviewIndex}`}
+                  className="flashcard-card-enter min-h-[120px] flex flex-col justify-center"
+                >
+                  <div className="text-xl font-medium text-[var(--color-text-primary)] leading-relaxed text-center">
+                    <FlashcardContent text={reviewCards[reviewIndex].front} />
+                  </div>
                 </div>
 
                 {showBack ? (
                   <>
-                    <div className="mt-8 pt-6 border-t border-[var(--color-border)]">
-                      <p className="text-base text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap text-center">
-                        {reviewCards[reviewIndex].back}
-                      </p>
+                    <div key="answer" className="flashcard-answer-enter mt-8 pt-6 border-t border-[var(--color-border)]">
+                      <div className="text-base text-[var(--color-text-secondary)] leading-relaxed text-center">
+                        <FlashcardContent text={reviewCards[reviewIndex].back} />
+                      </div>
                     </div>
                     <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-muted)] mt-6 mb-3 text-center">
                       How well did you know this?

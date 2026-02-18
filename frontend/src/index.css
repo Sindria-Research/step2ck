@@ -1619,3 +1619,104 @@ select:focus-visible {
   padding: 0;
   background: none;
 }
+
+/* ========== Flashcard review animations & formatted content ========== */
+@keyframes flashcard-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flashcard-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flashcard-card-enter {
+  animation: flashcard-fade-in 0.35s ease-out forwards;
+}
+
+.flashcard-answer-enter {
+  animation: flashcard-reveal 0.3s ease-out 0.05s both;
+}
+
+/* Formatted flashcard content (Anki HTML + cloze) */
+.flashcard-content {
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.flashcard-content p {
+  margin: 0.5em 0;
+}
+
+.flashcard-content p:first-child {
+  margin-top: 0;
+}
+
+.flashcard-content p:last-child {
+  margin-bottom: 0;
+}
+
+.flashcard-content b,
+.flashcard-content strong {
+  font-weight: 700;
+}
+
+.flashcard-content i,
+.flashcard-content em {
+  font-style: italic;
+}
+
+.flashcard-content u {
+  text-decoration: underline;
+}
+
+.flashcard-content br {
+  display: block;
+  content: "";
+  margin-top: 0.25em;
+}
+
+.flashcard-content ul,
+.flashcard-content ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+  text-align: left;
+}
+
+.flashcard-content li {
+  margin: 0.25em 0;
+}
+
+.flashcard-content h1,
+.flashcard-content h2,
+.flashcard-content h3,
+.flashcard-content h4 {
+  margin: 0.6em 0 0.3em;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.flashcard-content blockquote {
+  margin: 0.5em 0;
+  padding-left: 1em;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.flashcard-content sub,
+.flashcard-content sup {
+  font-size: 0.75em;
+}
