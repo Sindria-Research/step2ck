@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
-from app.api import health, auth, questions, progress, exams
+from app.api import health, auth, questions, progress, exams, ai, exam_sessions, notes, flashcards, bookmarks
 
 logging.basicConfig(
     level=get_settings().LOG_LEVEL,
@@ -58,3 +58,8 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(questions.router, prefix="/questions", tags=["questions"])
 app.include_router(progress.router, prefix="/progress", tags=["progress"])
 app.include_router(exams.router, prefix="/exams", tags=["exams"])
+app.include_router(ai.router, prefix="/ai", tags=["ai"])
+app.include_router(exam_sessions.router, prefix="/exam-sessions", tags=["exam-sessions"])
+app.include_router(notes.router, prefix="/notes", tags=["notes"])
+app.include_router(flashcards.router, prefix="/flashcards", tags=["flashcards"])
+app.include_router(bookmarks.router, prefix="/bookmarks", tags=["bookmarks"])
