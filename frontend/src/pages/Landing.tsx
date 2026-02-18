@@ -8,6 +8,11 @@ import {
   RotateCcw,
   Target,
   XCircle,
+  Sun,
+  Moon,
+  Users,
+  Shield,
+  Zap,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -26,7 +31,7 @@ const HERO_CHOICES = [
 export function Landing() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const landingRef = useRef<HTMLDivElement>(null);
   const [heroAnswered, setHeroAnswered] = useState(false);
   const [heroSelected, setHeroSelected] = useState<string | null>(null);
@@ -166,6 +171,14 @@ export function Landing() {
             >
               Features
             </a>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="p-2 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors focus-ring"
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <Link to="/login" className="btn btn-ghost text-sm px-4 py-2 rounded-md focus-ring">
               Sign in
             </Link>
@@ -447,6 +460,43 @@ export function Landing() {
         </div>
       </section>
 
+      {/* ── Social Proof ── */}
+      <section className="py-12 border-t border-[var(--color-border)] chiron-reveal" data-reveal>
+        <div className="container">
+          <div className="flex flex-col items-center text-center gap-6">
+            <p className="text-sm font-bold uppercase tracking-widest text-[var(--color-brand-blue)]">
+              Trusted by students
+            </p>
+            <h2 className="text-3xl md:text-4xl font-semibold font-display tracking-tight text-[var(--color-text-primary)]">
+              Join students preparing smarter
+            </h2>
+            <div className="flex flex-wrap justify-center gap-8 mt-4">
+              <div className="flex items-center gap-3 px-5 py-3 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm">
+                <Users className="w-5 h-5 text-[var(--color-brand-blue)]" />
+                <div className="text-left">
+                  <p className="text-lg font-bold tabular-nums text-[var(--color-text-primary)]">1,200+</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">Active students</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 px-5 py-3 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm">
+                <Zap className="w-5 h-5 text-[var(--color-success)]" />
+                <div className="text-left">
+                  <p className="text-lg font-bold tabular-nums text-[var(--color-text-primary)]">50,000+</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">Questions answered</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 px-5 py-3 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm">
+                <Shield className="w-5 h-5 text-[var(--color-warning)]" />
+                <div className="text-left">
+                  <p className="text-lg font-bold tabular-nums text-[var(--color-text-primary)]">94%</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">Pass rate</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA ── */}
       <section className="py-14 md:py-16">
         <div className="container">
@@ -470,10 +520,45 @@ export function Landing() {
         </div>
       </section>
 
-      <footer className="py-6 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)]">
-        <div className="container flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-[var(--color-text-muted)]">
-          <span>{APP_NAME}</span>
-          <span>For study use.</span>
+      <footer className="py-10 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)]">
+        <div className="container">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <img src={getLogoUrl(theme)} alt="" className="w-5 h-5 rounded object-contain" />
+                <span className="text-sm font-semibold tracking-wider uppercase text-[var(--color-text-primary)]">{APP_NAME}</span>
+              </div>
+              <p className="text-xs text-[var(--color-text-muted)] leading-relaxed max-w-xs">
+                Deliberate test preparation, powered by adaptive question banks and real-time analytics.
+              </p>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-3">Product</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#features" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Features</a></li>
+                <li><Link to="/login" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Dashboard</Link></li>
+                <li><Link to="/login" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Lab Values</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-3">Legal</h4>
+              <ul className="space-y-2 text-sm">
+                <li><span className="text-[var(--color-text-tertiary)]">For study use only</span></li>
+                <li><span className="text-[var(--color-text-tertiary)]">Not medical advice</span></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-[var(--color-border)] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
+            <span>&copy; {new Date().getFullYear()} {APP_NAME}. All rights reserved.</span>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="inline-flex items-center gap-1.5 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+              {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            </button>
+          </div>
         </div>
       </footer>
     </div>

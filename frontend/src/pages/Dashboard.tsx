@@ -26,6 +26,27 @@ import { SectionBreakdown } from '../components/analytics/SectionBreakdown';
 
 let dashboardHasLoadedOnce = false;
 
+/** Animate a number from 0 → target over `duration` ms */
+function useCountUp(target: number, duration = 800, enabled = true) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!enabled || target === 0) { setValue(target); return; }
+    let start: number | null = null;
+    let raf: number;
+    const step = (ts: number) => {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(eased * target));
+      if (progress < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, enabled]);
+  return value;
+}
+
 export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -90,24 +111,6 @@ export function Dashboard() {
     return () => window.removeEventListener('focus', onFocus);
   }, [location.pathname, fetchStats]);
 
-  useEffect(() => {
-    const root = dashRef.current;
-    if (!root || loading) return;
-    const targets = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]'));
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add('is-visible');
-            observer.unobserve(e.target);
-          }
-        });
-      },
-      { threshold: 0.08, rootMargin: '0px 0px -4% 0px' }
-    );
-    targets.forEach((t) => observer.observe(t));
-    return () => observer.disconnect();
-  }, [loading, stats]);
 
   const accuracy =
     stats && stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
@@ -175,7 +178,7 @@ export function Dashboard() {
       <div className="dash-glow dash-glow-two" aria-hidden />
 
       {/* ── Hero Stripe ── */}
-      <section className="relative z-[1] pt-14 pb-16 md:pt-24 md:pb-24 chiron-reveal" data-reveal>
+      <section className="relative z-[1] pt-14 pb-16 md:pt-24 md:pb-24 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>
         <div className="container">
           <div className="max-w-4xl">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
@@ -231,7 +234,7 @@ export function Dashboard() {
       </section>
 
       {/* ── Stats Stripe ── */}
-      <section className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-reveal" data-reveal>
+      <section className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 1 } as React.CSSProperties}>
         <div className="container">
           <div className="mb-8">
             <p className="chiron-feature-label">Overview</p>
@@ -239,13 +242,13 @@ export function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <StatPanel label="Questions" value={total} icon={BookOpen} color="var(--color-brand-blue)" />
-            <StatPanel label="Correct" value={correct} icon={CheckCircle2} color="var(--color-success)" />
-            <StatPanel label="Incorrect" value={incorrect} icon={XCircle} color="var(--color-error)" />
-            <StatPanel label="Accuracy" value={hasData ? `${accuracy}%` : '—'} icon={TrendingUp} color="var(--color-brand-blue)" />
+            <StatPanel label="Questions" value={total} icon={BookOpen} color="var(--color-brand-blue)" stagger={0} animate={!loading} />
+            <StatPanel label="Correct" value={correct} icon={CheckCircle2} color="var(--color-success)" stagger={1} animate={!loading} />
+            <StatPanel label="Incorrect" value={incorrect} icon={XCircle} color="var(--color-error)" stagger={2} animate={!loading} />
+            <StatPanel label="Accuracy" value={hasData ? `${accuracy}%` : '—'} icon={TrendingUp} color="var(--color-brand-blue)" stagger={3} animate={!loading} />
 
             {/* Goal Card */}
-            <div className="dash-card flex flex-col items-center justify-center p-6 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="dash-card dash-stat-stagger flex flex-col items-center justify-center p-6 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm hover:shadow-md transition-shadow" style={{ '--dash-stagger': 4 } as React.CSSProperties}>
               <CircularProgress
                 value={goalPct}
                 label=""
@@ -270,7 +273,7 @@ export function Dashboard() {
       </section>
 
       {/* ── Analytics Stripe ── */}
-      <section className="py-12 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-reveal" data-reveal>
+      <section className="py-12 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 2 } as React.CSSProperties}>
         <div className="container">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -309,7 +312,7 @@ export function Dashboard() {
 
       {/* ── Section Performance Stripe ── */}
       {hasData && bySection.length > 0 && (
-        <section className="py-14 border-t border-[var(--color-border)] chiron-reveal" data-reveal>
+        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 3 } as React.CSSProperties}>
           <div className="container">
             <div className="grid md:grid-cols-[0.35fr_0.65fr] gap-12 items-start">
               <div>
@@ -381,7 +384,7 @@ export function Dashboard() {
       )}
 
       {/* ── Actions / Utilities Stripe ── */}
-      <section className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-reveal" data-reveal>
+      <section className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 4 } as React.CSSProperties}>
         <div className="container">
           <div className="grid md:grid-cols-2 gap-8">
             <div>
@@ -405,7 +408,7 @@ export function Dashboard() {
 
       {/* ── Empty State Stripe (only if no data) ── */}
       {!hasData && (
-        <section className="py-14 border-t border-[var(--color-border)] chiron-reveal" data-reveal>
+        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 5 } as React.CSSProperties}>
           <div className="container">
             <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm max-w-2xl mx-auto p-8">
               <EmptyState
@@ -434,14 +437,25 @@ function StatPanel({
   value,
   icon: Icon,
   color,
+  stagger = 0,
+  animate = true,
 }: {
   label: string;
   value: string | number;
   icon: React.ElementType;
   color: string;
+  stagger?: number;
+  animate?: boolean;
 }) {
+  const numericTarget = typeof value === 'number' ? value : 0;
+  const isNumeric = typeof value === 'number';
+  const animatedValue = useCountUp(numericTarget, 800, animate && isNumeric);
+
   return (
-    <div className="dash-card bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-32">
+    <div
+      className="dash-card dash-stat-stagger bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-32"
+      style={{ '--dash-stagger': stagger } as React.CSSProperties}
+    >
       <div className="flex items-start justify-between">
         <div
           className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -455,7 +469,7 @@ function StatPanel({
       </div>
       <div>
         <p className="text-3xl font-semibold font-display tabular-nums tracking-tight text-[var(--color-text-primary)]">
-          {value}
+          {isNumeric ? animatedValue : value}
         </p>
       </div>
     </div>
@@ -484,10 +498,10 @@ function SectionRow({
       {/* Progress Bar Container */}
       <div className="h-2.5 w-full bg-[var(--color-bg-tertiary)] rounded-full overflow-hidden flex">
         {correct > 0 && (
-          <div className="h-full bg-[var(--color-success)]" style={{ width: `${correctPct}%` }} />
+          <div className="h-full bg-[var(--color-success)] dash-bar-fill" style={{ '--bar-target': `${correctPct}%` } as React.CSSProperties} />
         )}
         {incorrect > 0 && (
-          <div className="h-full bg-[var(--color-error)] opacity-80" style={{ width: `${100 - correctPct}%` }} />
+          <div className="h-full bg-[var(--color-error)] opacity-80 dash-bar-fill" style={{ '--bar-target': `${100 - correctPct}%` } as React.CSSProperties} />
         )}
       </div>
 

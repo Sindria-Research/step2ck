@@ -2,7 +2,7 @@
 
 ## 0. Overview
 
-**Product Name (working):** ClinReason AI
+**Product Name (working):** Chiron
 **Category:** High-stakes exam performance optimization
 **Primary Market:** USMLE Step 2 CK preparation
 **Users:** Medical students, IMGs, retakers
