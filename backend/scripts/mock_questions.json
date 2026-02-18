@@ -1,0 +1,38 @@
+[
+  {
+    "id": "EM-1-8",
+    "section": "Emergency Medicine",
+    "subsection": "CMS-1",
+    "questionNumber": 8,
+    "system": "Respiratory",
+    "questionStem": "A 13-year-old girl is brought to the emergency department 30 minutes after she fell off a sailboat into a freshwater lake. Which of the following is the most appropriate next step in management?",
+    "choices": {"A": "Admission to the hospital for observation", "B": "Antibiotic therapy", "C": "Corticosteroid therapy", "D": "Diuretic therapy", "E": "Noninvasive positive-pressure ventilation"},
+    "correctAnswer": "A",
+    "correctExplanation": "Admission for observation is appropriate for nonfatal drowning with any hypoxia or infiltrates.",
+    "incorrectExplanation": "Antibiotics and other options are not first-line here."
+  },
+  {
+    "id": "EM-1-6",
+    "section": "Emergency Medicine",
+    "subsection": "CMS-1",
+    "questionNumber": 6,
+    "system": "Neurological",
+    "questionStem": "A 47-year-old man is brought to the ED 30 minutes after a seizure. He drinks eight to nine beers nightly. His last drink was 28 hours ago. Which of the following is the most appropriate next step?",
+    "choices": {"A": "Dextrose and thiamine", "B": "Administration of lorazepam", "C": "Phenytoin", "D": "CT head", "E": "Intubation"},
+    "correctAnswer": "B",
+    "correctExplanation": "Alcohol withdrawal is managed with benzodiazepines.",
+    "incorrectExplanation": "Other choices are for different scenarios."
+  },
+  {
+    "id": "IM-2-12",
+    "section": "Internal Medicine",
+    "subsection": "CMS-2",
+    "questionNumber": 12,
+    "system": "Cardiovascular",
+    "questionStem": "A 65-year-old man with hypertension and type 2 diabetes has dyspnea, JVD, edema, S3 gallop. Echo shows LVEF 35%. Which medication should be added?",
+    "choices": {"A": "Amlodipine", "B": "Carvedilol", "C": "Digoxin", "D": "Furosemide", "E": "Hydralazine"},
+    "correctAnswer": "B",
+    "correctExplanation": "Beta-blockers reduce mortality in HFrEF.",
+    "incorrectExplanation": "Other options do not provide same mortality benefit."
+  }
+]

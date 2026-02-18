@@ -1,0 +1,54 @@
+"""FastAPI application entrypoint."""
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.config import get_settings
+from app.api import health, auth, questions, progress, exams
+
+logging.basicConfig(
+    level=get_settings().LOG_LEVEL,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Application startup")
+    yield
+    logger.info("Application shutdown")
+
+
+app = FastAPI(
+    title="step2ck API",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_settings().CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled error: %s", exc)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+
+app.include_router(health.router, prefix="/health", tags=["health"])
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(questions.router, prefix="/questions", tags=["questions"])
+app.include_router(progress.router, prefix="/progress", tags=["progress"])
+app.include_router(exams.router, prefix="/exams", tags=["exams"])
