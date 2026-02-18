@@ -14,6 +14,7 @@ interface AuthContextValue {
   loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password?: string) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -55,6 +56,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const loginWithGoogle = useCallback(async (idToken: string) => {
+    const res = await api.auth.googleLogin(idToken);
+    setToken(res.access_token);
+    setUser(res.user);
+  }, []);
+
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
@@ -65,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     isAuthenticated: !!user,
     login,
+    loginWithGoogle,
     logout,
     refreshUser,
   };

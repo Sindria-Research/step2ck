@@ -1,5 +1,8 @@
 # Future work
 
+- [ ] Remove "no questions available in the databse, run make __ etc."; in prod this shouldn't be a problem.
+
+
 ## Auth
 - Add Google OAuth (or other providers) via backend.
 - Email/password registration and email verification.

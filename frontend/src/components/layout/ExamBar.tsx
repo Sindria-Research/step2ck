@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Sun, Moon, LogOut, Flag, SkipForward } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sun, Moon, LogOut, Flag } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { Modal } from '../common/Modal';
 
@@ -47,27 +47,17 @@ export function ExamBar({
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button
-              type="button"
-              onClick={onNext}
-              disabled={atLast}
-              className="p-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-ring border-l border-[var(--color-border)]"
-              title="Next question"
-              aria-label="Next question"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
           <button
             type="button"
             onClick={onNext}
             disabled={atLast}
-            className="btn btn-primary text-sm py-1.5 px-3 rounded-md focus-ring flex items-center gap-1.5"
+            className="p-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-ring border-l border-[var(--color-border)]"
             title="Next question"
+            aria-label="Next question"
           >
-            <SkipForward className="w-4 h-4" aria-hidden />
-            Next question
+            <ChevronRight className="w-4 h-4" />
           </button>
+          </div>
           <span className="text-xs text-[var(--color-text-tertiary)] font-medium tabular-nums">
             {currentIndex + 1} / {total}
           </span>

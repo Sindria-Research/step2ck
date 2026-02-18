@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Target } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -7,21 +7,23 @@ import type { ProgressStats } from '../api/types';
 import { Skeleton, SkeletonCard, EmptyState, CircularProgress } from '../components/common';
 import { QuestionGoalModal } from '../components/dashboard/QuestionGoalModal';
 import { useQuestionGoal } from '../hooks/useQuestionGoal';
+import { useAuth } from '../context/AuthContext';
 
 let dashboardHasLoadedOnce = false;
 
 export function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const [goal, setGoal] = useQuestionGoal();
   const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [stats, setStats] = useState<ProgressStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch stats when on dashboard; refetch when navigating back (e.g. after exam)
-  useEffect(() => {
-    if (location.pathname !== '/dashboard') return;
+  const welcomeName = user?.display_name?.trim() || user?.email?.split('@')[0] || 'there';
+
+  const fetchStats = useCallback(() => {
     let cancelled = false;
     if (!dashboardHasLoadedOnce) setLoading(true);
     api.progress
@@ -41,7 +43,22 @@ export function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, [location.pathname]);
+  }, []);
+
+  // Fetch stats when on dashboard; refetch when navigating back (e.g. after exam)
+  useEffect(() => {
+    if (location.pathname !== '/dashboard') return;
+    const cancel = fetchStats();
+    return cancel;
+  }, [location.pathname, fetchStats]);
+
+  // Refetch when window regains focus (e.g. returning from exam in another tab)
+  useEffect(() => {
+    if (location.pathname !== '/dashboard') return;
+    const onFocus = () => fetchStats();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [location.pathname, fetchStats]);
 
   const accuracy =
     stats && stats.total > 0
@@ -105,9 +122,11 @@ export function Dashboard() {
               Dashboard
             </h1>
             <p className="text-[var(--color-text-secondary)] mt-0.5">
-              {hasData
-                ? 'Your progress and performance at a glance.'
-                : 'Track your Step 2 CK preparation here.'}
+              {user ? (
+                <>Welcome, {welcomeName}. {hasData ? 'Your progress and performance at a glance.' : 'Track your Step 2 CK preparation here.'}</>
+              ) : (
+                hasData ? 'Your progress and performance at a glance.' : 'Track your Step 2 CK preparation here.'
+              )}
             </p>
           </div>
           <button

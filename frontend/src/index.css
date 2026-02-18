@@ -374,22 +374,56 @@ select:focus-visible {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ========== Exam: AI “thinking” gradient ========== */
+/* ========== Exam: AI “thinking” gradient (ChatGPT-style white/grey) ========== */
 @keyframes thinking-gradient {
   0%, 100% {
-    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 50%, var(--color-accent) 100%);
-    background-size: 200% 200%;
-    background-position: 0% 50%;
+    background-position: 200% 50%;
   }
   50% {
-    background-position: 100% 50%;
+    background-position: 0% 50%;
   }
 }
 
 .thinking-gradient {
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 50%, var(--color-accent) 100%);
-  background-size: 200% 200%;
-  animation: thinking-gradient 1.8s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    #e5e5e5 0%,
+    #f5f5f5 25%,
+    #e8e8e8 50%,
+    #f5f5f5 75%,
+    #e5e5e5 100%
+  );
+  background-size: 200% 100%;
+  animation: thinking-gradient 1.5s ease-in-out infinite;
+}
+
+:root.dark .thinking-gradient {
+  background: linear-gradient(
+    90deg,
+    #404040 0%,
+    #525252 25%,
+    #404040 50%,
+    #525252 75%,
+    #404040 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ========== Exam: text streaming (cursor) ========== */
+@keyframes stream-cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.streaming-cursor::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--color-text-primary);
+  animation: stream-cursor-blink 0.8s step-end infinite;
 }
 
 /* ========== Exam: question text highlight ========== */

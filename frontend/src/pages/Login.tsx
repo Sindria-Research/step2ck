@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { APP_NAME, APP_TAGLINE, getLogoUrl } from '../config/branding';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { GoogleLoginButton } from '../components/auth/GoogleLoginButton';
 
 const DEMO_EMAIL = 'demo@step2ck.local';
 
@@ -47,8 +48,12 @@ export function Login() {
         </p>
 
         <div className="space-y-4">
+          <GoogleLoginButton />
+          <p className="text-xs text-[var(--color-text-tertiary)]">
+            or
+          </p>
           <p className="text-sm text-[var(--color-text-tertiary)] leading-relaxed">
-            Continue in demo mode. Your progress is saved for this session.
+            Continue in demo mode. Progress is saved for this session only.
           </p>
           <button
             type="button"

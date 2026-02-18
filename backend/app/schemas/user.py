@@ -28,3 +28,7 @@ class Token(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: Optional[str] = None  # Optional for demo login
+
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str  # Google ID token from frontend OAuth flow

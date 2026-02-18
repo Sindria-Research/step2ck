@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { Highlighter, Sparkles } from 'lucide-react';
 import { useExam } from '../../context/ExamContext';
+import { StreamingText } from '../common/StreamingText';
 import { getSelectionOffsets, segmentTextWithRanges } from '../../utils/selectionUtils';
 
 export function QuestionPanel() {
@@ -147,7 +148,7 @@ export function QuestionPanel() {
         </div>
       )}
 
-      {/* Explain selection placeholder (thinking animation) */}
+      {/* Explain selection placeholder (thinking animation + streaming) */}
       {explainSelectionActive && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-30 rounded-lg">
           <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-6 max-w-md shadow-xl">
@@ -157,8 +158,8 @@ export function QuestionPanel() {
                 Explaining selection…
               </span>
             </div>
-            <p className="text-xs text-[var(--color-text-tertiary)]">
-              AI explanation will appear here in a future update.
+            <p className="text-xs text-[var(--color-text-tertiary)] min-h-[1.5rem]">
+              <StreamingText text="AI explanation will appear here in a future update." charDelay={25} cursor />
             </p>
           </div>
         </div>

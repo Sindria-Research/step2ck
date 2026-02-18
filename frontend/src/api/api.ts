@@ -17,6 +17,12 @@ export const api = {
         body: JSON.stringify({ email, password }),
         skipAuth: true,
       }),
+    googleLogin: (idToken: string) =>
+      request<TokenResponse>('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ id_token: idToken }),
+        skipAuth: true,
+      }),
     me: () => request<User>('/auth/me'),
   },
   questions: {

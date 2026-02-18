@@ -5,6 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react';
+import { getLogoUrl } from '../config/branding';
 
 type Theme = 'light' | 'dark';
 
@@ -31,6 +32,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (theme === 'dark') root.classList.add('dark');
     else root.classList.remove('dark');
     localStorage.setItem(STORAGE_KEY, theme);
+    const favicon = document.querySelector<HTMLLinkElement>('#favicon');
+    if (favicon) favicon.href = getLogoUrl(theme);
   }, [theme]);
 
   const setTheme = useCallback((t: Theme) => setThemeState(t), []);

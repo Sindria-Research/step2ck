@@ -76,25 +76,40 @@ make seed
 
 4. If it shows thousands of questions in the DB but the app still shows 0, the frontend may not be talking to this backend. Restart both with `make dev`, open http://localhost:5173 (not 127.0.0.1 or another port), and hard-refresh the page (e.g. Cmd+Shift+R). Ensure no other backend is running on port 8001.
 
+## Auth and users
+
+- **Google OAuth:** Placeholder only for now (“Sign in with Google (coming soon)” on the login page). Backend `POST /auth/google` and user fields (`auth_provider`, `google_id`) are in place for when you enable it; set `GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID` and wire the frontend button to `loginWithGoogle(idToken)`.
+- **Email/password:** Backend support exists; registration UI can be added.
+- **Demo mode:** Without a token, the app uses a single shared demo user. Progress for the demo user is stored in the DB.
+- **User-specific data:** Stats, progress, and exam modes (e.g. “unused” / “incorrect”) are scoped to the current user. Each user has their own progress records and dashboard stats.
+
+## Data model (modular)
+
+- **Questions** live in the `questions` table (seeded from `data/all_questions.json`). Add or update questions by editing the JSON and running `make seed` (optionally with `--clear`). The exam engine filters by section and mode from this table.
+- **Users** have `email`, `display_name`, `avatar_url`, `auth_provider` (e.g. `google`, `email`, `demo`), and optional `google_id`.
+- **User progress** is one row per answer (`user_id`, `question_id`, `section`, `correct`, `answer_selected`). Used for stats, “unused” (never answered), and “incorrect” (previously wrong) modes.
+
 ## Env vars
 
 **Backend** (optional; defaults in `backend/app/config.py`):
 
-| Variable        | Default                    | Description                    |
-|----------------|----------------------------|--------------------------------|
-| `DATABASE_URL` | `sqlite:///./step2ck.db`   | DB URL (use Postgres in prod). |
-| `SECRET_KEY`   | (change in production)     | JWT signing key.               |
-| `CORS_ORIGINS` | `["http://localhost:5173"]`| Allowed origins.               |
-| `LOG_LEVEL`    | `INFO`                     | Logging level.                 |
+| Variable           | Default                    | Description                    |
+|--------------------|----------------------------|--------------------------------|
+| `DATABASE_URL`     | `sqlite:///./step2ck.db`   | DB URL (use Postgres in prod). |
+| `SECRET_KEY`       | (change in production)     | JWT signing key.               |
+| `GOOGLE_CLIENT_ID` | (empty)                    | Google OAuth client ID (verifies ID tokens). |
+| `CORS_ORIGINS`     | `["http://localhost:5173"]`| Allowed origins.               |
+| `LOG_LEVEL`        | `INFO`                     | Logging level.                 |
 
 **Frontend** (optional):
 
-| Variable           | Default   | Description              |
-|--------------------|-----------|--------------------------|
-| `VITE_API_URL`     | `/api` in dev | API base (e.g. `https://api.example.com` in prod). |
-| `VITE_APP_NAME`    | `step2ck` | App name in header/login. |
-| `VITE_APP_TAGLINE` | Step 2 CK preparation | Tagline on login.   |
-| `VITE_LOGO_URL`    | `/logo.svg` | Logo path.            |
+| Variable               | Default   | Description              |
+|------------------------|-----------|--------------------------|
+| `VITE_API_URL`         | `/api` in dev | API base (e.g. `https://api.example.com` in prod). |
+| `VITE_GOOGLE_CLIENT_ID`| (empty)   | Google OAuth client ID (enables “Sign in with Google”). |
+| `VITE_APP_NAME`        | `step2ck` | App name in header/login. |
+| `VITE_APP_TAGLINE`     | Step 2 CK preparation | Tagline on login.   |
+| `VITE_LOGO_URL`        | `/logo.svg` | Logo path.            |
 
 ## Production
 
