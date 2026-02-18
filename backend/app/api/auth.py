@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.config import get_settings
 from app.db import get_db
 from app.models import User
 from app.schemas.user import GoogleLoginRequest, LoginRequest, Token, UserResponse
@@ -21,8 +22,12 @@ DEMO_EMAIL = "demo@step2ck.local"
 
 @router.post("/login", response_model=Token)
 def login(data: LoginRequest, db: Session = Depends(get_db)):
-    """Login: use demo@step2ck.local (no password) for demo, or email+password for real user."""
-    if data.email == DEMO_EMAIL or not data.password:
+    """Login: demo mode (dev only) or email+password for real user."""
+    is_demo = data.email == DEMO_EMAIL or not data.password
+    if is_demo:
+        settings = get_settings()
+        if settings.ENVIRONMENT != "development":
+            raise HTTPException(status_code=403, detail="Demo login is disabled in production")
         user = get_or_create_demo_user(db)
     else:
         user = db.query(User).filter(User.email == data.email).first()

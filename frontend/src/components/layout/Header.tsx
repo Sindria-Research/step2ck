@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, LogOut, Sun, Moon } from 'lucide-react';
 import { APP_NAME, getLogoUrl } from '../../config/branding';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface HeaderProps {
   examContext?: {
@@ -99,6 +100,7 @@ export function Header({ examContext = null }: HeaderProps) {
 
         {user ? (
           <div className="flex items-center gap-2">
+            <UserAvatar src={user.avatar_url} name={user.display_name} size="sm" />
             <span
               className="hidden sm:block text-sm text-[var(--color-text-secondary)] truncate max-w-[140px]"
               title={user.display_name || user.email}

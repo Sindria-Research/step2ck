@@ -3,18 +3,20 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import type { User } from '../api/types';
 import { api } from '../api/api';
 import { setToken } from '../api/request';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password?: string) => Promise<void>;
-  loginWithGoogle: (idToken: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -24,28 +26,65 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const initialised = useRef(false);
 
-  const refreshUser = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
+  const fetchBackendUser = useCallback(async () => {
     try {
       const u = await api.auth.me();
       setUser(u);
     } catch {
       setToken(null);
       setUser(null);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    if (supabase) {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.access_token) {
+        setToken(data.session.access_token);
+        await fetchBackendUser();
+      } else {
+        setToken(null);
+        setUser(null);
+      }
+    } else {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setUser(null);
+      } else {
+        await fetchBackendUser();
+      }
+    }
+    setLoading(false);
+  }, [fetchBackendUser]);
+
   useEffect(() => {
+    if (initialised.current) return;
+    initialised.current = true;
+
     refreshUser();
-  }, [refreshUser]);
+
+    if (!supabase) return;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          if (session?.access_token) {
+            setToken(session.access_token);
+            await fetchBackendUser();
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setToken(null);
+          setUser(null);
+        }
+      },
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [refreshUser, fetchBackendUser]);
 
   const login = useCallback(
     async (email: string, password?: string) => {
@@ -53,16 +92,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(res.access_token);
       setUser(res.user);
     },
-    []
+    [],
   );
 
-  const loginWithGoogle = useCallback(async (idToken: string) => {
-    const res = await api.auth.googleLogin(idToken);
-    setToken(res.access_token);
-    setUser(res.user);
+  const loginWithGoogle = useCallback(async () => {
+    if (!supabase) {
+      throw new Error('Supabase is not configured');
+    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
+    if (error) throw error;
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setToken(null);
     setUser(null);
   }, []);

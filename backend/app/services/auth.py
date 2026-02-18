@@ -1,4 +1,5 @@
-"""Auth service: JWT, Google OAuth, and user resolution."""
+"""Auth service: JWT, Supabase Auth, Google OAuth, and user resolution."""
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -9,6 +10,8 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import User
+
+logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -110,6 +113,72 @@ def get_or_create_user_from_google(
         avatar_url=picture,
         auth_provider="google",
         google_id=google_id,
+    )
+    db.add(user)
+    db.flush()
+    return user
+
+
+def verify_supabase_token(token: str) -> Optional[dict[str, Any]]:
+    """Verify a Supabase-issued JWT and extract user claims.
+
+    Returns dict with sub, email, full_name, avatar_url on success, None on failure.
+    """
+    settings = get_settings()
+    if not settings.SUPABASE_JWT_SECRET:
+        return None
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            options={"require_exp": True, "require_sub": True},
+        )
+        sub = payload.get("sub")
+        email = payload.get("email")
+        if not sub or not email:
+            return None
+        user_metadata = payload.get("user_metadata", {})
+        return {
+            "sub": sub,
+            "email": email,
+            "full_name": user_metadata.get("full_name") or user_metadata.get("name"),
+            "avatar_url": user_metadata.get("avatar_url") or user_metadata.get("picture"),
+        }
+    except JWTError as exc:
+        logger.debug("Supabase JWT verification failed: %s", exc)
+        return None
+
+
+def get_or_create_user_from_supabase(
+    db: Session,
+    supabase_id: str,
+    email: str,
+    name: Optional[str] = None,
+    avatar_url: Optional[str] = None,
+) -> User:
+    """Find user by supabase_id or email; create or update with Supabase/Google profile."""
+    user = db.query(User).filter(User.supabase_id == supabase_id).first()
+    if user:
+        user.display_name = name or user.display_name
+        user.avatar_url = avatar_url or user.avatar_url
+        user.email = email
+        db.flush()
+        return user
+    user = db.query(User).filter(User.email == email).first()
+    if user:
+        user.supabase_id = supabase_id
+        user.auth_provider = "google"
+        user.display_name = name or user.display_name
+        user.avatar_url = avatar_url or user.avatar_url
+        db.flush()
+        return user
+    user = User(
+        email=email,
+        display_name=name,
+        avatar_url=avatar_url,
+        auth_provider="google",
+        supabase_id=supabase_id,
     )
     db.add(user)
     db.flush()

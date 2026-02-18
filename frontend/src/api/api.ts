@@ -1,4 +1,5 @@
 import { API_BASE } from '../config/env';
+import { supabase } from '../lib/supabase';
 import type {
   AIExplainRequest,
   AIExplainResponse,
@@ -168,11 +169,16 @@ export const api = {
       const formData = new FormData();
       formData.append('file', file);
       const url = `${API_BASE}/flashcards/import-apkg`;
-      const token = localStorage.getItem('token');
       const headers: HeadersInit = {};
+      let token = localStorage.getItem('token');
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.access_token) token = data.session.access_token;
+      }
       if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch(url, { method: 'POST', headers, body: formData });
       if (res.status === 401) {
+        if (supabase) await supabase.auth.signOut();
         localStorage.removeItem('token');
         window.location.href = '/login';
         throw new Error('Unauthorized');

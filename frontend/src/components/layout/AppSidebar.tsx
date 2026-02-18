@@ -16,8 +16,8 @@ import {
   Sun,
   Moon,
   LogOut,
-  User,
 } from 'lucide-react';
+import { UserAvatar } from '../common/UserAvatar';
 import { useSidebar } from '../../context/SidebarContext';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/api';
@@ -216,9 +216,7 @@ export function AppSidebar() {
               aria-expanded={userMenuOpen}
               aria-haspopup="true"
             >
-              <div className="w-7 h-7 rounded-full bg-[var(--color-bg-tertiary)] flex items-center justify-center shrink-0">
-                <User className="w-3.5 h-3.5 text-[var(--color-text-tertiary)]" />
-              </div>
+              <UserAvatar src={user.avatar_url} name={user.display_name} size="sm" />
               <span className="flex-1 truncate text-[var(--color-text-secondary)]">
                 {user.display_name || user.email}
               </span>

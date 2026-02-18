@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { GoogleLoginButton } from '../components/auth/GoogleLoginButton';
 
 const DEMO_EMAIL = 'demo@chiron.local';
+const isDev = import.meta.env.DEV;
 
 export function Login() {
   const { login, loading } = useAuth();
@@ -49,19 +50,23 @@ export function Login() {
 
         <div className="space-y-4">
           <GoogleLoginButton />
-          <p className="text-xs text-[var(--color-text-tertiary)]">
-            or
-          </p>
-          <p className="text-sm text-[var(--color-text-tertiary)] leading-relaxed">
-            Continue in demo mode. Progress is saved for this session only.
-          </p>
-          <button
-            type="button"
-            onClick={handleDemo}
-            className="btn btn-primary w-full focus-ring"
-          >
-            Continue in Demo Mode
-          </button>
+
+          {isDev && (
+            <>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 border-t border-[var(--color-border)]" />
+                <span className="text-xs text-[var(--color-text-muted)]">dev only</span>
+                <div className="flex-1 border-t border-[var(--color-border)]" />
+              </div>
+              <button
+                type="button"
+                onClick={handleDemo}
+                className="btn btn-secondary w-full focus-ring text-sm"
+              >
+                Continue as Demo User
+              </button>
+            </>
+          )}
         </div>
 
         <p className="mt-6 text-xs text-[var(--color-text-muted)]">
