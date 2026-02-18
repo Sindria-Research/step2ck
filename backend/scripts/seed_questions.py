@@ -48,36 +48,56 @@ def main():
             sys.exit(1)
         questions_data = load_json(path)
     else:
-        # Default: use in-repo data/all_questions.json (prod), then mock
+        # Default: use in-repo data (all_questions.json or allquestions.json), then mock
         repo_root = Path(__file__).resolve().parent.parent.parent
-        data_path = repo_root / "data" / "all_questions.json"
+        data_dir = repo_root / "data"
+        data_path = data_dir / "all_questions.json"
+        alt_data_path = data_dir / "allquestions.json"
         mock_path = Path(__file__).resolve().parent / "mock_questions.json"
         if data_path.exists():
             questions_data = load_json(data_path)
             print(f"Using {data_path}")
+        elif alt_data_path.exists():
+            questions_data = load_json(alt_data_path)
+            print(f"Using {alt_data_path}")
         elif mock_path.exists():
             questions_data = load_json(mock_path)
             print(f"Using {mock_path}")
         else:
-            print("No json_path given. Put all_questions.json in step2ck/data/ or scripts/mock_questions.json")
-            print("Usage: python seed_questions.py [path-to-all_questions.json]")
+            print("No json_path given and no default file found.")
+            print(f"  Checked: {data_path}")
+            print(f"           {alt_data_path}")
+            print("  Put all_questions.json (or allquestions.json) in the project's data/ folder.")
+            print("  Usage: python seed_questions.py [path-to-questions.json]")
             sys.exit(1)
+
+    print(f"Loaded {len(questions_data)} questions from JSON.")
+    if len(questions_data) == 0:
+        print("No questions in file. Check that the JSON is an array of question objects.")
+        sys.exit(1)
 
     with get_db_context() as db:
         if args.clear:
             db.query(Question).delete()
             print("Cleared existing questions.")
+        inserted = 0
+        updated = 0
+        skipped = 0
         for raw in questions_data:
             q = normalize_question(raw)
             if not q["id"] or not q["question_stem"]:
+                skipped += 1
                 continue
             existing = db.query(Question).filter(Question.id == q["id"]).first()
             if existing:
                 for k, v in q.items():
                     setattr(existing, k, v)
+                updated += 1
             else:
                 db.add(Question(**q))
-        print(f"Seeded {len(questions_data)} questions.")
+                inserted += 1
+        print(f"Done: {inserted} inserted, {updated} updated, {skipped} skipped.")
+        print(f"Total in DB: {inserted + updated} (from {len(questions_data)} in file).")
 
 
 if __name__ == "__main__":

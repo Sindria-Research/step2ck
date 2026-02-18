@@ -1,26 +1,36 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Target } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { api } from '../api/api';
 import type { ProgressStats } from '../api/types';
 import { Skeleton, SkeletonCard, EmptyState, CircularProgress } from '../components/common';
+import { QuestionGoalModal } from '../components/dashboard/QuestionGoalModal';
 import { useQuestionGoal } from '../hooks/useQuestionGoal';
+
+let dashboardHasLoadedOnce = false;
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [goal, setGoal] = useQuestionGoal();
-  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [stats, setStats] = useState<ProgressStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch stats when on dashboard; refetch when navigating back (e.g. after exam)
   useEffect(() => {
+    if (location.pathname !== '/dashboard') return;
     let cancelled = false;
+    if (!dashboardHasLoadedOnce) setLoading(true);
     api.progress
       .stats()
       .then((data) => {
-        if (!cancelled) setStats(data);
+        if (!cancelled) {
+          setStats(data);
+          dashboardHasLoadedOnce = true;
+        }
       })
       .catch((e) => {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load');
@@ -31,7 +41,7 @@ export function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [location.pathname]);
 
   const accuracy =
     stats && stats.total > 0
@@ -67,7 +77,7 @@ export function Dashboard() {
     );
   }
 
-  const bySection = stats?.by_section ?? [];
+  const bySection = [...(stats?.by_section ?? [])].sort((a, b) => a.name.localeCompare(b.name));
   const hasData = (stats?.total ?? 0) > 0;
 
   const focusAreas = bySection
@@ -78,8 +88,6 @@ export function Dashboard() {
   const total = stats?.total ?? 0;
   const correct = stats?.correct ?? 0;
   const incorrect = stats?.incorrect ?? 0;
-  const correctPct = total > 0 ? Math.round((correct / total) * 100) : 0;
-  const incorrectPct = total > 0 ? Math.round((incorrect / total) * 100) : 0;
 
   const pieData = [
     { name: 'Correct', value: correct, color: 'var(--color-success)' },
@@ -87,26 +95,6 @@ export function Dashboard() {
   ].filter((d) => d.value > 0);
 
   const goalPct = goal > 0 ? Math.min(100, Math.round((total / goal) * 100)) : 0;
-
-  const handleGoalBlur = useCallback(
-    (e: React.FocusEvent<HTMLInputElement>) => {
-      const n = parseInt(e.target.value, 10);
-      if (Number.isFinite(n) && n > 0) setGoal(n);
-      setEditingGoal(false);
-    },
-    [setGoal]
-  );
-
-  const handleGoalKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        const n = parseInt((e.target as HTMLInputElement).value, 10);
-        if (Number.isFinite(n) && n > 0) setGoal(n);
-        setEditingGoal(false);
-      }
-    },
-    [setGoal]
-  );
 
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-[var(--color-bg-secondary)]">
@@ -131,77 +119,63 @@ export function Dashboard() {
           </button>
         </div>
 
-        {/* Row 1: Accuracy ring + Goal ring + stat numbers */}
+        {/* Row 1: Overview — grid for even spacing */}
         <div className="card rounded-lg p-6">
           <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
             Overview
           </h2>
-          <div className="flex flex-wrap items-start gap-8">
-            <CircularProgress
-              value={accuracy}
-              label="Accuracy"
-              centerLabel={hasData ? `${accuracy}%` : '—'}
-              color="var(--color-accent)"
-              size={88}
-              strokeWidth={7}
-            />
-            <div className="flex flex-wrap items-start gap-8">
-              <div className="flex flex-col items-center">
-                <CircularProgress
-                  value={goalPct}
-                  label="Question goal"
-                  centerLabel={`${total}/${goal}`}
-                  color="var(--color-success)"
-                  size={88}
-                  strokeWidth={7}
-                />
-                {editingGoal ? (
-                  <input
-                    type="number"
-                    min={1}
-                    max={10000}
-                    defaultValue={goal}
-                    onBlur={handleGoalBlur}
-                    onKeyDown={handleGoalKeyDown}
-                    className="input w-20 mt-2 text-center text-sm"
-                    autoFocus
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setEditingGoal(true)}
-                    className="mt-2 text-xs text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] focus-ring"
-                  >
-                    Change goal
-                  </button>
-                )}
-              </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 lg:gap-8 items-start">
+            <div className="flex flex-col items-center">
+              <CircularProgress
+                value={accuracy}
+                label="Accuracy"
+                centerLabel={hasData ? `${accuracy}%` : '—'}
+                color="var(--color-accent)"
+                size={88}
+                strokeWidth={7}
+              />
             </div>
-            <div className="flex flex-wrap gap-6 sm:gap-8">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)] mb-0.5">
-                  Questions
-                </p>
-                <p className="text-2xl font-semibold text-[var(--color-text-primary)] font-display tabular-nums">
-                  {total}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)] mb-0.5">
-                  Correct
-                </p>
-                <p className="text-2xl font-semibold text-[var(--color-success)] font-display tabular-nums">
-                  {correct}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)] mb-0.5">
-                  Incorrect
-                </p>
-                <p className="text-2xl font-semibold text-[var(--color-error)] font-display tabular-nums">
-                  {incorrect}
-                </p>
-              </div>
+            <div className="flex flex-col items-center">
+              <CircularProgress
+                value={goalPct}
+                label="Question goal"
+                centerLabel={`${total}/${goal}`}
+                color="var(--color-success)"
+                size={88}
+                strokeWidth={7}
+              />
+              <button
+                type="button"
+                onClick={() => setGoalModalOpen(true)}
+                className="mt-2 text-xs font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] focus-ring rounded"
+                aria-label="Change question goal"
+              >
+                Change goal
+              </button>
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)] mb-0.5">
+                Questions
+              </p>
+              <p className="text-2xl font-semibold text-[var(--color-text-primary)] font-display tabular-nums">
+                {total}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)] mb-0.5">
+                Correct
+              </p>
+              <p className="text-2xl font-semibold text-[var(--color-success)] font-display tabular-nums">
+                {correct}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)] mb-0.5">
+                Incorrect
+              </p>
+              <p className="text-2xl font-semibold text-[var(--color-error)] font-display tabular-nums">
+                {incorrect}
+              </p>
             </div>
           </div>
         </div>
@@ -293,9 +267,9 @@ export function Dashboard() {
                   <button
                     type="button"
                     onClick={() => navigate('/exam/config')}
-                    className="btn btn-primary rounded-md px-4 py-2 text-sm focus-ring"
+                    className="text-sm font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors focus-ring"
                   >
-                    New test
+                    Start a practice test →
                   </button>
                 </div>
               )}
@@ -389,22 +363,22 @@ export function Dashboard() {
               Quick actions
             </h2>
             <p className="text-sm text-[var(--color-text-secondary)] mb-4">
-              Start a new test or review lab values.
+              Review lab values or jump to test config.
             </p>
             <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => navigate('/exam/config')}
-                className="btn btn-primary text-sm px-4 py-2 rounded-md focus-ring"
-              >
-                New test
-              </button>
               <button
                 type="button"
                 onClick={() => navigate('/lab-values')}
                 className="btn btn-secondary text-sm px-4 py-2 rounded-md focus-ring"
               >
                 Lab values
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/exam/config')}
+                className="text-sm font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors focus-ring"
+              >
+                Configure test →
               </button>
             </div>
           </div>
@@ -416,11 +390,18 @@ export function Dashboard() {
               icon={Target}
               title="No progress yet"
               description="Start a test to see your stats and analytics here."
-              action={{ label: 'New test', onClick: () => navigate('/exam/config') }}
+              action={{ label: 'Start test', onClick: () => navigate('/exam/config') }}
             />
           </div>
         )}
       </div>
+
+      <QuestionGoalModal
+        open={goalModalOpen}
+        onClose={() => setGoalModalOpen(false)}
+        currentGoal={goal}
+        onSave={setGoal}
+      />
     </div>
   );
 }

@@ -60,7 +60,7 @@ export function ExamConfig() {
       return;
     }
     api.questions
-      .list({ sections: subList, limit: 5000 })
+      .list({ sections: subList, limit: 500 })
       .then((res) => setAvailableCount(res.total))
       .catch(() => setAvailableCount(0));
   }, [selectedSubjects, sections]);
@@ -170,9 +170,21 @@ export function ExamConfig() {
             ))}
           </div>
           {!sectionsLoading && (
-            <p className="mt-2 text-xs text-[var(--color-text-tertiary)]">
-              {availableCount} questions available with selected subjects
-            </p>
+            <>
+              <p className="mt-2 text-xs text-[var(--color-text-tertiary)]">
+                {availableCount} questions available with selected subjects
+              </p>
+              {availableCount === 0 && (
+                <div className="mt-3 p-4 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]">
+                  <p className="font-medium text-[var(--color-text-primary)] mb-2">No questions in the database</p>
+                  <ol className="list-decimal list-inside space-y-1 mb-0">
+                    <li>Ensure the backend is running (<code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">make dev</code> or <code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">make backend</code>).</li>
+                    <li>From the project root: <code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">make migrate</code> then <code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">make seed</code>.</li>
+                    <li>Questions file: <code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">data/all_questions.json</code> or <code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">data/allquestions.json</code>.</li>
+                  </ol>
+                </div>
+              )}
+            </>
           )}
         </section>
 

@@ -11,7 +11,18 @@ Step 2 CK preparation app: practice questions, progress tracking, and exam modes
 
 ## Run locally
 
-### Backend
+**First-time setup (from project root):**
+
+```bash
+make setup    # backend venv + deps, frontend npm install
+make migrate  # create/update DB tables (backend)
+make seed     # load questions from data/all_questions.json or data/allquestions.json
+make dev      # backend + frontend
+```
+
+Then open http://localhost:5173 and use **Continue in Demo Mode** on the login page.
+
+### Backend (manual)
 
 ```bash
 cd backend
@@ -20,8 +31,7 @@ source .venv/bin/activate   # or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
 # Optional: set DATABASE_URL, SECRET_KEY, etc. in .env
 alembic upgrade head
-make seed   # or: cd backend && PYTHONPATH=. python scripts/seed_questions.py
-            # Uses step2ck/data/all_questions.json by default (copy from step2ck-mario/output if needed)
+make seed   # from project root, or: PYTHONPATH=. python scripts/seed_questions.py
 PYTHONPATH=. uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
@@ -33,18 +43,38 @@ npm install
 npm run dev
 ```
 
-Frontend dev server proxies `/api` to `http://127.0.0.1:8001`, so the app talks to the backend without CORS. Open http://localhost:5173 and use **Continue in Demo Mode** on the login page.
+Frontend dev server proxies `/api` to `http://127.0.0.1:8001`, so the app talks to the backend without CORS.
 
 ### Seed questions (integrate test bank)
 
-Questions live in **`data/all_questions.json`** (e.g. copied from `step2ck-mario/output/all_questions.json`). Seed the database once after setup:
+Questions live in **`data/all_questions.json`** (or **`data/allquestions.json`**). Seed the database once after setup:
 
 ```bash
 make seed
-# Or from backend: PYTHONPATH=. python scripts/seed_questions.py
 # Optional: pass a path or --clear to replace existing
-#   PYTHONPATH=. python scripts/seed_questions.py ../data/all_questions.json --clear
+#   cd backend && PYTHONPATH=. .venv/bin/python scripts/seed_questions.py ../data/all_questions.json --clear
 ```
+
+**Important:** Run all `make` commands from the **project root** (the folder that contains `backend/`, `frontend/`, and `data/`). If you're in a parent folder or only in `backend/`, paths will be wrong.
+
+### If the app still shows "0 questions"
+
+1. From the project root, run:
+   ```bash
+   make check-questions
+   ```
+   This prints whether the data file was found, how many questions are in the DB, and what’s wrong if something isn’t set up.
+
+2. If it says "Data file ... NOT FOUND", you’re likely in the wrong directory. `cd` into the project folder that has `data/all_questions.json`, then run `make check-questions` and `make seed` again.
+
+3. If it says "Questions in DB: 0", run:
+   ```bash
+   make migrate
+   make seed
+   ```
+   then restart the app (`make dev`).
+
+4. If it shows thousands of questions in the DB but the app still shows 0, the frontend may not be talking to this backend. Restart both with `make dev`, open http://localhost:5173 (not 127.0.0.1 or another port), and hard-refresh the page (e.g. Cmd+Shift+R). Ensure no other backend is running on port 8001.
 
 ## Env vars
 
