@@ -136,15 +136,15 @@ export function ExamConfig() {
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
-            className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
+            className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}
           >
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             Back to dashboard
           </button>
-          <h1 className="text-2xl md:text-3xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight chiron-page-enter" style={{ '--page-enter-order': 1 } as React.CSSProperties}>
             New test
           </h1>
-          <p className="mt-2 text-sm text-[var(--color-text-secondary)] max-w-lg leading-relaxed">
+          <p className="mt-2 text-sm text-[var(--color-text-secondary)] max-w-lg leading-relaxed chiron-page-enter" style={{ '--page-enter-order': 2 } as React.CSSProperties}>
             Choose your subjects and mode to focus your study.
           </p>
         </div>
@@ -156,7 +156,7 @@ export function ExamConfig() {
           <div className="grid lg:grid-cols-[1fr_380px] gap-8 items-start">
 
             {/* Left Column: Subjects */}
-            <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden chiron-page-enter" style={{ '--page-enter-order': 3 } as React.CSSProperties}>
               <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg-secondary)]/30">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-[var(--color-text-secondary)]">
@@ -232,7 +232,7 @@ export function ExamConfig() {
             </div>
 
             {/* Right Column: Settings */}
-            <div className="space-y-6">
+            <div className="space-y-6 chiron-page-enter" style={{ '--page-enter-order': 4 } as React.CSSProperties}>
 
               {/* Mode Selection */}
               <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">

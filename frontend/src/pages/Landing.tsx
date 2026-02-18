@@ -11,9 +11,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { APP_NAME, APP_TAGLINE, getLogoUrl } from '../config/branding';
+import { APP_NAME, getLogoUrl } from '../config/branding';
 
 const SUBJECTS = ['Cardiology', 'Pulmonology', 'Neurology', 'GI', 'Renal', 'OB/GYN', 'Psych', 'Endocrine'];
+const TESTS = ['Step 2 CK', 'the SAT', 'the ACT', 'the MCAT', 'the GRE', 'the LSAT', 'the USMLE', 'the Bar'];
 
 const HERO_CHOICES = [
   { letter: 'A', text: 'Aortic stenosis' },
@@ -28,10 +29,40 @@ export function Landing() {
   const { theme } = useTheme();
   const landingRef = useRef<HTMLDivElement>(null);
   const [heroAnswered, setHeroAnswered] = useState(false);
+  const [heroSelected, setHeroSelected] = useState<string | null>(null);
   const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(
     () => new Set(['Cardiology', 'Neurology', 'GI'])
   );
   const [activeReviewTab, setActiveReviewTab] = useState<'incorrect' | 'unused'>('incorrect');
+  const [typedText, setTypedText] = useState('');
+  const [testIndex, setTestIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Typewriter effect
+  useEffect(() => {
+    const current = TESTS[testIndex];
+    let timeout: ReturnType<typeof setTimeout>;
+
+    if (!isDeleting && typedText === current) {
+      // Pause before deleting
+      timeout = setTimeout(() => setIsDeleting(true), 2000);
+    } else if (isDeleting && typedText === '') {
+      // Move to next word
+      setIsDeleting(false);
+      setTestIndex((i) => (i + 1) % TESTS.length);
+    } else {
+      timeout = setTimeout(
+        () => {
+          setTypedText((prev) =>
+            isDeleting ? prev.slice(0, -1) : current.slice(0, prev.length + 1)
+          );
+        },
+        isDeleting ? 40 : 80
+      );
+    }
+
+    return () => clearTimeout(timeout);
+  }, [typedText, isDeleting, testIndex]);
 
   useEffect(() => {
     if (!loading && user) {
@@ -43,19 +74,32 @@ export function Landing() {
     const root = landingRef.current;
     if (!root) return;
     const targets = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]'));
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add('is-visible');
-          } else {
-            e.target.classList.remove('is-visible');
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -8% 0px' }
-    );
-    targets.forEach((t) => observer.observe(t));
+    let ticking = false;
+
+    const checkVisibility = () => {
+      const vh = window.innerHeight;
+      targets.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        const inView = rect.top < vh * 0.88 && rect.bottom > vh * 0.08;
+        if (inView) {
+          el.classList.add('is-visible');
+        } else {
+          el.classList.remove('is-visible');
+        }
+      });
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(checkVisibility);
+      }
+    };
+
+    // Check on mount + listen for scroll
+    checkVisibility();
+    window.addEventListener('scroll', onScroll, { passive: true });
 
     // Start float animation on hero panel after entrance completes
     const panel = root.querySelector<HTMLElement>('.chiron-hero .chiron-panel');
@@ -64,7 +108,7 @@ export function Landing() {
     }, 1400);
 
     return () => {
-      observer.disconnect();
+      window.removeEventListener('scroll', onScroll);
       clearTimeout(floatTimer);
     };
   }, []);
@@ -138,11 +182,10 @@ export function Landing() {
       <section className="chiron-hero relative flex items-center min-h-[calc(100vh-4rem)]">
         <div className="container grid gap-10 lg:gap-16 lg:grid-cols-[1fr_1fr] xl:grid-cols-[1.1fr_0.9fr] items-center w-full py-16 md:py-24">
           <div>
-            <p className="chiron-kicker mb-5 chiron-entrance" style={{ '--entrance-order': 0 } as React.CSSProperties}>{APP_TAGLINE}</p>
-            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.06] max-w-2xl chiron-entrance" style={{ '--entrance-order': 1 } as React.CSSProperties}>
-              Step 2 prep, built for flow.
+            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.06] max-w-2xl chiron-entrance" style={{ '--entrance-order': 0 } as React.CSSProperties}>
+              Prep for <span className="chiron-typewriter text-[var(--color-brand-blue)]">{typedText}<span className="chiron-cursor" /></span>
             </h1>
-            <p className="mt-6 text-base md:text-lg lg:text-xl text-[var(--color-text-secondary)] max-w-xl leading-relaxed chiron-entrance" style={{ '--entrance-order': 2 } as React.CSSProperties}>
+            <p className="mt-6 text-base md:text-lg lg:text-xl text-[var(--color-text-secondary)] max-w-xl leading-relaxed chiron-entrance" style={{ '--entrance-order': 1 } as React.CSSProperties}>
               Practice, track, and adapt in one clean workspace.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 chiron-entrance" style={{ '--entrance-order': 3 } as React.CSSProperties}>
@@ -179,18 +222,23 @@ export function Landing() {
               {HERO_CHOICES.map((c) => {
                 let cls = 'chiron-hero-choice';
                 if (heroAnswered && c.correct) cls += ' is-correct';
-                if (heroAnswered && c.letter === 'A') cls += ' is-selected-wrong';
+                if (heroAnswered && c.letter === heroSelected && !c.correct) cls += ' is-selected-wrong';
                 return (
                   <button
                     key={c.letter}
                     type="button"
                     className={cls}
-                    onClick={() => setHeroAnswered(true)}
+                    onClick={() => {
+                      if (!heroAnswered) {
+                        setHeroSelected(c.letter);
+                        setHeroAnswered(true);
+                      }
+                    }}
                   >
                     <span className="chiron-hero-choice-letter">{c.letter}</span>
                     <span>{c.text}</span>
                     {heroAnswered && c.correct && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-[var(--color-success)]" />}
-                    {heroAnswered && c.letter === 'A' && !c.correct && <XCircle className="w-3.5 h-3.5 ml-auto text-[var(--color-error)]" />}
+                    {heroAnswered && c.letter === heroSelected && !c.correct && <XCircle className="w-3.5 h-3.5 ml-auto text-[var(--color-error)]" />}
                   </button>
                 );
               })}
