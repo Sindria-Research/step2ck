@@ -100,7 +100,7 @@ export function Notes() {
               type="button"
               onClick={handleCreate}
               disabled={creating}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg btn-primary text-sm font-medium transition-all disabled:opacity-50"
             >
               <Plus className="w-4 h-4" />
               New Note
@@ -177,7 +177,7 @@ export function Notes() {
                     <button
                       type="button"
                       onClick={handleSave}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-brand-blue)] text-white text-xs font-medium hover:opacity-90"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg btn-primary text-xs font-medium transition-all"
                     >
                       <Save className="w-3.5 h-3.5" />
                       Save

@@ -49,7 +49,7 @@ export function PreviousTests() {
                   onClick={() => setFilter(f)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     filter === f
-                      ? 'bg-[var(--color-brand-blue)] text-white'
+                      ? 'btn-primary'
                       : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
                   }`}
                 >

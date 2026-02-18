@@ -115,7 +115,7 @@ export function Search() {
                 type="button"
                 onClick={handleSearch}
                 disabled={loading}
-                className="px-5 py-2.5 rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="px-5 py-2.5 rounded-lg btn-primary text-sm font-medium transition-all disabled:opacity-50"
               >
                 {loading ? 'Searching...' : 'Search'}
               </button>

@@ -275,7 +275,7 @@ export function ExamConfig() {
                           disabled={c > availableCount}
                           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all focus-ring border ${
                             questionCount === c && !customCount
-                              ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)] text-white'
+                              ? 'chiron-btn-primary border-transparent text-white'
                               : c > availableCount
                                 ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
                                 : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)]'
@@ -290,7 +290,7 @@ export function ExamConfig() {
                         disabled={availableCount === 0}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all focus-ring border ${
                           questionCount === availableCount && !customCount
-                            ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)] text-white'
+                            ? 'chiron-btn-primary border-transparent text-white'
                             : availableCount === 0
                               ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
                               : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)]'

@@ -293,7 +293,7 @@ export function Flashcards() {
               <button
                 type="button"
                 onClick={startReview}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 transition-opacity focus-ring shrink-0"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg btn-primary text-sm font-medium transition-all focus-ring shrink-0"
               >
                 <Play className="w-4 h-4" />
                 Start review
@@ -308,7 +308,7 @@ export function Flashcards() {
                 <button
                   type="button"
                   onClick={() => setNewDeckModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 transition-opacity focus-ring"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg btn-primary text-sm font-medium transition-all focus-ring"
                 >
                   <Plus className="w-4 h-4" />
                   New deck
@@ -373,7 +373,7 @@ export function Flashcards() {
                       type="button"
                       onClick={handleCreateDeck}
                       disabled={creating || !newDeckName.trim()}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 focus-ring"
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg btn-primary text-sm font-medium transition-all disabled:opacity-50 focus-ring"
                     >
                       <Plus className="w-4 h-4" />
                       Create
@@ -447,7 +447,7 @@ export function Flashcards() {
                         type="button"
                         onClick={() => startDeckStudy(deck)}
                         disabled={deck.card_count === 0}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--color-brand-blue)] text-white text-xs font-medium hover:opacity-90 disabled:opacity-50 focus-ring"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg btn-primary text-xs font-medium transition-all disabled:opacity-50 focus-ring"
                         title="Study this deck"
                       >
                         <Play className="w-3.5 h-3.5" />
@@ -535,7 +535,7 @@ export function Flashcards() {
                         type="button"
                         onClick={handleImport}
                         disabled={importing || !importText.trim()}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 focus-ring"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg btn-primary text-sm font-medium transition-all disabled:opacity-50 focus-ring"
                       >
                         <Upload className="w-4 h-4" />
                         {importing ? 'Importing…' : 'Import'}
@@ -573,7 +573,7 @@ export function Flashcards() {
                       type="button"
                       onClick={handleAddCard}
                       disabled={addingCard || !addFront.trim() || !addBack.trim()}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 focus-ring"
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-lg btn-primary text-sm font-medium transition-all disabled:opacity-50 focus-ring"
                     >
                       <Plus className="w-4 h-4" />
                       Add card
@@ -611,7 +611,7 @@ export function Flashcards() {
                               <button
                                 type="button"
                                 onClick={handleUpdateCard}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--color-brand-blue)] text-white text-xs font-medium hover:opacity-90 focus-ring"
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg btn-primary text-xs font-medium transition-all focus-ring"
                               >
                                 <Check className="w-3.5 h-3.5" />
                                 Save
@@ -721,7 +721,7 @@ export function Flashcards() {
                     <button
                       type="button"
                       onClick={() => setShowBack(true)}
-                      className="px-6 py-2.5 rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 focus-ring transition-opacity"
+                      className="px-6 py-2.5 rounded-lg btn-primary text-sm font-medium transition-all focus-ring"
                     >
                       Show answer
                     </button>
