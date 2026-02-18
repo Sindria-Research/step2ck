@@ -156,7 +156,7 @@ export function ExamConfig() {
           <div className="grid lg:grid-cols-[1fr_380px] gap-8 items-start">
 
             {/* Left Column: Subjects */}
-            <div className="bg-white border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg-secondary)]/30">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-[var(--color-text-secondary)]">
@@ -192,13 +192,13 @@ export function ExamConfig() {
                       type="button"
                       onClick={() => toggleSubject(subject)}
                       className={`flex items-center gap-3 px-4 py-3.5 rounded-lg border text-left transition-all focus-ring ${selectedSubjects.has(subject)
-                        ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_5%,white)] shadow-sm ring-1 ring-[var(--color-brand-blue)]/10'
-                        : 'border-[var(--color-border)] bg-gray-50/50 hover:bg-white hover:border-[var(--color-border-hover)]'
+                        ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_5%,var(--color-bg-primary))] shadow-sm ring-1 ring-[var(--color-brand-blue)]/10'
+                        : 'border-[var(--color-border)] bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)]'
                         }`}
                     >
                       <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${selectedSubjects.has(subject)
                         ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)]'
-                        : 'bg-white border-[var(--color-border)]'
+                        : 'bg-[var(--color-bg-primary)] border-[var(--color-border)]'
                         }`}>
                         {selectedSubjects.has(subject) && <Check className="w-3 h-3 text-white" />}
                       </div>
@@ -235,7 +235,7 @@ export function ExamConfig() {
             <div className="space-y-6">
 
               {/* Mode Selection */}
-              <div className="bg-white border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
+              <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center gap-3 bg-[var(--color-bg-secondary)]/30">
                   <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-[var(--color-text-secondary)]">
                     <Settings2 className="w-4 h-4" />
@@ -249,8 +249,8 @@ export function ExamConfig() {
                       type="button"
                       onClick={() => setMode(m.id)}
                       className={`w-full flex items-start gap-3 px-4 py-3 rounded-lg border text-left transition-all focus-ring ${mode === m.id
-                        ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_5%,white)] shadow-sm'
-                        : 'border-[var(--color-border)] bg-gray-50/50 hover:bg-white hover:border-[var(--color-border-hover)]'
+                        ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_5%,var(--color-bg-primary))] shadow-sm'
+                        : 'border-[var(--color-border)] bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)]'
                         }`}
                     >
                       <div className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${mode === m.id ? 'border-[var(--color-brand-blue)]' : 'border-[var(--color-border)]'
@@ -271,7 +271,7 @@ export function ExamConfig() {
 
               {/* Question Count */}
               {!isPersonalized && (
-                <div className="bg-white border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
+                <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center gap-3 bg-[var(--color-bg-secondary)]/30">
                     <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-[var(--color-text-secondary)]">
                       <Calculator className="w-4 h-4" />
@@ -290,7 +290,7 @@ export function ExamConfig() {
                             ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)] text-white shadow-sm'
                             : c > availableCount
                               ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
-                              : 'bg-white border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)] hover:text-[var(--color-text-primary)]'
+                              : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)] hover:text-[var(--color-text-primary)]'
                             }`}
                         >
                           {c}
@@ -304,7 +304,7 @@ export function ExamConfig() {
                           ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)] text-white shadow-sm'
                           : availableCount === 0
                             ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
-                            : 'bg-white border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)] hover:text-[var(--color-text-primary)]'
+                            : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)] hover:text-[var(--color-text-primary)]'
                           }`}
                       >
                         Max
@@ -326,7 +326,7 @@ export function ExamConfig() {
                           else if (!isNaN(n) && n > 0) setQuestionCount(Math.min(n, availableCount));
                         }}
                         placeholder="Custom amount..."
-                        className="w-full h-10 px-3 rounded-lg border border-[var(--color-border)] bg-gray-50/50 text-sm focus:bg-white focus:border-[var(--color-brand-blue)] focus:ring-1 focus:ring-[var(--color-brand-blue)] transition-all outline-none"
+                        className="w-full h-10 px-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-sm focus:bg-[var(--color-bg-primary)] focus:border-[var(--color-brand-blue)] focus:ring-1 focus:ring-[var(--color-brand-blue)] transition-all outline-none"
                       />
                     </div>
                   </div>
