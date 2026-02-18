@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Check, Sparkles, ArrowLeft, Settings2, BookOpen, Calculator } from 'lucide-react';
+import { Play, Check, Sparkles, ArrowLeft, Settings2, BookOpen, Calculator, Info } from 'lucide-react';
 import { api } from '../api/api';
 
 const SUBJECTS = [
@@ -54,6 +54,15 @@ export function ExamConfig() {
     targets.forEach((t) => observer.observe(t));
     return () => observer.disconnect();
   }, []);
+
+  // First-time tip (localStorage based)
+  const [showTip, setShowTip] = useState(() => {
+    return !localStorage.getItem('chiron-exam-tip-dismissed');
+  });
+  const dismissTip = () => {
+    setShowTip(false);
+    localStorage.setItem('chiron-exam-tip-dismissed', '1');
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -184,6 +193,15 @@ export function ExamConfig() {
                     {sectionsError} — using default list.
                   </div>
                 ) : null}
+
+                {/* Skeleton loading for subjects */}
+                {sectionsLoading && (
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div key={i} className="h-12 rounded-lg bg-[var(--color-bg-tertiary)] animate-pulse" />
+                    ))}
+                  </div>
+                )}
 
                 <div className="grid sm:grid-cols-2 gap-3">
                   {displaySubjects.map((subject) => (
@@ -329,6 +347,51 @@ export function ExamConfig() {
                         className="w-full h-10 px-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-sm focus:bg-[var(--color-bg-primary)] focus:border-[var(--color-brand-blue)] focus:ring-1 focus:ring-[var(--color-brand-blue)] transition-all outline-none"
                       />
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Config Summary Preview */}
+              <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]/30">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Summary</h3>
+                </div>
+                <div className="p-5 space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--color-text-tertiary)]">Subjects</span>
+                    <span className="font-medium text-[var(--color-text-primary)]">{selectedSubjects.size} selected</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--color-text-tertiary)]">Mode</span>
+                    <span className="font-medium text-[var(--color-text-primary)] capitalize">{mode === 'all' ? 'All questions' : mode}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--color-text-tertiary)]">Questions</span>
+                    <span className="font-medium text-[var(--color-text-primary)]">{isPersonalized ? 'Adaptive' : finalCount}</span>
+                  </div>
+                  <div className="border-t border-[var(--color-border)] pt-3 flex justify-between">
+                    <span className="text-[var(--color-text-tertiary)]">Available</span>
+                    <span className="font-medium tabular-nums text-[var(--color-text-primary)]">{availableCount}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* First-time tip */}
+              {showTip && (
+                <div className="flex items-start gap-3 p-4 rounded-xl border border-[color-mix(in_srgb,var(--color-brand-blue)_20%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-brand-blue)_4%,var(--color-bg-primary))]">
+                  <Info className="w-4 h-4 mt-0.5 text-[var(--color-brand-blue)] shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1">Tip: Try Personalized Mode</p>
+                    <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                      Personalized mode prioritizes questions you haven&apos;t seen yet and ones you&apos;ve answered incorrectly — great for focused study.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={dismissTip}
+                      className="mt-2 text-xs font-medium text-[var(--color-brand-blue)] hover:underline"
+                    >
+                      Got it
+                    </button>
                   </div>
                 </div>
               )}
