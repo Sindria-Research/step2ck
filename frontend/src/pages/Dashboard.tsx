@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   Clock3,
   Activity,
-  BarChart3,
   Filter,
 } from 'lucide-react';
 import { api } from '../api/api';
@@ -244,31 +243,49 @@ export function Dashboard() {
         <div className="container">
           <div className="mb-8">
             <p className="chiron-feature-label">Overview</p>
-            <h2 className="chiron-feature-heading">Current standing</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <StatPanel label="Questions" value={total} icon={BookOpen} color="var(--color-brand-blue)" stagger={0} animate={!loading} />
-            <StatPanel label="Correct" value={correct} icon={CheckCircle2} color="var(--color-success)" stagger={1} animate={!loading} />
-            <StatPanel label="Incorrect" value={incorrect} icon={XCircle} color="var(--color-error)" stagger={2} animate={!loading} />
-            <StatPanel label="Accuracy" value={hasData ? `${accuracy}%` : '—'} icon={TrendingUp} color="var(--color-brand-blue)" stagger={3} animate={!loading} />
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Left mockup: key stats in a progress-grid style */}
+            <div className="chiron-mockup">
+              <p className="chiron-mockup-label mb-4">Performance</p>
+              <div className="grid grid-cols-2 gap-3">
+                <OverviewStat label="Questions" value={total} icon={BookOpen} color="var(--color-brand-blue)" animate={!loading} />
+                <OverviewStat label="Correct" value={correct} icon={CheckCircle2} color="var(--color-success)" animate={!loading} />
+                <OverviewStat label="Incorrect" value={incorrect} icon={XCircle} color="var(--color-error)" animate={!loading} />
+                <OverviewStat label="Accuracy" value={hasData ? `${accuracy}%` : '—'} icon={TrendingUp} color="var(--color-brand-blue)" animate={!loading} />
+              </div>
+            </div>
 
-            {/* Goal Card */}
-            <div className="dash-card dash-stat-stagger flex flex-col items-center justify-center p-6 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm hover:shadow-md transition-shadow" style={{ '--dash-stagger': 4 } as React.CSSProperties}>
-              <CircularProgress
-                value={goalPct}
-                label=""
-                centerLabel={`${total}/${goal}`}
-                color="var(--color-success)"
-                size={64}
-                strokeWidth={5}
-              />
-              <div className="text-center mt-2">
-                <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Question Goal</p>
+            {/* Right mockup: goal progress */}
+            <div className="chiron-mockup flex flex-col">
+              <p className="chiron-mockup-label mb-4">Question Goal</p>
+              <div className="flex-1 flex items-center gap-5">
+                <CircularProgress
+                  value={goalPct}
+                  label=""
+                  centerLabel={`${total}/${goal}`}
+                  color="var(--color-success)"
+                  size={80}
+                  strokeWidth={6}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-2xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
+                    {goalPct}%
+                  </p>
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+                    {total} of {goal} questions answered
+                  </p>
+                  <div className="chiron-meter-track mt-3">
+                    <div className="chiron-meter-fill" style={{ width: `${goalPct}%` }} />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 chiron-mockup-meta">
                 <button
                   type="button"
                   onClick={() => setGoalModalOpen(true)}
-                  className="text-xs font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
+                  className="text-xs font-medium text-[var(--color-brand-blue)] hover:underline transition-colors"
                 >
                   Change goal
                 </button>
@@ -282,11 +299,8 @@ export function Dashboard() {
       <section className="py-12 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 2 } as React.CSSProperties}>
         <div className="container">
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)]">
-                <BarChart3 className="w-5 h-5" />
-              </div>
-              <h2 className="text-xl font-semibold text-[var(--color-text-primary)] font-display">Analytics</h2>
+            <div>
+              <p className="chiron-feature-label">Analytics</p>
             </div>
 
             <div className="relative group z-10">
@@ -309,9 +323,15 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-8">
-            <ProgressChart history={filteredHistory} className="h-full" />
-            <SectionBreakdown sections={bySection} className="h-full" />
+          <div className="grid lg:grid-cols-2 gap-6">
+            <div className="chiron-mockup">
+              <p className="chiron-mockup-label mb-4">Performance Trend</p>
+              <ProgressChart history={filteredHistory} className="h-full" />
+            </div>
+            <div className="chiron-mockup">
+              <p className="chiron-mockup-label mb-4">Section Performance</p>
+              <SectionBreakdown sections={bySection} className="h-full" />
+            </div>
           </div>
         </div>
       </section>
@@ -328,22 +348,18 @@ export function Dashboard() {
                   Identifying weak spots is the fastest way to improve. Focus your review on sections with high volume but lower accuracy.
                 </p>
 
-                <div className="mt-8 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-5 shadow-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <AlertTriangle className="w-4 h-4 text-[var(--color-warning)]" />
-                    <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Focus areas</h3>
-                  </div>
-                  {focusAreas.length > 0 ? (
+                {focusAreas.length > 0 && (
+                  <div className="chiron-mockup mt-8">
+                    <div className="flex items-center gap-2 mb-4">
+                      <AlertTriangle className="w-4 h-4 text-[var(--color-warning)]" />
+                      <p className="chiron-mockup-label">Focus areas</p>
+                    </div>
                     <div className="space-y-4">
                       {focusAreas.map((s) => (
                         <div key={s.name}>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-sm font-medium text-[var(--color-text-primary)]">
-                              {s.name}
-                            </span>
-                            <span className="text-xs tabular-nums text-[var(--color-text-tertiary)]">
-                              {s.accuracy}%
-                            </span>
+                            <span className="text-xs font-medium text-[var(--color-text-primary)]">{s.name}</span>
+                            <span className="text-xs tabular-nums text-[var(--color-text-tertiary)]">{s.accuracy}%</span>
                           </div>
                           <div className="chiron-meter-track">
                             <div className="chiron-meter-fill" style={{ width: `${s.accuracy}%` }} />
@@ -351,37 +367,35 @@ export function Dashboard() {
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="text-sm text-[var(--color-text-tertiary)]">
-                      Answer 5+ questions per section to see focus areas.
-                    </p>
-                  )}
-                </div>
+                  </div>
+                )}
+                {focusAreas.length === 0 && (
+                  <p className="text-sm text-[var(--color-text-tertiary)] mt-6">
+                    Answer 5+ questions per section to see focus areas.
+                  </p>
+                )}
               </div>
 
-              <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg-secondary)]/30">
-                  <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">All Sections</span>
-                  <div className="flex items-center gap-4 text-xs font-medium">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[var(--color-success)]" />
-                      <span className="text-[var(--color-text-tertiary)]">Correct</span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[var(--color-error)] opacity-80" />
-                      <span className="text-[var(--color-text-tertiary)]">Incorrect</span>
-                    </span>
-                  </div>
-                </div>
-                <div className="divide-y divide-[var(--color-border)]">
-                  {bySection.map((s) => (
-                    <SectionRow
-                      key={s.name}
-                      name={s.name}
-                      correct={s.correct}
-                      total={s.total}
-                    />
-                  ))}
+              <div className="chiron-mockup">
+                <p className="chiron-mockup-label mb-4">All Sections</p>
+                <div className="chiron-progress-grid">
+                  {bySection.map((s) => {
+                    const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+                    return (
+                      <div key={s.name} className="chiron-progress-row">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-medium text-[var(--color-text-primary)]">{s.name}</span>
+                          <span className="text-xs tabular-nums text-[var(--color-text-tertiary)]">{acc}%</span>
+                        </div>
+                        <div className="chiron-meter-track">
+                          <div className="chiron-meter-fill" style={{ width: `${acc}%` }} />
+                        </div>
+                        <p className="mt-1 text-[0.68rem] text-[var(--color-text-muted)]">
+                          {s.correct}/{s.total} answered
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -401,7 +415,7 @@ export function Dashboard() {
               </p>
             </div>
 
-            <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm p-4 space-y-2">
+            <div className="chiron-mockup space-y-2">
               <ActionRow label="Configure new test" onClick={() => navigate('/exam/config')} />
               <ActionRow label="Reference lab values" onClick={() => navigate('/lab-values')} icon={FlaskConical} />
               {hasData && focusAreas.length > 0 && (
@@ -438,19 +452,17 @@ export function Dashboard() {
   );
 }
 
-function StatPanel({
+function OverviewStat({
   label,
   value,
   icon: Icon,
   color,
-  stagger = 0,
   animate = true,
 }: {
   label: string;
   value: string | number;
   icon: React.ElementType;
   color: string;
-  stagger?: number;
   animate?: boolean;
 }) {
   const numericTarget = typeof value === 'number' ? value : 0;
@@ -458,23 +470,16 @@ function StatPanel({
   const animatedValue = useCountUp(numericTarget, 800, animate && isNumeric);
 
   return (
-    <div
-      className="dash-card dash-stat-stagger bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-32"
-      style={{ '--dash-stagger': stagger } as React.CSSProperties}
-    >
-      <div className="flex items-start justify-between">
-        <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: `color-mix(in srgb, ${color} 12%, var(--color-bg-primary))` }}
-        >
-          <Icon className="w-5 h-5" style={{ color }} />
-        </div>
-        <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mt-1">
-          {label}
-        </p>
+    <div className="chiron-progress-row flex items-center gap-3">
+      <div
+        className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: `color-mix(in srgb, ${color} 12%, var(--color-bg-primary))` }}
+      >
+        <Icon className="w-4 h-4" style={{ color }} />
       </div>
-      <div>
-        <p className="text-3xl font-semibold font-display tabular-nums tracking-tight text-[var(--color-text-primary)]">
+      <div className="min-w-0">
+        <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">{label}</p>
+        <p className="text-xl font-semibold font-display tabular-nums tracking-tight text-[var(--color-text-primary)]">
           {isNumeric ? animatedValue : value}
         </p>
       </div>
@@ -482,42 +487,6 @@ function StatPanel({
   );
 }
 
-function SectionRow({
-  name,
-  correct,
-  total,
-}: {
-  name: string;
-  correct: number;
-  total: number;
-}) {
-  const incorrect = total - correct;
-  const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
-
-  // Correct/Incorrect ratio within the bar
-  const correctPct = total > 0 ? (correct / total) * 100 : 0;
-
-  return (
-    <div className="grid grid-cols-[140px_1fr_60px] gap-6 items-center px-6 py-3.5 hover:bg-[var(--color-bg-secondary)]/50 transition-colors">
-      <span className="text-sm font-medium text-[var(--color-text-secondary)] truncate" title={name}>{name}</span>
-
-      {/* Progress Bar Container */}
-      <div className="h-2.5 w-full bg-[var(--color-bg-tertiary)] rounded-full overflow-hidden flex">
-        {correct > 0 && (
-          <div className="h-full bg-[var(--color-success)] dash-bar-fill" style={{ '--bar-target': `${correctPct}%` } as React.CSSProperties} />
-        )}
-        {incorrect > 0 && (
-          <div className="h-full bg-[var(--color-error)] opacity-80 dash-bar-fill" style={{ '--bar-target': `${100 - correctPct}%` } as React.CSSProperties} />
-        )}
-      </div>
-
-      <div className="text-right">
-        <span className="text-sm font-bold text-[var(--color-text-primary)] tabular-nums">{acc}%</span>
-        {/* <span className="text-xs text-[var(--color-text-muted)] ml-1 tabular-nums">({total})</span> */}
-      </div>
-    </div>
-  );
-}
 
 function ActionRow({
   label,

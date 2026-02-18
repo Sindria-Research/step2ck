@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Check, Sparkles, ArrowLeft, Settings2, BookOpen, Calculator, Info } from 'lucide-react';
+import { Play, Sparkles, ArrowLeft, Info } from 'lucide-react';
 import { api } from '../api/api';
 
 const SUBJECTS = [
@@ -15,10 +15,10 @@ const SUBJECTS = [
 ];
 
 const MODES = [
-  { id: 'all' as const, label: 'All questions', description: 'Include all questions in selected subjects' },
-  { id: 'unused' as const, label: 'Unused only', description: 'Exclude questions you’ve already answered' },
-  { id: 'incorrect' as const, label: 'Incorrect only', description: 'Only questions you got wrong before' },
-  { id: 'personalized' as const, label: 'Personalized', description: 'One at a time — prioritizes unseen and incorrect' },
+  { id: 'all' as const, label: 'All questions', desc: 'All in selected subjects' },
+  { id: 'unused' as const, label: 'Unused only', desc: 'Skip already answered' },
+  { id: 'incorrect' as const, label: 'Incorrect only', desc: 'Questions you missed' },
+  { id: 'personalized' as const, label: 'Personalized', desc: 'Adaptive, one at a time' },
 ];
 
 const QUICK_COUNTS = [10, 20, 40];
@@ -35,6 +35,12 @@ export function ExamConfig() {
   const [sections, setSections] = useState<string[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState<string | null>(null);
+
+  const [showTip, setShowTip] = useState(() => !localStorage.getItem('chiron-exam-tip-dismissed'));
+  const dismissTip = () => {
+    setShowTip(false);
+    localStorage.setItem('chiron-exam-tip-dismissed', '1');
+  };
 
   useEffect(() => {
     const root = rootRef.current;
@@ -55,40 +61,22 @@ export function ExamConfig() {
     return () => observer.disconnect();
   }, []);
 
-  // First-time tip (localStorage based)
-  const [showTip, setShowTip] = useState(() => {
-    return !localStorage.getItem('chiron-exam-tip-dismissed');
-  });
-  const dismissTip = () => {
-    setShowTip(false);
-    localStorage.setItem('chiron-exam-tip-dismissed', '1');
-  };
-
   useEffect(() => {
     let cancelled = false;
     setSectionsLoading(true);
     setSectionsError(null);
     api.questions
       .sections()
-      .then((res) => {
-        if (!cancelled) setSections(res.sections);
-      })
-      .catch((e) => {
-        if (!cancelled) setSectionsError(e instanceof Error ? e.message : 'Failed to load subjects');
-      })
-      .finally(() => {
-        if (!cancelled) setSectionsLoading(false);
-      });
+      .then((res) => { if (!cancelled) setSections(res.sections); })
+      .catch((e) => { if (!cancelled) setSectionsError(e instanceof Error ? e.message : 'Failed to load subjects'); })
+      .finally(() => { if (!cancelled) setSectionsLoading(false); });
     return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
     if (sections.length === 0) return;
     const subList = Array.from(selectedSubjects).filter((s) => sections.includes(s));
-    if (subList.length === 0) {
-      setAvailableCount(0);
-      return;
-    }
+    if (subList.length === 0) { setAvailableCount(0); return; }
     api.questions
       .list({ sections: subList, limit: 500 })
       .then((res) => setAvailableCount(res.total))
@@ -98,12 +86,10 @@ export function ExamConfig() {
   const toggleSubject = (id: string) => {
     setSelectedSubjects((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
-
   const selectAll = () => setSelectedSubjects(new Set(SUBJECTS.filter((s) => sections.includes(s))));
   const clearAll = () => setSelectedSubjects(new Set());
 
@@ -111,10 +97,10 @@ export function ExamConfig() {
   const finalCount = isPersonalized
     ? 1
     : Math.min(
-      customCount ? parseInt(customCount, 10) || questionCount : questionCount,
-      availableCount,
-      questionCount
-    );
+        customCount ? parseInt(customCount, 10) || questionCount : questionCount,
+        availableCount,
+        questionCount
+      );
   const canStart = selectedSubjects.size > 0 && (isPersonalized ? availableCount > 0 : availableCount > 0 && finalCount > 0);
 
   const handleStart = () => {
@@ -127,11 +113,7 @@ export function ExamConfig() {
     navigate('/exam');
   };
 
-  const setCount = (c: number) => {
-    setQuestionCount(c);
-    setCustomCount('');
-  };
-
+  const setCount = (c: number) => { setQuestionCount(c); setCustomCount(''); };
   const displaySubjects = sections.length > 0 ? SUBJECTS.filter((s) => sections.includes(s)) : SUBJECTS;
 
   return (
@@ -139,177 +121,165 @@ export function ExamConfig() {
       <div className="dash-glow dash-glow-one" aria-hidden />
       <div className="dash-glow dash-glow-two" aria-hidden />
 
-      {/* ── Header ── */}
-      <div className="relative z-[1] pt-8 pb-6 md:pt-12 md:pb-8">
-        <div className="container">
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard')}
-            className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}
-          >
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            Back to dashboard
-          </button>
-          <h1 className="text-2xl md:text-3xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight chiron-page-enter" style={{ '--page-enter-order': 1 } as React.CSSProperties}>
-            New test
-          </h1>
-          <p className="mt-2 text-sm text-[var(--color-text-secondary)] max-w-lg leading-relaxed chiron-page-enter" style={{ '--page-enter-order': 2 } as React.CSSProperties}>
-            Choose your subjects and mode to focus your study.
-          </p>
-        </div>
-      </div>
+      <div className="relative z-[1]">
+        {/* ── Hero header ── */}
+        <section className="pt-10 pb-8 md:pt-14 md:pb-10">
+          <div className="container">
+            <div className="chiron-reveal" data-reveal>
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard')}
+                className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] mb-5 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                Back to dashboard
+              </button>
+              <h1 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.08]">
+                New test
+              </h1>
+              <p className="mt-4 text-base md:text-lg text-[var(--color-text-secondary)] max-w-lg leading-relaxed">
+                Pick your subjects, choose a mode, and start studying.
+              </p>
+            </div>
+          </div>
+        </section>
 
-      {/* ── Configuration Stripe ── */}
-      <section className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-reveal" data-reveal>
-        <div className="container">
-          <div className="grid lg:grid-cols-[1fr_380px] gap-8 items-start">
-
-            {/* Left Column: Subjects */}
-            <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden chiron-page-enter" style={{ '--page-enter-order': 3 } as React.CSSProperties}>
-              <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg-secondary)]/30">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-[var(--color-text-secondary)]">
-                    <BookOpen className="w-4 h-4" />
-                  </div>
-                  <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Subjects</h2>
-                </div>
-                <div className="flex gap-3">
-                  <button type="button" onClick={selectAll} className="text-xs font-medium text-[var(--color-text-primary)] hover:underline focus-ring">
-                    Select All
+        {/* ── Subjects (feature-row) ── */}
+        <div className="chiron-feature-row">
+          <div className="container">
+            <div className="chiron-feature-grid">
+              <div className="chiron-reveal" data-reveal>
+                <p className="chiron-feature-label">Subjects</p>
+                <h2 className="chiron-feature-heading">What to study</h2>
+                <p className="chiron-feature-body">
+                  Toggle the subjects you want in this set. Questions are pulled from your selection.
+                </p>
+                <div className="flex items-center gap-3 mt-4">
+                  <button type="button" onClick={selectAll} className="text-xs font-semibold text-[var(--color-brand-blue)] hover:underline focus-ring">
+                    Select all
                   </button>
+                  <span className="text-[var(--color-text-muted)]">·</span>
                   <button type="button" onClick={clearAll} className="text-xs text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] focus-ring">
                     Clear
                   </button>
                 </div>
+                {!sectionsLoading && (
+                  <p className="mt-4 text-xs text-[var(--color-text-muted)]">
+                    {availableCount} questions available
+                  </p>
+                )}
               </div>
 
-              <div className="p-6">
+              <div className="chiron-mockup chiron-reveal chiron-reveal-delay-1" data-reveal>
                 {sectionsLoading ? (
-                  <div className="text-center text-sm text-[var(--color-text-tertiary)] py-8">
-                    Loading subjects…
-                  </div>
-                ) : sectionsError ? (
-                  <div className="text-sm text-[var(--color-text-secondary)] py-4">
-                    {sectionsError} — using default list.
-                  </div>
-                ) : null}
-
-                {/* Skeleton loading for subjects */}
-                {sectionsLoading && (
-                  <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="flex flex-wrap gap-2">
                     {Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="h-12 rounded-lg bg-[var(--color-bg-tertiary)] animate-pulse" />
+                      <div key={i} className="h-8 w-28 rounded-full bg-[var(--color-bg-tertiary)] animate-pulse" />
                     ))}
                   </div>
-                )}
-
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {displaySubjects.map((subject) => (
-                    <button
-                      key={subject}
-                      type="button"
-                      onClick={() => toggleSubject(subject)}
-                      className={`flex items-center gap-3 px-4 py-3.5 rounded-lg border text-left transition-all focus-ring ${selectedSubjects.has(subject)
-                        ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_5%,var(--color-bg-primary))] shadow-sm ring-1 ring-[var(--color-brand-blue)]/10'
-                        : 'border-[var(--color-border)] bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)]'
-                        }`}
-                    >
-                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${selectedSubjects.has(subject)
-                        ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)]'
-                        : 'bg-[var(--color-bg-primary)] border-[var(--color-border)]'
-                        }`}>
-                        {selectedSubjects.has(subject) && <Check className="w-3 h-3 text-white" />}
-                      </div>
-                      <span className={`text-sm font-medium ${selectedSubjects.has(subject) ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
-                        {subject}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {!sectionsLoading && (
-                  <div className="mt-6 flex items-center gap-2 text-xs text-[var(--color-text-tertiary)] border-t border-[var(--color-border)] pt-4">
-                    <Check className="w-3.5 h-3.5" />
-                    {availableCount} questions available with selected subjects
-                  </div>
-                )}
-
-                {!sectionsLoading && availableCount === 0 && (
-                  <div className="mt-4 p-4 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]">
-                    <p className="font-medium text-[var(--color-text-primary)] mb-1">No questions available</p>
-                    {import.meta.env.DEV ? (
-                      <div className="space-y-1 text-xs">
-                        <p>Ensure backend is running (make dev) and database is seeded.</p>
-                      </div>
-                    ) : (
-                      <p className="mb-0">If this persists, please contact support.</p>
+                ) : (
+                  <>
+                    {sectionsError && (
+                      <p className="text-xs text-[var(--color-text-tertiary)] mb-3">
+                        {sectionsError} — using defaults.
+                      </p>
                     )}
-                  </div>
+                    <div className="flex flex-wrap gap-2">
+                      {displaySubjects.map((subject) => (
+                        <button
+                          key={subject}
+                          type="button"
+                          onClick={() => toggleSubject(subject)}
+                          className={`chiron-subject-tag ${selectedSubjects.has(subject) ? 'is-selected' : ''}`}
+                        >
+                          {subject}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-5 chiron-mockup-meta">
+                      <span>{selectedSubjects.size} subjects</span>
+                      <span className="chiron-mockup-dot" />
+                      <span>{availableCount} questions</span>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Right Column: Settings */}
-            <div className="space-y-6 chiron-page-enter" style={{ '--page-enter-order': 4 } as React.CSSProperties}>
+        {/* ── Mode + Count (feature-row-alt, two mockups side by side) ── */}
+        <div className="chiron-feature-row chiron-feature-row-alt">
+          <div className="container">
+            <div className="chiron-reveal mb-6" data-reveal>
+              <p className="chiron-feature-label">Settings</p>
+              <h2 className="chiron-feature-heading">How to study</h2>
+              <p className="chiron-feature-body">
+                Pick a question mode and set how many questions you want.
+              </p>
+            </div>
 
-              {/* Mode Selection */}
-              <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center gap-3 bg-[var(--color-bg-secondary)]/30">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-[var(--color-text-secondary)]">
-                    <Settings2 className="w-4 h-4" />
-                  </div>
-                  <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Mode</h2>
-                </div>
-                <div className="p-4 space-y-2">
+            <div className="grid md:grid-cols-2 gap-4 chiron-reveal chiron-reveal-delay-1" data-reveal>
+              {/* Mode panel */}
+              <div className="chiron-mockup">
+                <p className="chiron-mockup-label mb-3">Mode</p>
+                <div className="space-y-1.5">
                   {MODES.map((m) => (
                     <button
                       key={m.id}
                       type="button"
                       onClick={() => setMode(m.id)}
-                      className={`w-full flex items-start gap-3 px-4 py-3 rounded-lg border text-left transition-all focus-ring ${mode === m.id
-                        ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_5%,var(--color-bg-primary))] shadow-sm'
-                        : 'border-[var(--color-border)] bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)]'
-                        }`}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-all focus-ring ${
+                        mode === m.id
+                          ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_8%,var(--color-bg-primary))]'
+                          : 'border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)]'
+                      }`}
                     >
-                      <div className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${mode === m.id ? 'border-[var(--color-brand-blue)]' : 'border-[var(--color-border)]'
-                        }`}>
-                        {mode === m.id && <div className="w-2 h-2 rounded-full bg-[var(--color-brand-blue)]" />}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className={`text-sm font-medium ${mode === m.id ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'}`}>{m.label}</p>
-                          {m.id === 'personalized' && <Sparkles className="w-3.5 h-3.5 text-[var(--color-brand-purple)]" />}
-                        </div>
-                        <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5 leading-snug">{m.description}</p>
+                      <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        mode === m.id ? 'border-[var(--color-brand-blue)]' : 'border-[var(--color-border)]'
+                      }`}>
+                        {mode === m.id && <span className="w-2 h-2 rounded-full bg-[var(--color-brand-blue)]" />}
+                      </span>
+                      <div className="min-w-0">
+                        <span className="flex items-center gap-1.5">
+                          <span className={`text-sm font-medium ${mode === m.id ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
+                            {m.label}
+                          </span>
+                          {m.id === 'personalized' && <Sparkles className="w-3.5 h-3.5 text-[var(--color-brand-blue)]" />}
+                        </span>
+                        <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{m.desc}</p>
                       </div>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Question Count */}
-              {!isPersonalized && (
-                <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center gap-3 bg-[var(--color-bg-secondary)]/30">
-                    <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-[var(--color-text-secondary)]">
-                      <Calculator className="w-4 h-4" />
-                    </div>
-                    <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Count</h2>
+              {/* Count panel */}
+              <div className="chiron-mockup">
+                <p className="chiron-mockup-label mb-3">Question count</p>
+                {isPersonalized ? (
+                  <div className="py-6 text-center">
+                    <Sparkles className="w-6 h-6 text-[var(--color-brand-blue)] mx-auto mb-2" />
+                    <p className="text-sm text-[var(--color-text-secondary)]">
+                      Personalized mode is adaptive — questions are served one at a time.
+                    </p>
                   </div>
-                  <div className="p-6">
-                    <div className="flex flex-wrap gap-2 mb-4">
+                ) : (
+                  <>
+                    <div className="flex gap-2 mb-4">
                       {QUICK_COUNTS.map((c) => (
                         <button
                           key={c}
                           type="button"
                           onClick={() => setCount(c)}
                           disabled={c > availableCount}
-                          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all focus-ring border ${questionCount === c && !customCount
-                            ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)] text-white shadow-sm'
-                            : c > availableCount
-                              ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
-                              : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)] hover:text-[var(--color-text-primary)]'
-                            }`}
+                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all focus-ring border ${
+                            questionCount === c && !customCount
+                              ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)] text-white'
+                              : c > availableCount
+                                ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
+                                : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)]'
+                          }`}
                         >
                           {c}
                         </button>
@@ -318,45 +288,37 @@ export function ExamConfig() {
                         type="button"
                         onClick={() => setCount(availableCount)}
                         disabled={availableCount === 0}
-                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all focus-ring border ${questionCount === availableCount && !customCount
-                          ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)] text-white shadow-sm'
-                          : availableCount === 0
-                            ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
-                            : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)] hover:text-[var(--color-text-primary)]'
-                          }`}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all focus-ring border ${
+                          questionCount === availableCount && !customCount
+                            ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)] text-white'
+                            : availableCount === 0
+                              ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
+                              : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)]'
+                        }`}
                       >
                         Max
                       </button>
                     </div>
+                    <input
+                      type="number"
+                      min={1}
+                      max={availableCount}
+                      value={customCount}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setCustomCount(v);
+                        const n = parseInt(v, 10);
+                        if (v === '') setQuestionCount(20);
+                        else if (!isNaN(n) && n > 0) setQuestionCount(Math.min(n, availableCount));
+                      }}
+                      placeholder="Custom amount..."
+                      className="w-full h-10 px-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm focus:border-[var(--color-brand-blue)] focus:ring-1 focus:ring-[var(--color-brand-blue)] transition-all outline-none"
+                    />
+                  </>
+                )}
 
-                    <div className="relative">
-                      <input
-                        id="custom-count"
-                        type="number"
-                        min={1}
-                        max={availableCount}
-                        value={customCount}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setCustomCount(v);
-                          const n = parseInt(v, 10);
-                          if (v === '') setQuestionCount(20);
-                          else if (!isNaN(n) && n > 0) setQuestionCount(Math.min(n, availableCount));
-                        }}
-                        placeholder="Custom amount..."
-                        className="w-full h-10 px-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-sm focus:bg-[var(--color-bg-primary)] focus:border-[var(--color-brand-blue)] focus:ring-1 focus:ring-[var(--color-brand-blue)] transition-all outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Config Summary Preview */}
-              <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]/30">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Summary</h3>
-                </div>
-                <div className="p-5 space-y-3 text-sm">
+                {/* Summary inside count panel */}
+                <div className="mt-5 pt-4 border-t border-[var(--color-border)] space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-[var(--color-text-tertiary)]">Subjects</span>
                     <span className="font-medium text-[var(--color-text-primary)]">{selectedSubjects.size} selected</span>
@@ -369,49 +331,81 @@ export function ExamConfig() {
                     <span className="text-[var(--color-text-tertiary)]">Questions</span>
                     <span className="font-medium text-[var(--color-text-primary)]">{isPersonalized ? 'Adaptive' : finalCount}</span>
                   </div>
-                  <div className="border-t border-[var(--color-border)] pt-3 flex justify-between">
+                  <div className="flex justify-between pt-2 border-t border-[var(--color-border)]">
                     <span className="text-[var(--color-text-tertiary)]">Available</span>
                     <span className="font-medium tabular-nums text-[var(--color-text-primary)]">{availableCount}</span>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
 
-              {/* First-time tip */}
-              {showTip && (
-                <div className="flex items-start gap-3 p-4 rounded-xl border border-[color-mix(in_srgb,var(--color-brand-blue)_20%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-brand-blue)_4%,var(--color-bg-primary))]">
-                  <Info className="w-4 h-4 mt-0.5 text-[var(--color-brand-blue)] shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1">Tip: Try Personalized Mode</p>
-                    <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
-                      Personalized mode prioritizes questions you haven&apos;t seen yet and ones you&apos;ve answered incorrectly — great for focused study.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={dismissTip}
-                      className="mt-2 text-xs font-medium text-[var(--color-brand-blue)] hover:underline"
-                    >
-                      Got it
-                    </button>
+        {/* ── Tip (optional) ── */}
+        {showTip && (
+          <div className="chiron-feature-row">
+            <div className="container">
+              <div className="chiron-reveal" data-reveal>
+                <div className="chiron-cta-wrap" style={{ borderColor: 'color-mix(in srgb, var(--color-brand-blue) 20%, var(--color-border))' }}>
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 mt-0.5 text-[var(--color-brand-blue)] shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">Try Personalized Mode</p>
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1 leading-relaxed max-w-md">
+                        Personalized mode prioritizes unseen questions and ones you got wrong — great for focused study.
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={dismissTip}
+                    className="chiron-btn chiron-btn-subtle px-4 py-2 rounded-md text-sm focus-ring shrink-0"
+                  >
+                    Got it
+                  </button>
                 </div>
-              )}
+              </div>
+            </div>
+          </div>
+        )}
 
+        {/* ── CTA ── */}
+        <section className="py-10 md:py-14">
+          <div className="container">
+            <div className="chiron-cta-wrap chiron-reveal" data-reveal>
+              <div>
+                <h2 className="text-xl md:text-2xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight">
+                  {isPersonalized ? 'Start your session.' : `Ready — ${finalCount} questions.`}
+                </h2>
+                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                  {selectedSubjects.size} subjects · {mode === 'all' ? 'All questions' : mode} mode
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={handleStart}
                 disabled={!canStart}
-                className={`w-full group btn flex items-center justify-center gap-2 py-4 rounded-full text-base font-semibold shadow-lg shadow-[var(--color-brand-blue)]/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 focus-ring ${canStart
-                  ? 'bg-[var(--color-brand-blue)] text-white hover:bg-[color-mix(in_srgb,var(--color-brand-blue)_90%,white)]'
-                  : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)] cursor-not-allowed shadow-none'
-                  }`}
+                className={`inline-flex items-center gap-2 px-6 py-3 rounded-md text-base font-semibold transition-all focus-ring ${
+                  canStart
+                    ? 'chiron-btn chiron-btn-primary'
+                    : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)] cursor-not-allowed'
+                }`}
               >
                 <Play className="w-5 h-5 fill-current" />
                 {isPersonalized ? 'Start Session' : 'Start Test'}
               </button>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {!canStart && selectedSubjects.size === 0 && (
+          <div className="container pb-10">
+            <p className="text-center text-sm text-[var(--color-text-muted)]">
+              Select at least one subject to begin.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
