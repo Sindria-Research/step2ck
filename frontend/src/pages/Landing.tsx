@@ -48,14 +48,25 @@ export function Landing() {
         entries.forEach((e) => {
           if (e.isIntersecting) {
             e.target.classList.add('is-visible');
-            observer.unobserve(e.target);
+          } else {
+            e.target.classList.remove('is-visible');
           }
         });
       },
-      { threshold: 0.12, rootMargin: '0px 0px -6% 0px' }
+      { threshold: 0.1, rootMargin: '0px 0px -8% 0px' }
     );
     targets.forEach((t) => observer.observe(t));
-    return () => observer.disconnect();
+
+    // Start float animation on hero panel after entrance completes
+    const panel = root.querySelector<HTMLElement>('.chiron-hero .chiron-panel');
+    const floatTimer = setTimeout(() => {
+      panel?.classList.add('is-floating');
+    }, 1400);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(floatTimer);
+    };
   }, []);
 
   if (loading) {
