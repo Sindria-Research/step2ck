@@ -6,7 +6,7 @@ Reference for designers working on the Chiron frontend. Everything here maps to 
 
 ## Color System
 
-All colors are defined as CSS custom properties on `:root` (light) and `:root.dark` (dark). Every surface, text element, and border in the app references these tokens — never raw hex values in components.
+All colors are defined as CSS custom properties on `:root` (light) and `:root.dark` (dark). Every surface, text element, and border references these tokens — never raw hex values in components.
 
 ### Light Mode
 
@@ -23,14 +23,9 @@ All colors are defined as CSS custom properties on `:root` (light) and `:root.da
 | `--color-border` | `#e5e7eb` | Default borders on cards, inputs, dividers |
 | `--color-border-hover` | `#d1d5db` | Borders on hover |
 | `--color-accent` | `#3b82f6` | Focus rings, active controls, links |
-| `--color-accent-hover` | `#2563eb` | Accent on hover |
-| `--color-accent-light` | `#eff6ff` | Accent badge background |
 | `--color-success` | `#10b981` | Correct answers, positive indicators |
-| `--color-success-bg` | `#ecfdf5` | Correct answer background fill |
 | `--color-error` | `#ef4444` | Wrong answers, destructive actions |
-| `--color-error-bg` | `#fee2e2` | Wrong answer background fill |
 | `--color-warning` | `#f59e0b` | Caution states |
-| `--color-warning-bg` | `#fef3c7` | Warning background fill |
 
 ### Dark Mode
 
@@ -42,15 +37,13 @@ Every token above has a dark counterpart. Key shifts:
 - Accent shifts to `#60a5fa` (lighter blue for contrast)
 - Success/error/warning colors shift to lighter tints with dark background fills
 
-### Brand Colors (Landing Page)
-
-These are used only on the public landing page for visual identity.
+### Brand Colors
 
 | Token | Light | Dark | Usage |
 |---|---|---|---|
-| `--color-brand-ink` | `#111827` | `#f5f7fb` | Primary CTA button gradient base |
-| `--color-brand-blue` | `#3b82f6` | `#60a5fa` | CTA gradient accent, feature labels, active states |
-| `--color-brand-bone` | `#f8f5ee` | `#1f2937` | Warm tint in background radial gradient, CTA wrap |
+| `--color-brand-ink` | `#111827` | `#f5f7fb` | Primary CTA gradient base |
+| `--color-brand-blue` | `#3b82f6` | `#60a5fa` | Feature labels, active states, accents |
+| `--color-brand-bone` | `#f8f5ee` | `#1f2937` | Warm tint in background gradient, CTA wrap |
 | `--color-brand-copper` | `#b45309` | `#f59e0b` | Warm accent in ambient glow, meter gradient |
 | `--color-brand-glow` | `rgba(59,130,246,0.2)` | `rgba(96,165,250,0.26)` | Background radial glow |
 
@@ -60,15 +53,14 @@ These are used only on the public landing page for visual identity.
 
 | Property | Value |
 |---|---|
-| Primary font | `Inter`, falling back to system sans-serif |
+| Primary font | `Nunito`, falling back to system sans-serif |
 | Monospace font | `JetBrains Mono`, for code/meta text |
 | Base body size | `0.875rem` (14px) |
-| Display headings | `.font-display` class — adds `letter-spacing: -0.02em` |
-| Hero h1 | `3.35rem` on desktop, `text-5xl` on tablet, `text-4xl` on mobile |
-| Feature headings | `1.35rem`, weight 600, letter-spacing `-0.02em` |
+| Display headings | `.font-display` — adds `letter-spacing: -0.02em` |
+| Feature headings | `1.35rem`, weight 600 |
 | Feature body | `0.88rem`, line-height 1.55 |
 | Labels / kickers | `0.72rem`, uppercase, letter-spacing `0.08em–0.18em` |
-| Antialiasing | `-webkit-font-smoothing: antialiased` globally |
+| Nav group labels | `0.6rem`, uppercase, bold, tracking `0.12em` |
 
 ---
 
@@ -77,89 +69,132 @@ These are used only on the public landing page for visual identity.
 | Property | Value |
 |---|---|
 | Container max-width | `1200px`, centered, `1rem` padding (mobile), `1.5rem` (768px+) |
-| Hero top padding | `3.5rem` mobile, `6rem` desktop |
-| Feature row padding | `3rem` top and bottom |
-| Card padding | `1.1rem` |
-| Grid gap (hero) | `2.5rem` between text and mockup |
-| Grid gap (feature cards) | `2rem` mobile, `2.5rem` desktop |
+| Section padding | `3.5rem` top and bottom (py-14) |
+| Card padding | `1.1rem` (chiron-mockup) |
+| Grid gap (two-column) | `1.5rem` (gap-6) |
+| Sidebar width (expanded) | `224px` (w-56) |
+| Sidebar width (collapsed) | `56px` (w-14) |
+| Nav group gap | `0.25rem` between items, `0.75rem` before group labels |
 
 ---
 
-## Border Radii
+## Design System Classes
 
-| Element | Radius |
+These CSS classes form the design language shared between the landing page and all app pages:
+
+### Panels & Containers
+
+| Class | Purpose |
 |---|---|
-| Buttons | `6px` (`--radius-btn`) |
-| Cards / panels | `8px` (`--radius-card`), landing cards use `1rem` |
-| Badges | `4px` (`--radius-badge`) |
-| Pills / tags | `9999px` (full round) |
-| Mockup containers | `1rem` |
-| Answer choices | `0.6rem` |
+| `.chiron-mockup` | Primary panel — 1px border, 1rem radius, 1.1rem padding, subtle shadow |
+| `.chiron-mockup-label` | Panel header — 0.72rem, uppercase, tracking, muted color |
+| `.chiron-mockup-meta` | Panel footer row — flex, gap-0.5rem, 0.72rem text |
 
----
+### Progress & Metrics
 
-## Shadows
-
-| Token | Value | Usage |
-|---|---|---|
-| `--shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Buttons, small cards |
-| `--shadow-md` | `0 4px 6px -1px rgba(0,0,0,0.1)` | Hover cards, dropdowns |
-| `--shadow-elevated` | `0 4px 6px -1px rgba(0,0,0,0.1)` | Landing panels |
-
-Dark mode increases shadow opacity (0.3–0.5 range) since the background is already dark.
-
----
-
-## Buttons
-
-Four button tiers used across the app:
-
-| Class | Style | When to use |
-|---|---|---|
-| `.btn-primary` | Solid dark (`#111827`), white text. Dark mode inverts. | Primary app actions (start exam, submit) |
-| `.btn-secondary` | White bg, 1px border, subtle shadow | Secondary actions (cancel, back) |
-| `.btn-ghost` | Transparent, text only | Tertiary actions (nav links, sign in) |
-| `.btn-accent` | Solid blue (`--color-accent`) | Rare emphasis (not used on landing) |
-
-**Landing-specific buttons:**
-
-| Class | Style | When to use |
-|---|---|---|
-| `.chiron-btn-primary` | Gradient from `brand-ink` to `brand-blue`, white text, blue box-shadow. Lifts 1px on hover. | Hero CTA, section CTAs |
-| `.chiron-btn-subtle` | 1px border, semi-transparent bg. Border tints blue on hover. | Secondary CTA ("See how it works") |
-
----
-
-## Landing Page Structure
-
-The landing page has five sections, top to bottom:
-
-### 1. Nav Bar
-- Sticky, `backdrop-filter: blur` with semi-transparent background
-- Logo image (theme-aware SVG from `public/`) + "CHIRON" in uppercase tracked type
-- Right side: "Features" anchor link, "Sign in" ghost button, "Get started" primary CTA
-
-### 2. Hero (two-column on desktop)
-- **Left column:** Kicker pill (uppercase tagline in a rounded border capsule) → h1 → one-line subhead → two buttons → three stat pills with icons
-- **Right column:** Interactive question preview card showing a real exam question with four answer choices (A–D). Visitor can click any answer to see correct/incorrect feedback with color-coded states and an explanation panel. This demonstrates the core product experience.
-
-### 3. Feature Showcases (four rows)
-Each row is a two-column grid: text on one side, interactive mockup on the other. Rows alternate which side the mockup is on, and alternate background tint.
-
-| Feature | Mockup contents |
+| Class | Purpose |
 |---|---|
-| **Custom Sets** | Clickable subject pill tags (toggle on/off), summary bar showing count + "Timed" + start button |
-| **Mode Switching** | Radio-style list (All / Unused / Incorrect) with active badge, plus a truncated question card below |
-| **Progress Map** | 2×3 grid of per-subject progress bars with percentage and "X/Y answered" counts. Bars animate in on scroll. |
-| **Targeted Review** | Tabbed interface (Incorrect / Unused). Incorrect tab shows wrong vs correct answer badges. Unused tab shows unattempted questions. Tabs are clickable. |
+| `.chiron-progress-grid` | 2-column grid of progress items, 0.7rem gap |
+| `.chiron-progress-row` | Individual progress item — bordered, padded, bg-primary |
+| `.chiron-meter-track` | Bar track — full width, 0.44rem height, rounded, tertiary bg |
+| `.chiron-meter-fill` | Bar fill — gradient from brand-blue to brand-copper, transitions |
+| `.chiron-meter-fill-animated` | Animated fill — grows from 0 to `--fill-target` on scroll reveal |
 
-### 4. CTA Banner
-- Rounded card with warm gradient background (`brand-bone` tint)
-- "Enter Chiron." heading + subtext + primary button
-- Responsive: stacks vertically on mobile
+### Feature Sections
 
-### 5. Footer
-- Simple single row: app name left, "For study use." right
+| Class | Purpose |
+|---|---|
+| `.chiron-feature-label` | Section kicker — 0.72rem uppercase, brand-blue color |
+| `.chiron-feature-heading` | Section title — 1.35rem, semibold, display tracking |
+| `.chiron-feature-body` | Section description — 0.88rem, secondary text, 1.55 line-height |
+
+### Page Structure
+
+| Class | Purpose |
+|---|---|
+| `.chiron-dash` | Page-level background (ambient gradient, positioned relative) |
+| `.dash-glow` | Ambient glow overlay (large blurred gradient circles) |
+| `.chiron-page-enter` | Staggered entrance animation (uses `--page-enter-order`) |
+
+---
+
+## Page Patterns
+
+All app pages follow this consistent structure:
+
+```
+<div className="chiron-dash min-h-screen">
+  <div className="dash-glow" />
+  <section className="py-14 chiron-page-enter">
+    <div className="container">
+      <p className="chiron-feature-label">Group Name</p>
+      <h1 className="chiron-feature-heading">Page Title</h1>
+      <p className="chiron-feature-body mt-2">Description</p>
+      
+      <!-- Content in chiron-mockup panels -->
+      <div className="chiron-mockup">
+        <p className="chiron-mockup-label mb-4">Panel Title</p>
+        <!-- Panel content -->
+      </div>
+    </div>
+  </section>
+</div>
+```
+
+### Dashboard Page
+
+- **Overview section**: 2-column grid — left panel with 2×2 stat cards (chiron-progress-row), right panel with goal ring + meter bar
+- **Analytics section**: 2-column grid of chiron-mockup panels wrapping recharts (ProgressChart, SectionBreakdown)
+- **Section breakdown**: Left column with feature text + focus areas, right column with chiron-progress-grid
+- **Quick actions**: chiron-mockup panel with action rows
+
+### Previous Tests Page
+
+- Filter tabs (All / Completed / In Progress) with active-state styling
+- Session cards in chiron-mockup panels with status badges, accuracy meters, action buttons
+
+### Performance Page
+
+- 3-column summary stats in chiron-mockup panels
+- 2-column chart grid (same as dashboard analytics)
+- Full chiron-progress-grid section breakdown
+
+### Notes Page
+
+- Split-pane layout: 280px sidebar (note list) + main editor panel
+- Both sides are chiron-mockup panels
+- Inline title editing, textarea content, save/delete actions
+
+### Flashcards Page
+
+- Due-card banner with start-review button
+- Deck creation input + deck list
+- Card review interface with flip animation and SM-2 quality buttons
+- chiron-meter-track progress bar during review
+
+### Search Page
+
+- Search input + section filter + search button in a chiron-mockup panel
+- Results in chiron-progress-row cards with section badges, expandable stems
+
+### Bookmarks Page
+
+- chiron-mockup panel wrapping chiron-progress-row cards
+- Section tags, saved date, expandable question stems
+
+---
+
+## Sidebar Navigation
+
+Grouped into three labeled sections:
+
+| Group | Items |
+|---|---|
+| **Study** | Dashboard |
+| **QBank** | New Test, Previous Tests, Performance, Search |
+| **Tools** | Notes, Flashcards, Bookmarks, Lab Values |
+
+Group labels: `0.6rem`, bold, uppercase, `tracking-[0.12em]`, muted color. Hidden when sidebar is collapsed (dividers shown instead).
 
 ---
 
@@ -167,73 +202,44 @@ Each row is a two-column grid: text on one side, interactive mockup on the other
 
 ### Scroll Reveal
 - Class: `.chiron-reveal` + `data-reveal` attribute
-- Elements start `opacity: 0` and `translate: 0 24px` (shifted down 24px)
-- When 12% visible (IntersectionObserver), class `.is-visible` is added
-- Transition: `520ms cubic-bezier(0.22, 1, 0.36, 1)` on both opacity and translate
-- Stagger delays: `chiron-reveal-delay-1` (80ms), `delay-2` (140ms), `delay-3` (200ms)
+- Start: `opacity: 0`, `translate: 0 24px`
+- Trigger: 12% visible via IntersectionObserver → `.is-visible` added
+- Transition: `520ms cubic-bezier(0.22, 1, 0.36, 1)`
 
-### Ambient Background Glows
-- Two large blurred circles (30rem diameter, `filter: blur(64px)`, opacity 0.33)
-- Glow one: top-left, blue tint, drifts via `chiron-drift-1` animation (12s alternate)
-- Glow two: right side, copper tint, drifts via `chiron-drift-2` animation (15s alternate)
-- Positioned absolute behind all content (`z-index: 0`)
+### Page Enter
+- Class: `.chiron-page-enter` with `--page-enter-order` CSS variable
+- Staggered entrance for dashboard/page sections
 
 ### Progress Bar Fill
 - Class: `.chiron-meter-fill-animated`
-- Starts at `width: 0`, animates to `var(--fill-target)` over `1s cubic-bezier(0.22, 1, 0.36, 1)`
-- Animation is paused by default; plays when parent has `.is-visible` (tied to scroll reveal)
+- Animates width from 0 to `var(--fill-target)` over 1s
+- Paused by default; plays when parent has `.is-visible`
 
-### Stat Pill Pulse
-- Three hero stat pills cycle opacity between 0.75 and 1.0 over 5.5s
-- Stagger: 0s, 0.9s, 1.8s
-
-### Hover Micro-interactions
-- Landing buttons: lift `1px` up on hover (`translate: 0 -1px`)
-- Surface cards: lift `2px` up, border tints toward blue, shadow increases
-- Subject tags: border color changes on hover, blue tint background when selected
-- Answer choices: background shifts to hover color, then to success-bg or error-bg on answer
+### Ambient Background Glows
+- Two large blurred circles (30rem diameter, blur 64px, opacity 0.33)
+- Drift animations at 12s and 15s cycles
 
 ### Reduced Motion
-- All animations and transitions are disabled when `prefers-reduced-motion: reduce`
+- All animations disabled when `prefers-reduced-motion: reduce`
 - Reveal elements render at full opacity immediately
-- Progress bars show at final width without animation
 
 ---
 
 ## Feedback Colors (Exam)
 
-Used in the question interface and review sections:
-
 | State | Border | Background | Text/Icon |
 |---|---|---|---|
-| Correct answer | `--color-success` | `--color-success-bg` | Green check icon |
-| Wrong answer | `--color-error` | `--color-error-bg` | Red X icon |
+| Correct answer | `--color-success` | `--color-success-bg` | Green check |
+| Wrong answer | `--color-error` | `--color-error-bg` | Red X |
 | Selected (before submit) | `--color-brand-blue` | 10% blue mix | — |
-| Explanation panel | `--color-success` border | `--color-success-bg` | Green label + secondary text |
 
 ---
 
 ## Icon System
 
-Icons come from [Lucide React](https://lucide.dev/). Used at `w-3.5 h-3.5` (14px) for inline/pill usage, `w-4 h-4` (16px) for buttons. No custom SVGs on the landing page.
+All icons from [Lucide React](https://lucide.dev/). Standard size `w-4 h-4` (16px), header size `w-5 h-5` (20px).
 
-Key icons used:
-- `ArrowRight` — CTAs
-- `Clock3` — Timer, timed sets
-- `Target` — Adaptive review
-- `Activity` — Live progress
-- `CheckCircle2` — Correct answer
-- `XCircle` — Wrong answer
-- `RotateCcw` — Unused/retry
-
----
-
-## Dark Mode Implementation
-
-- Toggled by adding/removing `.dark` class on `<html>`
-- All components reference CSS variables — no conditional styling in JS
-- `getLogoUrl(theme)` swaps between `logo-light.svg` and `logo-dark.svg`
-- Landing background gradients use `color-mix()` with brand tokens, so they adapt automatically
+Key icons: `LayoutDashboard`, `PlusCircle`, `ClipboardList`, `BarChart3`, `Search`, `FileText`, `Layers`, `Bookmark`, `FlaskConical`, `Settings`, `CheckCircle2`, `XCircle`, `TrendingUp`, `BookOpen`, `ArrowRight`, `Target`, `Clock3`, `Activity`.
 
 ---
 
@@ -241,10 +247,19 @@ Key icons used:
 
 | File | Contains |
 |---|---|
-| `src/index.css` | All design tokens, global styles, landing-specific styles |
+| `src/index.css` | All design tokens, global styles, chiron component classes |
 | `src/config/branding.ts` | App name, tagline, logo URLs |
 | `src/context/ThemeContext.tsx` | Dark mode toggle logic |
-| `src/pages/Landing.tsx` | Landing page component |
-| `src/pages/Login.tsx` | Login/demo mode page |
-| `public/logo-light.svg` | Logo for light mode |
-| `public/logo-dark.svg` | Logo for dark mode |
+| `src/components/layout/AppSidebar.tsx` | Sidebar navigation with grouped sections |
+| `src/pages/Landing.tsx` | Landing page |
+| `src/pages/Dashboard.tsx` | Dashboard with stats, analytics, breakdown |
+| `src/pages/PreviousTests.tsx` | Test session history |
+| `src/pages/Performance.tsx` | Dedicated analytics page |
+| `src/pages/Search.tsx` | Question search |
+| `src/pages/Notes.tsx` | Notes editor |
+| `src/pages/Flashcards.tsx` | Flashcard decks and review |
+| `src/pages/Bookmarks.tsx` | Saved questions |
+| `src/pages/ExamConfig.tsx` | Test configuration |
+| `src/pages/ExamView.tsx` | Exam-taking interface |
+| `src/pages/LabValues.tsx` | Lab values reference |
+| `src/pages/Settings.tsx` | User settings |

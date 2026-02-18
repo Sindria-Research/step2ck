@@ -19,7 +19,7 @@ In `.env` or `.env.local` you can override paths:
 - `VITE_LOGO_URL` – single logo (e.g. `/logo.svg`)
 - `VITE_LOGO_LIGHT_URL` – light theme logo (default: `/logo-light.svg`)
 - `VITE_LOGO_DARK_URL` – dark theme logo (default: `/logo-dark.svg`)
-- `VITE_APP_NAME` – app name (default: `step2ck`)
-- `VITE_APP_TAGLINE` – short tagline (default: `Step 2 CK preparation`)
+- `VITE_APP_NAME` – app name (default: `Chiron`)
+- `VITE_APP_TAGLINE` – short tagline (default: `Deliberate Step 2 CK preparation`)
 
 Replace the placeholder SVGs in `public/` with your own files; no code changes needed.
