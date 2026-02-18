@@ -164,6 +164,7 @@ export const api = {
   },
   bookmarks: {
     list: () => request<BookmarkResponse[]>('/bookmarks'),
+    count: () => request<{ count: number }>('/bookmarks/count'),
     create: (questionId: string) =>
       request<BookmarkResponse>('/bookmarks', {
         method: 'POST',

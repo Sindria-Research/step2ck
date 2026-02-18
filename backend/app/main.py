@@ -47,9 +47,14 @@ app.add_middleware(
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.exception("Unhandled error: %s", exc)
+    settings = get_settings()
+    # Include error message in response when debug or when it's a DB error (e.g. missing table)
+    detail = "Internal server error"
+    if settings.LOG_LEVEL.upper() == "DEBUG" or "no such table" in str(exc).lower() or "operational" in type(exc).__name__.lower():
+        detail = str(exc)
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error"},
+        content={"detail": detail},
     )
 
 

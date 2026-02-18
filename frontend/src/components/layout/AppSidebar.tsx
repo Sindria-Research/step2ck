@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useSidebar } from '../../context/SidebarContext';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 import { APP_NAME, getLogoUrl } from '../../config/branding';
 
@@ -68,9 +69,28 @@ export function AppSidebar() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [bookmarkCount, setBookmarkCount] = useState<number | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const isExamPage = location.pathname === '/exam';
   const logoUrl = getLogoUrl(theme);
+
+  const refreshBookmarkCount = useCallback(() => {
+    if (!user) {
+      setBookmarkCount(null);
+      return;
+    }
+    api.bookmarks.count().then((r) => setBookmarkCount(r.count)).catch(() => setBookmarkCount(null));
+  }, [user]);
+
+  useEffect(() => {
+    refreshBookmarkCount();
+  }, [refreshBookmarkCount, location.pathname]);
+
+  useEffect(() => {
+    const onBookmarksChange = () => refreshBookmarkCount();
+    window.addEventListener('bookmarks-changed', onBookmarksChange);
+    return () => window.removeEventListener('bookmarks-changed', onBookmarksChange);
+  }, [refreshBookmarkCount]);
 
   if (isExamPage) return null;
 
@@ -95,7 +115,7 @@ export function AppSidebar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [userMenuOpen]);
 
-  const renderNavItem = ({ to, label, icon: Icon }: NavItem) => (
+  const renderNavItem = ({ to, label, icon: Icon }: NavItem, badge?: number | null) => (
     <NavLink
       key={to}
       to={to}
@@ -109,7 +129,16 @@ export function AppSidebar() {
       title={collapsed ? label : undefined}
     >
       <Icon className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
-      {!collapsed && <span>{label}</span>}
+      {!collapsed && (
+        <>
+          <span className="flex-1 truncate">{label}</span>
+          {badge != null && badge > 0 && (
+            <span className="text-[0.65rem] font-medium tabular-nums text-[var(--color-text-muted)]" aria-label={`${badge} bookmarks`}>
+              {badge}
+            </span>
+          )}
+        </>
+      )}
     </NavLink>
   );
 
@@ -165,7 +194,7 @@ export function AppSidebar() {
               <div className="border-t border-[var(--color-border)] my-1.5" />
             )}
             <div className="space-y-0.5">
-              {group.items.map(renderNavItem)}
+              {group.items.map((item) => renderNavItem(item, item.to === '/bookmarks' ? bookmarkCount : undefined))}
             </div>
           </div>
         ))}

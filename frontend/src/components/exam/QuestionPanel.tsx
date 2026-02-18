@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Highlighter, Wand2 } from 'lucide-react';
+import { Highlighter, Wand2, Bookmark } from 'lucide-react';
 import { useExam } from '../../context/ExamContext';
+import { useToast } from '../../context/ToastContext';
 import { StreamingText } from '../common/StreamingText';
 import { getSelectionOffsets, segmentTextWithRanges } from '../../utils/selectionUtils';
 import { api } from '../../api/api';
@@ -24,6 +25,43 @@ export function QuestionPanel() {
   const [selectionExplainError, setSelectionExplainError] = useState<string | null>(null);
   const [selectionExplainText, setSelectionExplainText] = useState('');
   const [selectionExplainMeta, setSelectionExplainMeta] = useState<{ model: string; fallback: boolean } | null>(null);
+  const { addToast } = useToast();
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+
+  useEffect(() => {
+    if (!currentQuestion?.id) {
+      setBookmarked(false);
+      return;
+    }
+    let cancelled = false;
+    api.bookmarks.check(currentQuestion.id).then((r) => {
+      if (!cancelled) setBookmarked(r.bookmarked);
+    }).catch(() => {
+      if (!cancelled) setBookmarked(false);
+    });
+    return () => { cancelled = true; };
+  }, [currentQuestion?.id]);
+
+  const handleBookmarkToggle = useCallback(async () => {
+    if (!currentQuestion || bookmarkLoading) return;
+    setBookmarkLoading(true);
+    try {
+      if (bookmarked) {
+        await api.bookmarks.delete(currentQuestion.id);
+        setBookmarked(false);
+      } else {
+        await api.bookmarks.create(currentQuestion.id);
+        setBookmarked(true);
+      }
+      window.dispatchEvent(new CustomEvent('bookmarks-changed'));
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to update bookmark';
+      addToast(message, 'error');
+    } finally {
+      setBookmarkLoading(false);
+    }
+  }, [currentQuestion, bookmarked, bookmarkLoading]);
 
   const handleMouseUp = useCallback(() => {
     if (!currentQuestion || !stemRef.current) return;
@@ -127,6 +165,20 @@ export function QuestionPanel() {
           {currentQuestion.system && currentQuestion.system !== 'Unknown' && (
             <span className="badge badge-success">{currentQuestion.system}</span>
           )}
+          <button
+            type="button"
+            onClick={handleBookmarkToggle}
+            disabled={bookmarkLoading}
+            className={`ml-auto p-2 rounded-md transition-colors focus-ring shrink-0 ${
+              bookmarked
+                ? 'text-[var(--color-accent)] bg-[var(--color-bg-active)]'
+                : 'text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'
+            }`}
+            title={bookmarked ? 'Remove bookmark' : 'Save to bookmarks'}
+            aria-label={bookmarked ? 'Remove bookmark' : 'Save to bookmarks'}
+          >
+            <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-current' : ''}`} />
+          </button>
         </div>
         <div
           ref={stemRef}

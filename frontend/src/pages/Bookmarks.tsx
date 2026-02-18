@@ -31,6 +31,7 @@ export function Bookmarks() {
   const handleRemove = async (questionId: string) => {
     await api.bookmarks.delete(questionId);
     setBookmarks((prev) => prev.filter((b) => b.question_id !== questionId));
+    window.dispatchEvent(new CustomEvent('bookmarks-changed'));
   };
 
   const formatDate = (iso: string) => {
