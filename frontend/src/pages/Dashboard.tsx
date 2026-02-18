@@ -21,6 +21,7 @@ import { QuestionGoalModal } from '../components/dashboard/QuestionGoalModal';
 import { useQuestionGoal } from '../hooks/useQuestionGoal';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useToast } from '../context/ToastContext';
 import { ProgressChart } from '../components/analytics/ProgressChart';
 import { SectionBreakdown } from '../components/analytics/SectionBreakdown';
 
@@ -52,6 +53,7 @@ export function Dashboard() {
   const location = useLocation();
   const { user } = useAuth();
   const { theme: _ } = useTheme();
+  const { addToast } = useToast();
   const [goal, setGoal] = useQuestionGoal();
   const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [stats, setStats] = useState<ProgressStats | null>(null);
@@ -82,7 +84,11 @@ export function Dashboard() {
         }
       })
       .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load');
+        if (!cancelled) {
+          const msg = e instanceof Error ? e.message : 'Failed to load';
+          setError(msg);
+          addToast(msg, 'error');
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

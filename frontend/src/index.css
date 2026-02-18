@@ -1435,3 +1435,52 @@ select:focus-visible {
     opacity: 1;
   }
 }
+
+/* ========== Toast Notifications ========== */
+.chiron-toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 380px;
+  pointer-events: none;
+}
+
+@keyframes chiron-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes chiron-toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+}
+
+.chiron-toast {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  box-shadow: 0 4px 24px -4px rgb(0 0 0 / 0.12);
+  pointer-events: auto;
+  animation: chiron-toast-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.chiron-toast-exit {
+  animation: chiron-toast-out 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
