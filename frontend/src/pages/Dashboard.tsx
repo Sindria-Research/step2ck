@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Target } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -8,6 +8,7 @@ import { Skeleton, SkeletonCard, EmptyState, CircularProgress } from '../compone
 import { QuestionGoalModal } from '../components/dashboard/QuestionGoalModal';
 import { useQuestionGoal } from '../hooks/useQuestionGoal';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 let dashboardHasLoadedOnce = false;
 
@@ -21,7 +22,31 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { theme } = useTheme();
   const welcomeName = user?.display_name?.trim() || user?.email?.split('@')[0] || 'there';
+
+  const chartStyles = useMemo(() => {
+    const isDark = theme === 'dark';
+    return {
+      tooltipContent: {
+        backgroundColor: isDark ? '#1f1f1f' : '#ffffff',
+        border: `1px solid ${isDark ? '#333' : '#e5e7eb'}`,
+        borderRadius: '8px',
+        boxShadow: isDark
+          ? '0 4px 20px rgba(0,0,0,0.5)'
+          : '0 4px 6px -1px rgba(0,0,0,0.1)',
+      },
+      tooltipLabel: { color: isDark ? '#f9fafb' : '#111827' },
+      tooltipItem: { color: isDark ? '#d1d5db' : '#374151' },
+      tooltipCursor: { fill: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+      axisTick: { fontSize: 12, fill: isDark ? '#9ca3af' : '#6b7280' },
+      axisLabel: { fontSize: 12, fill: isDark ? '#d1d5db' : '#4b5563' },
+      barFill: isDark ? '#60a5fa' : '#3b82f6',
+      barSecondary: isDark ? '#525252' : '#d1d5db',
+      successFill: isDark ? '#34d399' : '#10b981',
+      errorFill: isDark ? '#f87171' : '#ef4444',
+    };
+  }, [theme]);
 
   const fetchStats = useCallback(() => {
     let cancelled = false;
@@ -45,6 +70,13 @@ export function Dashboard() {
     };
   }, []);
 
+  // Reset "loaded once" when leaving dashboard so we refetch and show fresh data when returning
+  useEffect(() => {
+    if (location.pathname !== '/dashboard') {
+      dashboardHasLoadedOnce = false;
+    }
+  }, [location.pathname]);
+
   // Fetch stats when on dashboard; refetch when navigating back (e.g. after exam)
   useEffect(() => {
     if (location.pathname !== '/dashboard') return;
@@ -55,7 +87,10 @@ export function Dashboard() {
   // Refetch when window regains focus (e.g. returning from exam in another tab)
   useEffect(() => {
     if (location.pathname !== '/dashboard') return;
-    const onFocus = () => fetchStats();
+    const onFocus = () => {
+      dashboardHasLoadedOnce = false;
+      fetchStats();
+    };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, [location.pathname, fetchStats]);
@@ -107,8 +142,8 @@ export function Dashboard() {
   const incorrect = stats?.incorrect ?? 0;
 
   const pieData = [
-    { name: 'Correct', value: correct, color: 'var(--color-success)' },
-    { name: 'Incorrect', value: incorrect, color: 'var(--color-error)' },
+    { name: 'Correct', value: correct, color: chartStyles.successFill },
+    { name: 'Incorrect', value: incorrect, color: chartStyles.errorFill },
   ].filter((d) => d.value > 0);
 
   const goalPct = goal > 0 ? Math.min(100, Math.round((total / goal) * 100)) : 0;
@@ -223,12 +258,10 @@ export function Dashboard() {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => [value, '']}
-                      contentStyle={{
-                        backgroundColor: 'var(--color-bg-primary)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: '8px',
-                      }}
+                      formatter={(value: number, name: string) => [value, name]}
+                      contentStyle={chartStyles.tooltipContent}
+                      labelStyle={chartStyles.tooltipLabel}
+                      itemStyle={chartStyles.tooltipItem}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -253,26 +286,24 @@ export function Dashboard() {
                         type="number"
                         domain={[0, 100]}
                         tickFormatter={(v) => `${v}%`}
-                        tick={{ fontSize: 12, fill: 'var(--color-text-tertiary)' }}
+                        tick={chartStyles.axisTick}
                       />
                       <YAxis
                         type="category"
                         dataKey="name"
                         width={80}
-                        tick={{ fontSize: 12, fill: 'var(--color-text-secondary)' }}
+                        tick={chartStyles.axisLabel}
                       />
                       <Tooltip
                         formatter={(value: number) => (value != null ? `${value}%` : '')}
-                        contentStyle={{
-                          backgroundColor: 'var(--color-bg-primary)',
-                          border: '1px solid var(--color-border)',
-                          borderRadius: '8px',
-                        }}
-                        labelStyle={{ color: 'var(--color-text-primary)' }}
+                        contentStyle={chartStyles.tooltipContent}
+                        labelStyle={chartStyles.tooltipLabel}
+                        itemStyle={chartStyles.tooltipItem}
+                        cursor={chartStyles.tooltipCursor}
                       />
                       <Bar
                         dataKey="accuracy"
-                        fill="var(--color-accent)"
+                        fill={chartStyles.barFill}
                         radius={[0, 4, 4, 0]}
                       />
                     </BarChart>
@@ -309,25 +340,23 @@ export function Dashboard() {
                   layout="vertical"
                   margin={{ left: 80, right: 24 }}
                 >
-                  <XAxis type="number" tick={{ fontSize: 12, fill: 'var(--color-text-tertiary)' }} />
+                  <XAxis type="number" tick={chartStyles.axisTick} />
                   <YAxis
                     type="category"
                     dataKey="name"
                     width={80}
-                    tick={{ fontSize: 12, fill: 'var(--color-text-secondary)' }}
+                    tick={chartStyles.axisLabel}
                   />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--color-bg-primary)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: '8px',
-                    }}
-                    labelStyle={{ color: 'var(--color-text-primary)' }}
+                    contentStyle={chartStyles.tooltipContent}
+                    labelStyle={chartStyles.tooltipLabel}
+                    itemStyle={chartStyles.tooltipItem}
+                    cursor={chartStyles.tooltipCursor}
                   />
                   <Bar
                     dataKey="total"
                     name="Questions"
-                    fill="var(--color-border-hover)"
+                    fill={chartStyles.barSecondary}
                     radius={[0, 4, 4, 0]}
                   />
                 </BarChart>

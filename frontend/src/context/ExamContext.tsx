@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useRef,
   useState,
 } from 'react';
 import type { Question } from '../api/types';
@@ -36,6 +37,8 @@ interface ExamContextValue {
   goToQuestion: (index: number) => void;
   nextQuestion: () => void;
   prevQuestion: () => void;
+  finishExam: () => void;
+  registerFinishHandler: (fn: () => void) => () => void;
   getProgress: (sectionQuestions: Question[]) => { completed: number; total: number };
   loadExam: (config: ExamConfig) => Promise<void>;
   resetExam: () => void;
@@ -59,8 +62,20 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isPersonalizedMode, setIsPersonalizedMode] = useState(false);
   const [highlightsByQuestionId, setHighlightsByQuestionId] = useState<Map<string, HighlightRange[]>>(new Map());
+  const finishHandlerRef = useRef<(() => void) | null>(null);
 
   const currentQuestion = questions[currentQuestionIndex] ?? null;
+
+  const finishExam = useCallback(() => {
+    finishHandlerRef.current?.();
+  }, []);
+
+  const registerFinishHandler = useCallback((fn: () => void) => {
+    finishHandlerRef.current = fn;
+    return () => {
+      finishHandlerRef.current = null;
+    };
+  }, []);
 
   const resetExam = useCallback(() => {
     setQuestions([]);
@@ -232,6 +247,8 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     goToQuestion,
     nextQuestion,
     prevQuestion,
+    finishExam,
+    registerFinishHandler,
     getProgress,
     loadExam,
     resetExam,

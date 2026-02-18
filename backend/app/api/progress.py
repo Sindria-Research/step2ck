@@ -1,5 +1,8 @@
 """Progress endpoints."""
-from fastapi import APIRouter, Depends
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -7,6 +10,7 @@ from app.db import get_db
 from app.models import User, UserProgress
 from app.schemas.progress import ProgressRecordCreate, ProgressRecordResponse, ProgressStatsResponse
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -65,6 +69,15 @@ def get_stats(
     )
 
 
+def _serialize_created_at(value):
+    """Normalize created_at for JSON (SQLite may return str or datetime)."""
+    if value is None:
+        return None
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return str(value)
+
+
 @router.post("", response_model=ProgressRecordResponse)
 def record_progress(
     data: ProgressRecordCreate,
@@ -72,13 +85,33 @@ def record_progress(
     db: Session = Depends(get_db),
 ):
     """Record one answer (append; multiple attempts allowed)."""
-    rec = UserProgress(
-        user_id=current_user.id,
-        question_id=data.question_id,
-        section=data.section,
-        correct=data.correct,
-        answer_selected=data.answer_selected,
-    )
-    db.add(rec)
-    db.flush()
-    return ProgressRecordResponse.model_validate(rec)
+    try:
+        rec = UserProgress(
+            user_id=current_user.id,
+            question_id=data.question_id,
+            section=data.section,
+            correct=data.correct,
+            answer_selected=data.answer_selected,
+        )
+        db.add(rec)
+        db.flush()
+        # Build response explicitly to avoid ORM->Pydantic issues (e.g. SQLite datetime)
+        return ProgressRecordResponse(
+            id=rec.id,
+            user_id=rec.user_id,
+            question_id=rec.question_id,
+            correct=rec.correct,
+            answer_selected=rec.answer_selected,
+            section=rec.section,
+            created_at=_serialize_created_at(rec.created_at),
+        )
+    except IntegrityError as e:
+        db.rollback()
+        logger.warning("Progress record IntegrityError: %s", e)
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid question_id or user: question may not exist in the database.",
+        ) from e
+    except Exception as e:
+        logger.exception("Progress record failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e)) from e

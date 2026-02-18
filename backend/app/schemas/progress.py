@@ -1,4 +1,5 @@
 """Progress schemas."""
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -19,7 +20,7 @@ class ProgressRecordResponse(ProgressRecordBase):
     id: int
     user_id: str
     section: str
-    created_at: Optional[str] = None
+    created_at: Optional[datetime] = None
 
 
 class ProgressStatsResponse(BaseModel):

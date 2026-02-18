@@ -6,7 +6,7 @@ import { StreamingText } from '../common/StreamingText';
 const AI_PLACEHOLDER_TEXT = 'AI-powered explanation will be available in a future update.';
 
 export function ExplanationPanel() {
-  const { currentQuestion, selectedAnswer, isSubmitted, nextQuestion, currentQuestionIndex, questions } = useExam();
+  const { currentQuestion, selectedAnswer, isSubmitted, nextQuestion, finishExam, currentQuestionIndex, questions } = useExam();
   const [aiExplainActive, setAiExplainActive] = useState(false);
 
   if (!currentQuestion) return null;
@@ -81,9 +81,9 @@ export function ExplanationPanel() {
           )}
         </div>
 
-        {/* Next question — bottom right */}
-        {hasNext && (
-          <div className="mt-auto pt-6 flex justify-end">
+        {/* Next question or Finish exam — bottom right */}
+        <div className="mt-auto pt-6 flex justify-end">
+          {hasNext ? (
             <button
               type="button"
               onClick={nextQuestion}
@@ -92,8 +92,16 @@ export function ExplanationPanel() {
               Next question
               <ChevronRight className="w-4 h-4" />
             </button>
-          </div>
-        )}
+          ) : (
+            <button
+              type="button"
+              onClick={finishExam}
+              className="btn btn-primary flex items-center gap-2 py-2.5 px-4 rounded-lg focus-ring"
+            >
+              Finish exam
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

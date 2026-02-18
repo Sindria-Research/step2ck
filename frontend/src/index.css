@@ -183,6 +183,15 @@ select:focus-visible {
   background-color: #1f2937;
 }
 
+:root.dark .btn-primary {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+:root.dark .btn-primary:hover:not(:disabled) {
+  background-color: #f3f4f6;
+}
+
 .btn-secondary {
   background-color: var(--color-bg-primary);
   color: var(--color-text-secondary);

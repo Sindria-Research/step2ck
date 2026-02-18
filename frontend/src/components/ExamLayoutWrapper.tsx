@@ -1,3 +1,4 @@
+import { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from './layout/AppLayout';
 import { ExamView } from '../pages/ExamView';
@@ -8,15 +9,19 @@ export function ExamLayoutWrapper() {
   const navigate = useNavigate();
   const examContext = useExam();
 
-  const handleExamExit = () => {
+  const handleExamExit = useCallback(() => {
     examContext.resetExam();
     navigate('/dashboard');
-  };
+  }, [examContext, navigate]);
 
-  const handleExamFinish = () => {
+  const handleExamFinish = useCallback(() => {
     examContext.resetExam();
     navigate('/dashboard');
-  };
+  }, [examContext, navigate]);
+
+  useEffect(() => {
+    return examContext.registerFinishHandler(handleExamFinish);
+  }, [examContext.registerFinishHandler, handleExamFinish]);
 
   return (
     <AppLayout
