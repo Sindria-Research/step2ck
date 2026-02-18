@@ -6,7 +6,7 @@ import { AnswerPanel } from '../components/exam/AnswerPanel';
 import { ExplanationPanel } from '../components/exam/ExplanationPanel';
 
 export function ExamView() {
-  const { loadExam, loading, questions } = useExam();
+  const { loadExam, loading, loadError, questions } = useExam();
   const navigate = useNavigate();
   const initialLoadDone = useRef(false);
   const [initialLoadStarted, setInitialLoadStarted] = useState(false);
@@ -36,7 +36,7 @@ export function ExamView() {
     }
   }, [loadExam, navigate]);
 
-  const showLoading = loading || (initialLoadStarted && questions.length === 0);
+  const showLoading = loading || (initialLoadStarted && questions.length === 0 && !loadError);
 
   if (showLoading) {
     return (
@@ -49,19 +49,36 @@ export function ExamView() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-[var(--color-bg-secondary)]">
+        <div className="text-center max-w-sm">
+          <p className="text-[var(--color-text-secondary)] mb-4">{loadError}</p>
+          <button
+            type="button"
+            onClick={() => navigate('/exam/config')}
+            className="btn btn-primary focus-ring rounded-lg"
+          >
+            Back to config
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (questions.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[var(--color-bg-secondary)]">
         <div className="text-center">
           <p className="text-[var(--color-text-secondary)] mb-4">
-            No questions match your criteria.
+            No questions match your criteria. Try different subjects or mode.
           </p>
           <button
             type="button"
             onClick={() => navigate('/exam/config')}
-            className="btn btn-accent focus-ring"
+            className="btn btn-primary focus-ring rounded-lg"
           >
-            Go back and adjust filters
+            Back to config
           </button>
         </div>
       </div>

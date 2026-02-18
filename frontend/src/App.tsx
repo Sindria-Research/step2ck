@@ -11,6 +11,7 @@ import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
 import { ExamConfig } from './pages/ExamConfig';
 import { LabValues } from './pages/LabValues';
+import { Settings } from './pages/Settings';
 
 function App() {
   return (
@@ -47,6 +48,16 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <LabValues />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Settings />
                   </AppLayout>
                 </ProtectedRoute>
               }

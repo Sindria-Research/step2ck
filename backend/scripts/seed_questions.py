@@ -48,20 +48,20 @@ def main():
             sys.exit(1)
         questions_data = load_json(path)
     else:
-        # Default: use mock data from step2ck-mario if available
-        candidate = Path(__file__).resolve().parent.parent.parent.parent / "step2ck-mario" / "output" / "all_questions.json"
-        if candidate.exists():
-            questions_data = load_json(candidate)
-            print(f"Using {candidate}")
+        # Default: use in-repo data/all_questions.json (prod), then mock
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        data_path = repo_root / "data" / "all_questions.json"
+        mock_path = Path(__file__).resolve().parent / "mock_questions.json"
+        if data_path.exists():
+            questions_data = load_json(data_path)
+            print(f"Using {data_path}")
+        elif mock_path.exists():
+            questions_data = load_json(mock_path)
+            print(f"Using {mock_path}")
         else:
-            # Minimal in-repo mock for dev (no external file)
-            mock_path = Path(__file__).resolve().parent / "mock_questions.json"
-            if mock_path.exists():
-                questions_data = load_json(mock_path)
-            else:
-                print("No json_path given and no step2ck-mario/output/all_questions.json or scripts/mock_questions.json found.")
-                print("Usage: python seed_questions.py <path-to-all_questions.json>")
-                sys.exit(1)
+            print("No json_path given. Put all_questions.json in step2ck/data/ or scripts/mock_questions.json")
+            print("Usage: python seed_questions.py [path-to-all_questions.json]")
+            sys.exit(1)
 
     with get_db_context() as db:
         if args.clear:

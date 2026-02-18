@@ -20,7 +20,8 @@ source .venv/bin/activate   # or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
 # Optional: set DATABASE_URL, SECRET_KEY, etc. in .env
 alembic upgrade head
-python scripts/seed_questions.py   # uses scripts/mock_questions.json if no path given
+make seed   # or: cd backend && PYTHONPATH=. python scripts/seed_questions.py
+            # Uses step2ck/data/all_questions.json by default (copy from step2ck-mario/output if needed)
 PYTHONPATH=. uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
@@ -34,15 +35,15 @@ npm run dev
 
 Frontend dev server proxies `/api` to `http://127.0.0.1:8001`, so the app talks to the backend without CORS. Open http://localhost:5173 and use **Continue in Demo Mode** on the login page.
 
-### Seed more questions
+### Seed questions (integrate test bank)
 
-Point the seed script at a JSON file with the same shape as `backend/scripts/mock_questions.json` (camelCase or snake_case):
+Questions live in **`data/all_questions.json`** (e.g. copied from `step2ck-mario/output/all_questions.json`). Seed the database once after setup:
 
 ```bash
-cd backend
-PYTHONPATH=. python scripts/seed_questions.py /path/to/all_questions.json
-# Or with --clear to replace existing questions
-PYTHONPATH=. python scripts/seed_questions.py /path/to/all_questions.json --clear
+make seed
+# Or from backend: PYTHONPATH=. python scripts/seed_questions.py
+# Optional: pass a path or --clear to replace existing
+#   PYTHONPATH=. python scripts/seed_questions.py ../data/all_questions.json --clear
 ```
 
 ## Env vars

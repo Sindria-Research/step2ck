@@ -22,6 +22,7 @@ interface ExamContextValue {
   isSubmitted: boolean;
   answeredQuestions: Map<string, { selected: string; correct: boolean }>;
   loading: boolean;
+  loadError: string | null;
   isPersonalizedMode: boolean;
   selectAnswer: (choice: string) => void;
   toggleStrikethrough: (choice: string) => void;
@@ -45,25 +46,30 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     Map<string, { selected: string; correct: boolean }>
   >(new Map());
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isPersonalizedMode, setIsPersonalizedMode] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex] ?? null;
 
   const loadExam = useCallback(async (config: ExamConfig) => {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await api.exams.generate({
         subjects: config.subjects,
         mode: config.mode,
         count: config.count,
       });
-      setQuestions(res.questions);
+      setQuestions(res.questions ?? []);
       setCurrentQuestionIndex(0);
       setSelectedAnswer(null);
       setIsSubmitted(false);
       setStruckThroughChoices(new Set());
       setAnsweredQuestions(new Map());
       setIsPersonalizedMode(config.mode === 'personalized');
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : 'Failed to load exam');
+      setQuestions([]);
     } finally {
       setLoading(false);
     }
@@ -156,6 +162,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     isSubmitted,
     answeredQuestions,
     loading,
+    loadError,
     isPersonalizedMode,
     selectAnswer,
     toggleStrikethrough,
