@@ -1,6 +1,8 @@
 # Plans and tiers (e.g. free vs pro)
 
-**Current state:** The app does **not** have account tiers or plans. Every user has the same access: full question bank, progress tracking, exam modes, and dashboard. The Settings page has a “Billing” section that is placeholder only (“Billing is not yet available”).
+**Current state:** Backend infra for plans is in place (see below); **no behavior is gated yet**—every user has the same access. The Settings page has a “Billing” section that is placeholder only (“Billing is not yet available”).
+
+**Backend infra (done):** `User.plan` (default `"free"`), migration `003_add_user_plan`, `UserResponse.plan` so `/auth/me` and login responses include plan, and `app/services/plans.py` with constants `PLAN_FREE` / `PLAN_PRO` and `is_valid_plan()` for future use.
 
 ---
 
@@ -8,13 +10,11 @@
 
 To support levels like **free** vs **pro** (or more tiers), you’d do the following.
 
-### 1. Backend: user plan/tier
+### 1. Backend: user plan/tier ✅ (done)
 
-- **User model:** Add a field, e.g. `plan: str` with values like `"free"` | `"pro"` (or `tier`, or `subscription_plan`). Default `"free"` for new users.
-- **Migration:** New Alembic migration that adds the column (e.g. `plan VARCHAR(32) NOT NULL DEFAULT 'free'`).
-- **Auth/me:** Include `plan` (or equivalent) in the user payload so the frontend knows the current tier. Either:
-  - Add `plan` to `UserResponse` in `schemas/user.py` and ensure the User model has the attribute, or
-  - Add a separate endpoint like `GET /auth/me` that already returns the user and extend it with `plan`.
+- **User model:** `plan: str` with default `PLAN_FREE` (`"free"`); `PLAN_PRO` = `"pro"`. See `app/services/plans.py`.
+- **Migration:** `003_add_user_plan` adds `plan VARCHAR(32) NOT NULL DEFAULT 'free'`.
+- **Auth/me:** `UserResponse` includes `plan`; `GET /auth/me` and login responses return it.
 
 ### 2. Deciding what each tier can do
 

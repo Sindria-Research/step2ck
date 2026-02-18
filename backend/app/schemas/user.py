@@ -17,6 +17,7 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
     id: str
+    plan: str = "free"
 
 
 class Token(BaseModel):

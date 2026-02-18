@@ -9,6 +9,7 @@ from sqlalchemy import Boolean, DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.services.plans import PLAN_FREE
 
 
 def uuid_str() -> str:
@@ -26,6 +27,7 @@ class User(Base):
     hashed_password: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     auth_provider: Mapped[str] = mapped_column(String(32), nullable=False, default="email")
     google_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, unique=True, index=True)
+    plan: Mapped[str] = mapped_column(String(32), nullable=False, default=PLAN_FREE)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
