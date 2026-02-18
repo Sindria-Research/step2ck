@@ -717,28 +717,75 @@ select:focus-visible {
     linear-gradient(160deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 44%, var(--color-bg-secondary) 100%);
 }
 
+/* ── Hero entrance animations ── */
+@keyframes chiron-entrance-in {
+  0% {
+    opacity: 0;
+    transform: translateY(32px);
+    filter: blur(4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.chiron-entrance {
+  opacity: 0;
+  animation: chiron-entrance-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--entrance-order, 0) * 120ms + 200ms);
+}
+
+.chiron-hero .chiron-panel {
+  animation-delay: calc(var(--entrance-order, 0) * 120ms + 350ms);
+}
+
+/* Subtle float for hero mockup */
+@keyframes chiron-float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.chiron-hero .chiron-panel {
+  animation: chiron-entrance-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    chiron-float 6s ease-in-out 1.2s infinite;
+  opacity: 0;
+}
+
+/* ── Scroll reveal ── */
 .chiron-reveal {
   opacity: 0;
-  translate: 0 24px;
-  transition: opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), translate 520ms cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity, translate;
+  translate: 0 36px;
+  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), translate 700ms cubic-bezier(0.22, 1, 0.36, 1), filter 700ms ease;
+  filter: blur(2px);
+  will-change: opacity, translate, filter;
 }
 
 .chiron-reveal.is-visible {
   opacity: 1;
   translate: 0 0;
+  filter: blur(0);
 }
 
 .chiron-reveal-delay-1 {
-  transition-delay: 80ms;
+  transition-delay: 120ms;
 }
 
 .chiron-reveal-delay-2 {
-  transition-delay: 140ms;
+  transition-delay: 200ms;
 }
 
 .chiron-reveal-delay-3 {
-  transition-delay: 200ms;
+  transition-delay: 280ms;
 }
 
 .chiron-ambient-glow {
@@ -774,14 +821,24 @@ select:focus-visible {
   border-bottom: 1px solid var(--color-border);
 }
 
+.chiron-feature-row-padded {
+  padding: 5rem 0;
+}
+
+@media (min-width: 768px) {
+  .chiron-feature-row-padded {
+    padding: 6rem 0;
+  }
+}
+
 .chiron-feature-row-alt {
   background: color-mix(in srgb, var(--color-bg-primary) 94%, transparent);
 }
 
 .chiron-feature-grid {
   display: grid;
-  gap: 2rem;
-  align-items: start;
+  gap: 2.5rem;
+  align-items: center;
 }
 
 @media (min-width: 768px) {
@@ -810,19 +867,26 @@ select:focus-visible {
 }
 
 .chiron-feature-heading {
-  font-size: 1.35rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
   line-height: 1.2;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-display);
+}
+
+@media (min-width: 768px) {
+  .chiron-feature-heading {
+    font-size: 1.75rem;
+  }
 }
 
 .chiron-feature-body {
-  font-size: 0.88rem;
+  font-size: 0.95rem;
   color: var(--color-text-secondary);
-  line-height: 1.55;
-  max-width: 28rem;
+  line-height: 1.65;
+  max-width: 30rem;
 }
 
 /* ── Mockup shell ── */
@@ -1294,8 +1358,16 @@ select:focus-visible {
   .chiron-ambient-glow-one,
   .chiron-ambient-glow-two,
   .chiron-stat-pill,
-  .chiron-meter-fill-animated {
+  .chiron-meter-fill-animated,
+  .chiron-entrance,
+  .chiron-hero .chiron-panel {
     animation: none;
+  }
+
+  .chiron-entrance {
+    opacity: 1;
+    filter: none;
+    transform: none;
   }
 
   .chiron-meter-fill-animated {
@@ -1312,5 +1384,6 @@ select:focus-visible {
   .chiron-reveal {
     opacity: 1;
     translate: none;
+    filter: none;
   }
 }
