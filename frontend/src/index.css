@@ -491,6 +491,155 @@ select:focus-visible {
   background: rgba(250, 204, 21, 0.25);
 }
 
+/* ========== Dashboard (Chiron style) ========== */
+.chiron-dash {
+  position: relative;
+  overflow: clip;
+  background:
+    radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--color-brand-bone) 80%, transparent) 0%, transparent 42%),
+    radial-gradient(circle at 85% 0%, color-mix(in srgb, var(--color-brand-glow) 85%, transparent) 0%, transparent 35%),
+    linear-gradient(160deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 44%, var(--color-bg-secondary) 100%);
+}
+
+.chiron-dash .dash-glow {
+  position: absolute;
+  width: 30rem;
+  height: 30rem;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(64px);
+  opacity: 0.33;
+  z-index: 0;
+}
+
+.chiron-dash .dash-glow-one {
+  top: -14rem;
+  left: -9rem;
+  background: color-mix(in srgb, var(--color-brand-blue) 28%, transparent);
+  animation: chiron-drift-1 12s ease-in-out infinite alternate;
+}
+
+.chiron-dash .dash-glow-two {
+  top: 14rem;
+  right: -11rem;
+  background: color-mix(in srgb, var(--color-brand-copper) 24%, transparent);
+  animation: chiron-drift-2 15s ease-in-out infinite alternate;
+}
+
+.dash-panel {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  background: color-mix(in srgb, var(--color-bg-primary) 88%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-elevated);
+  transition: border-color var(--transition-fast), translate 180ms ease-out, box-shadow var(--transition-fast);
+}
+
+.dash-panel-lift:hover {
+  translate: 0 -2px;
+  border-color: color-mix(in srgb, var(--color-brand-blue) 28%, var(--color-border));
+  box-shadow: var(--shadow-md);
+}
+
+.dash-stat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-section-row {
+  display: grid;
+  align-items: center;
+  gap: 0.75rem;
+  grid-template-columns: 140px 1fr 80px;
+  padding: 0.65rem 0.3rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+  border-radius: 0.4rem;
+  transition: background-color var(--transition-fast);
+}
+
+.dash-section-row:last-child {
+  border-bottom: none;
+}
+
+.dash-section-row:hover {
+  background: color-mix(in srgb, var(--color-bg-hover) 40%, transparent);
+}
+
+.dash-section-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-section-bar {
+  height: 1.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  display: flex;
+  background: color-mix(in srgb, var(--color-bg-tertiary) 60%, transparent);
+  transition: width 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dash-section-acc {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dash-section-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 0.5rem;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-primary) 92%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-md);
+  animation: fade-in 100ms ease-out;
+}
+
+.dash-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-primary) 80%, transparent);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), translate 150ms ease-out, box-shadow var(--transition-fast);
+}
+
+.dash-action:hover {
+  border-color: color-mix(in srgb, var(--color-brand-blue) 30%, var(--color-border));
+  background: color-mix(in srgb, var(--color-bg-primary) 95%, transparent);
+  translate: 0 -1px;
+  box-shadow: var(--shadow-sm);
+}
+
 /* ========== Chiron landing (public page) ========== */
 .chiron-landing {
   --chiron-scroll-progress: 0;
