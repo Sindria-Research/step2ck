@@ -3,6 +3,7 @@ import { Highlighter, Wand2 } from 'lucide-react';
 import { useExam } from '../../context/ExamContext';
 import { StreamingText } from '../common/StreamingText';
 import { getSelectionOffsets, segmentTextWithRanges } from '../../utils/selectionUtils';
+import { api } from '../../api/api';
 
 export function QuestionPanel() {
   const {
@@ -19,6 +20,10 @@ export function QuestionPanel() {
     y: number;
   } | null>(null);
   const [explainSelectionActive, setExplainSelectionActive] = useState(false);
+  const [selectionExplainLoading, setSelectionExplainLoading] = useState(false);
+  const [selectionExplainError, setSelectionExplainError] = useState<string | null>(null);
+  const [selectionExplainText, setSelectionExplainText] = useState('');
+  const [selectionExplainMeta, setSelectionExplainMeta] = useState<{ model: string; fallback: boolean } | null>(null);
 
   const handleMouseUp = useCallback(() => {
     if (!currentQuestion || !stemRef.current) return;
@@ -54,12 +59,39 @@ export function QuestionPanel() {
   }, [currentQuestion, selectionToolbar, addHighlight]);
 
   const handleExplainSelection = useCallback(() => {
-    if (!selectionToolbar) return;
+    if (!selectionToolbar || !currentQuestion) return;
     setExplainSelectionActive(true);
-    setTimeout(() => setExplainSelectionActive(false), 2500);
+    setSelectionExplainLoading(true);
+    setSelectionExplainError(null);
+    setSelectionExplainText('');
+    setSelectionExplainMeta(null);
     window.getSelection()?.removeAllRanges();
+    const selectionText = selectionToolbar.text;
     setSelectionToolbar(null);
-  }, [selectionToolbar]);
+    void api.ai
+      .explain({
+        question_id: currentQuestion.id,
+        selection_text: selectionText,
+      })
+      .then((res) => {
+        setSelectionExplainText(res.explanation);
+        setSelectionExplainMeta({ model: res.model, fallback: res.fallback_used });
+      })
+      .catch((e) => {
+        setSelectionExplainError(e instanceof Error ? e.message : 'Failed to explain selection');
+      })
+      .finally(() => {
+        setSelectionExplainLoading(false);
+      });
+  }, [selectionToolbar, currentQuestion]);
+
+  useEffect(() => {
+    setExplainSelectionActive(false);
+    setSelectionExplainLoading(false);
+    setSelectionExplainError(null);
+    setSelectionExplainText('');
+    setSelectionExplainMeta(null);
+  }, [currentQuestion?.id]);
 
   useEffect(() => {
     if (!selectionToolbar) return;
@@ -148,18 +180,44 @@ export function QuestionPanel() {
         </div>
       )}
 
-      {/* Explain selection placeholder (thinking animation + streaming) */}
+      {/* Explain selection response */}
       {explainSelectionActive && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-30 rounded-lg">
           <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-6 max-w-md shadow-xl">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-sm font-medium thinking-text">
-                Explaining selection…
-              </span>
-            </div>
-            <p className="text-xs text-[var(--color-text-tertiary)] min-h-[1.5rem]">
-              <StreamingText text="AI explanation will appear here in a future update." charDelay={25} cursor />
-            </p>
+            {selectionExplainLoading ? (
+              <>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-sm font-medium thinking-text">
+                    Explaining selection…
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--color-text-tertiary)] min-h-[1.5rem]">
+                  <StreamingText text="Analyzing selected text..." charDelay={24} cursor />
+                </p>
+              </>
+            ) : selectionExplainError ? (
+              <p className="text-xs text-[var(--color-error)] min-h-[1.5rem]">
+                {selectionExplainError}
+              </p>
+            ) : (
+              <>
+                {selectionExplainMeta && (
+                  <p className="text-[0.68rem] uppercase tracking-[0.08em] text-[var(--color-text-muted)] mb-2">
+                    {selectionExplainMeta.fallback ? 'Built-in explanation fallback' : `Model: ${selectionExplainMeta.model}`}
+                  </p>
+                )}
+                <p className="text-xs text-[var(--color-text-tertiary)] min-h-[1.5rem] whitespace-pre-wrap">
+                  <StreamingText text={selectionExplainText} charDelay={10} cursor />
+                </p>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => setExplainSelectionActive(false)}
+              className="mt-3 text-xs text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] focus-ring"
+            >
+              Dismiss
+            </button>
           </div>
         </div>
       )}
