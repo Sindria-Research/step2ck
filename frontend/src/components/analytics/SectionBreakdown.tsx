@@ -29,14 +29,14 @@ export function SectionBreakdown({ sections, className }: { sections: SectionSta
 
     if (data.length === 0) {
         return (
-            <div className={`flex items-center justify-center bg-white border border-[var(--color-border)] rounded-xl p-8 text-[var(--color-text-tertiary)] text-sm ${className}`}>
+            <div className={`flex items-center justify-center bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-8 text-[var(--color-text-tertiary)] text-sm ${className}`}>
                 No section data available.
             </div>
         );
     }
 
     return (
-        <div className={`bg-white border border-[var(--color-border)] rounded-xl p-6 shadow-sm ${className}`}>
+        <div className={`bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-6 shadow-sm ${className}`}>
             <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-6">
                 Section Performance <span className="text-xs font-normal text-[var(--color-text-tertiary)] ml-2">(Top 8 active)</span>
             </h3>
