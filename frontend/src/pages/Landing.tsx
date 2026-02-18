@@ -124,36 +124,36 @@ export function Landing() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative pt-14 pb-16 md:pt-24 md:pb-24">
-        <div className="container grid gap-10 lg:grid-cols-[1.05fr_0.95fr] items-start">
-          <div className="chiron-reveal" data-reveal>
-            <p className="chiron-kicker mb-5">{APP_TAGLINE}</p>
-            <h1 className="text-4xl md:text-5xl lg:text-[3.35rem] font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.04] max-w-2xl">
+      <section className="chiron-hero relative flex items-center min-h-[calc(100vh-4rem)]">
+        <div className="container grid gap-10 lg:gap-16 lg:grid-cols-[1fr_1fr] xl:grid-cols-[1.1fr_0.9fr] items-center w-full py-16 md:py-24">
+          <div>
+            <p className="chiron-kicker mb-5 chiron-entrance" style={{ '--entrance-order': 0 } as React.CSSProperties}>{APP_TAGLINE}</p>
+            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.06] max-w-2xl chiron-entrance" style={{ '--entrance-order': 1 } as React.CSSProperties}>
               Step 2 prep, built for flow.
             </h1>
-            <p className="mt-6 text-base md:text-lg text-[var(--color-text-secondary)] max-w-xl leading-relaxed">
+            <p className="mt-6 text-base md:text-lg lg:text-xl text-[var(--color-text-secondary)] max-w-xl leading-relaxed chiron-entrance" style={{ '--entrance-order': 2 } as React.CSSProperties}>
               Practice, track, and adapt in one clean workspace.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 chiron-entrance" style={{ '--entrance-order': 3 } as React.CSSProperties}>
               <Link
                 to="/login"
-                className="chiron-btn chiron-btn-primary px-5 py-2.5 rounded-md focus-ring inline-flex items-center gap-2"
+                className="chiron-btn chiron-btn-primary px-6 py-3 rounded-lg focus-ring inline-flex items-center gap-2 text-base"
               >
                 Start studying
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <a href="#features" className="chiron-btn chiron-btn-subtle px-5 py-2.5 rounded-md focus-ring">
+              <a href="#features" className="chiron-btn chiron-btn-subtle px-6 py-3 rounded-lg focus-ring text-base">
                 See how it works
               </a>
             </div>
-            <div className="mt-8 flex flex-wrap items-center gap-2.5">
+            <div className="mt-8 flex flex-wrap items-center gap-2.5 chiron-entrance" style={{ '--entrance-order': 4 } as React.CSSProperties}>
               <span className="chiron-stat-pill"><Clock3 className="w-3.5 h-3.5" /> Timed sets</span>
               <span className="chiron-stat-pill"><Target className="w-3.5 h-3.5" /> Adaptive review</span>
               <span className="chiron-stat-pill"><Activity className="w-3.5 h-3.5" /> Live progress</span>
             </div>
           </div>
 
-          <aside className="chiron-panel chiron-reveal chiron-reveal-delay-1" data-reveal aria-label="Question preview">
+          <aside className="chiron-panel chiron-entrance" style={{ '--entrance-order': 2 } as React.CSSProperties} aria-label="Question preview">
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs text-[var(--color-text-muted)]">Question 14 of 40</p>
               <p className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5">
@@ -205,7 +205,7 @@ export function Landing() {
       <section id="features" className="border-t border-[var(--color-border)]" style={{ scrollMarginTop: '80px' }}>
 
         {/* 1 · Custom Sets */}
-        <div className="chiron-feature-row">
+        <div className="chiron-feature-row chiron-feature-row-padded">
           <div className="container">
             <div className="chiron-feature-grid">
               <div className="chiron-reveal" data-reveal>
@@ -245,7 +245,7 @@ export function Landing() {
         </div>
 
         {/* 2 · Mode Switching */}
-        <div className="chiron-feature-row chiron-feature-row-alt">
+        <div className="chiron-feature-row chiron-feature-row-alt chiron-feature-row-padded">
           <div className="container">
             <div className="chiron-feature-grid chiron-feature-grid-reverse">
               <div className="chiron-reveal" data-reveal>
@@ -280,7 +280,7 @@ export function Landing() {
         </div>
 
         {/* 3 · Progress Map */}
-        <div className="chiron-feature-row">
+        <div className="chiron-feature-row chiron-feature-row-padded">
           <div className="container">
             <div className="chiron-feature-grid">
               <div className="chiron-reveal" data-reveal>
@@ -323,7 +323,7 @@ export function Landing() {
         </div>
 
         {/* 4 · Targeted Review */}
-        <div className="chiron-feature-row chiron-feature-row-alt">
+        <div className="chiron-feature-row chiron-feature-row-alt chiron-feature-row-padded">
           <div className="container">
             <div className="chiron-feature-grid chiron-feature-grid-reverse">
               <div className="chiron-reveal" data-reveal>
