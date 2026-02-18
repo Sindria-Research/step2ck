@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
-import { ChevronLeft, CreditCard, User } from 'lucide-react';
+import { ChevronLeft, CreditCard, User, Moon, Sun, Monitor } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 export function Settings() {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-[var(--color-bg-secondary)]">
@@ -21,7 +23,7 @@ export function Settings() {
               Settings
             </h1>
             <p className="text-sm text-[var(--color-text-tertiary)] mt-0.5">
-              Account and billing
+              Account and preferences
             </p>
           </div>
         </div>
@@ -57,6 +59,47 @@ export function Settings() {
               <p className="text-sm text-[var(--color-text-primary)] mt-0.5">
                 {user?.display_name ?? '—'}
               </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Appearance */}
+        <section className="card rounded-lg mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center">
+              <Monitor className="w-5 h-5 text-[var(--color-text-tertiary)]" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+                Appearance
+              </h2>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Customize your interface theme.
+              </p>
+            </div>
+          </div>
+          <div className="pt-4 border-t border-[var(--color-border)]">
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => setTheme('light')}
+                className={`flex items-center justify-center gap-2 py-2.5 rounded-md border text-sm font-medium transition-all ${theme === 'light'
+                    ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)] border-[var(--color-text-primary)]'
+                    : 'bg-[var(--color-bg-primary)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]'
+                  }`}
+              >
+                <Sun className="w-4 h-4" />
+                Light
+              </button>
+              <button
+                onClick={() => setTheme('dark')}
+                className={`flex items-center justify-center gap-2 py-2.5 rounded-md border text-sm font-medium transition-all ${theme === 'dark'
+                    ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-primary)] border-[var(--color-text-primary)]'
+                    : 'bg-[var(--color-bg-primary)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]'
+                  }`}
+              >
+                <Moon className="w-4 h-4" />
+                Dark
+              </button>
             </div>
           </div>
         </section>
