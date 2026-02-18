@@ -16,12 +16,16 @@ interface AppLayoutProps {
     prevQuestion: () => void;
     nextQuestion: () => void;
   } | null;
+  onExamExit?: () => void;
+  onExamFinish?: () => void;
 }
 
 export function AppLayout({
   children,
   showSidebar = false,
   examContext = null,
+  onExamExit,
+  onExamFinish,
 }: AppLayoutProps) {
   const location = useLocation();
   const isExamPage = location.pathname === '/exam';
@@ -34,8 +38,11 @@ export function AppLayout({
           <ExamBar
             currentIndex={examContext.currentQuestionIndex}
             total={examContext.questions.length}
+            answeredCount={examContext.answeredQuestions.size}
             onPrev={examContext.prevQuestion}
             onNext={examContext.nextQuestion}
+            onExit={onExamExit}
+            onFinish={onExamFinish}
           />
         )}
         <div className="flex-1 flex min-w-0 overflow-hidden">

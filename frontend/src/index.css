@@ -374,6 +374,35 @@ select:focus-visible {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ========== Exam: AI “thinking” gradient ========== */
+@keyframes thinking-gradient {
+  0%, 100% {
+    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 50%, var(--color-accent) 100%);
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.thinking-gradient {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 50%, var(--color-accent) 100%);
+  background-size: 200% 200%;
+  animation: thinking-gradient 1.8s ease-in-out infinite;
+}
+
+/* ========== Exam: question text highlight ========== */
+.question-highlight {
+  background: rgba(250, 204, 21, 0.35);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+:root.dark .question-highlight {
+  background: rgba(250, 204, 21, 0.25);
+}
+
 /* ========== Landing (public page) ========== */
 .landing-hero-bg {
   background: linear-gradient(160deg, var(--color-bg-secondary) 0%, var(--color-emphasis-bg) 50%, var(--color-bg-secondary) 100%);

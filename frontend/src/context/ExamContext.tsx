@@ -13,6 +13,11 @@ interface ExamConfig {
   count: number;
 }
 
+export interface HighlightRange {
+  start: number;
+  end: number;
+}
+
 interface ExamContextValue {
   questions: Question[];
   currentQuestion: Question | null;
@@ -24,6 +29,7 @@ interface ExamContextValue {
   loading: boolean;
   loadError: string | null;
   isPersonalizedMode: boolean;
+  highlightsByQuestionId: Map<string, HighlightRange[]>;
   selectAnswer: (choice: string) => void;
   toggleStrikethrough: (choice: string) => void;
   submit: () => Promise<void>;
@@ -32,6 +38,10 @@ interface ExamContextValue {
   prevQuestion: () => void;
   getProgress: (sectionQuestions: Question[]) => { completed: number; total: number };
   loadExam: (config: ExamConfig) => Promise<void>;
+  resetExam: () => void;
+  addHighlight: (questionId: string, range: HighlightRange) => void;
+  removeHighlight: (questionId: string, range: HighlightRange) => void;
+  getHighlights: (questionId: string) => HighlightRange[];
 }
 
 const ExamContext = createContext<ExamContextValue | null>(null);
@@ -48,8 +58,59 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isPersonalizedMode, setIsPersonalizedMode] = useState(false);
+  const [highlightsByQuestionId, setHighlightsByQuestionId] = useState<Map<string, HighlightRange[]>>(new Map());
 
   const currentQuestion = questions[currentQuestionIndex] ?? null;
+
+  const resetExam = useCallback(() => {
+    setQuestions([]);
+    setCurrentQuestionIndex(0);
+    setSelectedAnswer(null);
+    setIsSubmitted(false);
+    setStruckThroughChoices(new Set());
+    setAnsweredQuestions(new Map());
+    setHighlightsByQuestionId(new Map());
+    try {
+      sessionStorage.removeItem('examConfig');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const addHighlight = useCallback((questionId: string, range: HighlightRange) => {
+    if (range.start >= range.end) return;
+    setHighlightsByQuestionId((prev) => {
+      const list = [...(prev.get(questionId) ?? []), range].sort((a, b) => a.start - b.start);
+      const merged: HighlightRange[] = [];
+      for (const r of list) {
+        const last = merged[merged.length - 1];
+        if (last && r.start <= last.end) {
+          merged[merged.length - 1] = { start: last.start, end: Math.max(last.end, r.end) };
+        } else {
+          merged.push(r);
+        }
+      }
+      const next = new Map(prev);
+      next.set(questionId, merged);
+      return next;
+    });
+  }, []);
+
+  const removeHighlight = useCallback((questionId: string, range: HighlightRange) => {
+    setHighlightsByQuestionId((prev) => {
+      const list = (prev.get(questionId) ?? []).filter(
+        (r) => !(r.start === range.start && r.end === range.end)
+      );
+      const next = new Map(prev);
+      if (list.length) next.set(questionId, list);
+      else next.delete(questionId);
+      return next;
+    });
+  }, []);
+
+  const getHighlights = useCallback((questionId: string) => {
+    return highlightsByQuestionId.get(questionId) ?? [];
+  }, [highlightsByQuestionId]);
 
   const loadExam = useCallback(async (config: ExamConfig) => {
     setLoading(true);
@@ -164,6 +225,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     loading,
     loadError,
     isPersonalizedMode,
+    highlightsByQuestionId,
     selectAnswer,
     toggleStrikethrough,
     submit,
@@ -172,6 +234,10 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     prevQuestion,
     getProgress,
     loadExam,
+    resetExam,
+    addHighlight,
+    removeHighlight,
+    getHighlights,
   };
 
   return (
