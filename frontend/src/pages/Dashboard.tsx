@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Target, TrendingUp, CheckCircle2, XCircle, BookOpen, ArrowRight } from 'lucide-react';
 import { api } from '../api/api';

@@ -1,14 +1,37 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import {
+  ArrowRight,
+  Activity,
+  CheckCircle2,
+  Clock3,
+  RotateCcw,
+  Target,
+  XCircle,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { APP_NAME, APP_TAGLINE, getLogoUrl } from '../config/branding';
+
+const SUBJECTS = ['Cardiology', 'Pulmonology', 'Neurology', 'GI', 'Renal', 'OB/GYN', 'Psych', 'Endocrine'];
+
+const HERO_CHOICES = [
+  { letter: 'A', text: 'Aortic stenosis' },
+  { letter: 'B', text: 'Mitral regurgitation', correct: true },
+  { letter: 'C', text: 'Mitral valve prolapse' },
+  { letter: 'D', text: 'Tricuspid regurgitation' },
+];
 
 export function Landing() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { theme } = useTheme();
+  const landingRef = useRef<HTMLDivElement>(null);
+  const [heroAnswered, setHeroAnswered] = useState(false);
+  const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(
+    () => new Set(['Cardiology', 'Neurology', 'GI'])
+  );
+  const [activeReviewTab, setActiveReviewTab] = useState<'incorrect' | 'unused'>('incorrect');
 
   useEffect(() => {
     if (!loading && user) {
@@ -16,7 +39,24 @@ export function Landing() {
     }
   }, [loading, user, navigate]);
 
-  const logoUrl = getLogoUrl(theme);
+  useEffect(() => {
+    const root = landingRef.current;
+    if (!root) return;
+    const targets = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]'));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-visible');
+            observer.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -6% 0px' }
+    );
+    targets.forEach((t) => observer.observe(t));
+    return () => observer.disconnect();
+  }, []);
 
   if (loading) {
     return (
@@ -28,143 +68,352 @@ export function Landing() {
 
   if (user) return null;
 
+  const toggleSubject = (s: string) => {
+    setSelectedSubjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-[var(--color-bg-secondary)]">
-      {/* Nav – Notion-style: clean bar */}
+    <div ref={landingRef} className="chiron-landing min-h-screen">
+      <div className="chiron-ambient-glow chiron-ambient-glow-one" aria-hidden />
+      <div className="chiron-ambient-glow chiron-ambient-glow-two" aria-hidden />
+
+      {/* ── Nav ── */}
       <nav
-        className="sticky top-0 z-50 flex items-center justify-between h-14 px-4 md:px-6 border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]"
+        className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_86%,transparent)] backdrop-blur-xl"
         aria-label="Main"
       >
-        <div className="flex items-center gap-6">
+        <div className="container h-16 flex items-center justify-between">
           <Link
             to="/"
-            className="flex items-center gap-2.5 focus-ring rounded-md py-1.5 pr-2 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors"
+            className="group inline-flex items-center gap-3 focus-ring rounded-md px-1 py-1.5"
             aria-label={`${APP_NAME} home`}
           >
             <img
-              src={logoUrl}
+              src={getLogoUrl(theme)}
               alt=""
               className="w-7 h-7 rounded-md object-contain shrink-0"
             />
-            <span className="text-base font-semibold font-display tracking-tight">
+            <span className="text-base font-semibold tracking-[0.14em] uppercase text-[var(--color-text-primary)]">
               {APP_NAME}
             </span>
           </Link>
-          <a href="#features" className="hidden sm:block text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
-            Features
-          </a>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            to="/login"
-            className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-3 py-2 rounded-md transition-colors focus-ring"
-          >
-            Sign in
-          </Link>
-          <Link
-            to="/login"
-            className="btn btn-primary text-sm px-4 py-2 rounded-md focus-ring inline-flex items-center gap-2"
-          >
-            Get started
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </nav>
-
-      {/* Hero – clear headline, one CTA */}
-      <section className="pt-16 pb-14 md:pt-20 md:pb-18">
-        <div className="container max-w-2xl">
-          <p className="inline-block px-2.5 py-1 mb-5 text-xs font-medium rounded-md bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)]">
-            {APP_TAGLINE}
-          </p>
-          <h1 className="text-3xl md:text-4xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-tight mb-4">
-            Practice questions with explanations. Track progress by section.
-          </h1>
-          <p className="text-[var(--color-text-secondary)] mb-8 leading-relaxed">
-            Custom tests by subject, personalized review, and clear analytics. One place to study and see where you stand.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex items-center gap-2">
+            <a
+              href="#features"
+              className="hidden md:inline-flex text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-3 py-2 rounded-md transition-colors focus-ring"
+            >
+              Features
+            </a>
+            <Link to="/login" className="btn btn-ghost text-sm px-4 py-2 rounded-md focus-ring">
+              Sign in
+            </Link>
             <Link
               to="/login"
-              className="btn btn-primary px-5 py-2.5 rounded-md focus-ring inline-flex items-center gap-2"
+              className="chiron-btn chiron-btn-primary text-sm px-4 py-2 rounded-md focus-ring inline-flex items-center gap-2"
             >
               Get started
               <ArrowRight className="w-4 h-4" />
             </Link>
-            <a
-              href="#features"
-              className="btn btn-ghost px-5 py-2.5 rounded-md focus-ring"
-            >
-              See features
-            </a>
+          </div>
+        </div>
+      </nav>
+
+      {/* ── Hero ── */}
+      <section className="relative pt-14 pb-16 md:pt-24 md:pb-24">
+        <div className="container grid gap-10 lg:grid-cols-[1.05fr_0.95fr] items-start">
+          <div className="chiron-reveal" data-reveal>
+            <p className="chiron-kicker mb-5">{APP_TAGLINE}</p>
+            <h1 className="text-4xl md:text-5xl lg:text-[3.35rem] font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.04] max-w-2xl">
+              Step 2 prep, built for flow.
+            </h1>
+            <p className="mt-6 text-base md:text-lg text-[var(--color-text-secondary)] max-w-xl leading-relaxed">
+              Practice, track, and adapt in one clean workspace.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/login"
+                className="chiron-btn chiron-btn-primary px-5 py-2.5 rounded-md focus-ring inline-flex items-center gap-2"
+              >
+                Start studying
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <a href="#features" className="chiron-btn chiron-btn-subtle px-5 py-2.5 rounded-md focus-ring">
+                See how it works
+              </a>
+            </div>
+            <div className="mt-8 flex flex-wrap items-center gap-2.5">
+              <span className="chiron-stat-pill"><Clock3 className="w-3.5 h-3.5" /> Timed sets</span>
+              <span className="chiron-stat-pill"><Target className="w-3.5 h-3.5" /> Adaptive review</span>
+              <span className="chiron-stat-pill"><Activity className="w-3.5 h-3.5" /> Live progress</span>
+            </div>
+          </div>
+
+          <aside className="chiron-panel chiron-reveal chiron-reveal-delay-1" data-reveal aria-label="Question preview">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs text-[var(--color-text-muted)]">Question 14 of 40</p>
+              <p className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5">
+                <Clock3 className="w-3 h-3" /> 1:12:34
+              </p>
+            </div>
+            <p className="text-xs font-medium text-[var(--color-brand-blue)] mb-2">Cardiology</p>
+            <p className="text-sm text-[var(--color-text-primary)] leading-relaxed mb-5">
+              A 62-year-old woman presents with a holosystolic murmur best heard at the apex, radiating to the axilla. Which of the following is the most likely diagnosis?
+            </p>
+            <div className="grid gap-2">
+              {HERO_CHOICES.map((c) => {
+                let cls = 'chiron-hero-choice';
+                if (heroAnswered && c.correct) cls += ' is-correct';
+                if (heroAnswered && c.letter === 'A') cls += ' is-selected-wrong';
+                if (!heroAnswered && c.letter === 'A') cls += ' is-selected';
+                return (
+                  <button
+                    key={c.letter}
+                    type="button"
+                    className={cls}
+                    onClick={() => setHeroAnswered(true)}
+                  >
+                    <span className="chiron-hero-choice-letter">{c.letter}</span>
+                    <span>{c.text}</span>
+                    {heroAnswered && c.correct && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-[var(--color-success)]" />}
+                    {heroAnswered && c.letter === 'A' && !c.correct && <XCircle className="w-3.5 h-3.5 ml-auto text-[var(--color-error)]" />}
+                  </button>
+                );
+              })}
+            </div>
+            {heroAnswered && (
+              <div className="mt-4 p-3 rounded-lg border border-[var(--color-success)] bg-[var(--color-success-bg)]">
+                <p className="text-xs font-medium text-[var(--color-success)] mb-1">Correct answer: B</p>
+                <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                  A holosystolic murmur at the apex radiating to the axilla is characteristic of mitral regurgitation.
+                </p>
+              </div>
+            )}
+            {!heroAnswered && (
+              <p className="mt-4 text-center text-xs text-[var(--color-text-muted)]">
+                Click an answer to see how it works
+              </p>
+            )}
+          </aside>
+        </div>
+      </section>
+
+      {/* ── Features ── */}
+      <section id="features" className="border-t border-[var(--color-border)]" style={{ scrollMarginTop: '80px' }}>
+
+        {/* 1 · Custom Sets */}
+        <div className="chiron-feature-row">
+          <div className="container">
+            <div className="chiron-feature-grid">
+              <div className="chiron-reveal" data-reveal>
+                <p className="chiron-feature-label">Custom Sets</p>
+                <h2 className="chiron-feature-heading">Build exactly the test you need</h2>
+                <p className="chiron-feature-body">
+                  Pick subjects, set the count, choose timed or untimed. Every session is yours.
+                </p>
+              </div>
+              <div className="chiron-mockup chiron-reveal chiron-reveal-delay-1" data-reveal aria-hidden>
+                <p className="chiron-mockup-label">Select subjects</p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {SUBJECTS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSubject(s)}
+                      className={`chiron-subject-tag ${selectedSubjects.has(s) ? 'is-selected' : ''}`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-5 flex items-center justify-between">
+                  <div className="chiron-mockup-meta">
+                    <span>{selectedSubjects.size} subjects</span>
+                    <span className="chiron-mockup-dot" />
+                    <span>40 questions</span>
+                    <span className="chiron-mockup-dot" />
+                    <span>Timed</span>
+                  </div>
+                  <div className="chiron-mockup-btn">Start set</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2 · Mode Switching */}
+        <div className="chiron-feature-row chiron-feature-row-alt">
+          <div className="container">
+            <div className="chiron-feature-grid chiron-feature-grid-reverse">
+              <div className="chiron-reveal" data-reveal>
+                <p className="chiron-feature-label">Mode Switching</p>
+                <h2 className="chiron-feature-heading">Switch how you study, instantly</h2>
+                <p className="chiron-feature-body">
+                  Move between unused questions, incorrect-only review, or full random sets without losing your place.
+                </p>
+              </div>
+              <div className="chiron-mockup chiron-reveal chiron-reveal-delay-1" data-reveal aria-hidden>
+                <div className="chiron-mode-switcher">
+                  {(['All questions', 'Unused only', 'Incorrect only'] as const).map((label, i) => (
+                    <div
+                      key={label}
+                      className={`chiron-mode-switcher-item ${i === 2 ? 'is-current' : ''}`}
+                    >
+                      <span className="chiron-mode-switcher-radio" />
+                      <span>{label}</span>
+                      {i === 2 && <span className="chiron-mode-switcher-badge">Active</span>}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 chiron-mockup-question">
+                  <p className="text-xs text-[var(--color-text-muted)] mb-2">Question 14 of 40 · Cardiology</p>
+                  <p className="text-sm text-[var(--color-text-primary)] leading-relaxed">
+                    A 58-year-old man presents with acute substernal chest pain radiating to the left arm...
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 · Progress Map */}
+        <div className="chiron-feature-row">
+          <div className="container">
+            <div className="chiron-feature-grid">
+              <div className="chiron-reveal" data-reveal>
+                <p className="chiron-feature-label">Progress Map</p>
+                <h2 className="chiron-feature-heading">See where you stand at a glance</h2>
+                <p className="chiron-feature-body">
+                  Accuracy by section, completion rates, and trends over time — all in one dashboard.
+                </p>
+              </div>
+              <div className="chiron-mockup chiron-reveal chiron-reveal-delay-1" data-reveal aria-hidden>
+                <div className="chiron-progress-grid">
+                  {([
+                    { name: 'Cardiology', pct: 78, done: 62, total: 80 },
+                    { name: 'Pulmonology', pct: 65, done: 39, total: 60 },
+                    { name: 'Neurology', pct: 84, done: 51, total: 60 },
+                    { name: 'GI', pct: 71, done: 43, total: 60 },
+                    { name: 'Renal', pct: 59, done: 24, total: 40 },
+                    { name: 'OB/GYN', pct: 88, done: 35, total: 40 },
+                  ] as const).map((s) => (
+                    <div key={s.name} className="chiron-progress-row">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-medium text-[var(--color-text-primary)]">{s.name}</span>
+                        <span className="text-xs text-[var(--color-text-tertiary)]">{s.pct}%</span>
+                      </div>
+                      <div className="chiron-meter-track">
+                        <div
+                          className="chiron-meter-fill chiron-meter-fill-animated"
+                          style={{ '--fill-target': `${s.pct}%` } as React.CSSProperties}
+                        />
+                      </div>
+                      <p className="mt-1 text-[0.68rem] text-[var(--color-text-muted)]">
+                        {s.done}/{s.total} answered
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 4 · Targeted Review */}
+        <div className="chiron-feature-row chiron-feature-row-alt">
+          <div className="container">
+            <div className="chiron-feature-grid chiron-feature-grid-reverse">
+              <div className="chiron-reveal" data-reveal>
+                <p className="chiron-feature-label">Targeted Review</p>
+                <h2 className="chiron-feature-heading">Focus on what you got wrong</h2>
+                <p className="chiron-feature-body">
+                  Resurface missed questions with full explanations so you close gaps instead of repeating them.
+                </p>
+              </div>
+              <div className="chiron-mockup chiron-reveal chiron-reveal-delay-1" data-reveal aria-hidden>
+                <div className="flex gap-1 mb-4">
+                  {(['incorrect', 'unused'] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setActiveReviewTab(tab)}
+                      className={`chiron-review-tab ${activeReviewTab === tab ? 'is-active' : ''}`}
+                    >
+                      {tab === 'incorrect' ? (
+                        <><XCircle className="w-3.5 h-3.5" /> Incorrect</>
+                      ) : (
+                        <><RotateCcw className="w-3.5 h-3.5" /> Unused</>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                {activeReviewTab === 'incorrect' ? (
+                  <div className="space-y-2.5">
+                    {([
+                      { q: 'Murmur best heard at apex, radiating to axilla', section: 'Cardiology', your: 'Aortic stenosis', correct: 'Mitral regurgitation' },
+                      { q: 'Sudden painless vision loss, pale retina, cherry-red spot', section: 'Neurology', your: 'Retinal detachment', correct: 'Central retinal artery occlusion' },
+                    ] as const).map((item, i) => (
+                      <div key={i} className="chiron-review-item">
+                        <p className="text-xs text-[var(--color-text-muted)] mb-1">{item.section}</p>
+                        <p className="text-sm text-[var(--color-text-primary)] leading-snug mb-2">{item.q}</p>
+                        <div className="flex gap-3">
+                          <span className="chiron-review-answer is-wrong"><XCircle className="w-3 h-3" /> {item.your}</span>
+                          <span className="chiron-review-answer is-right"><CheckCircle2 className="w-3 h-3" /> {item.correct}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {([
+                      { q: 'Pregnant patient with new-onset seizures and HTN at 34 weeks', section: 'OB/GYN' },
+                      { q: 'Child with barking cough and inspiratory stridor', section: 'Pulmonology' },
+                    ] as const).map((item, i) => (
+                      <div key={i} className="chiron-review-item">
+                        <p className="text-xs text-[var(--color-text-muted)] mb-1">{item.section}</p>
+                        <p className="text-sm text-[var(--color-text-primary)] leading-snug">{item.q}</p>
+                        <p className="mt-1.5 text-xs text-[var(--color-brand-blue)]">Not yet attempted</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features – 3 cards, minimal */}
-      <section id="features" className="py-12 md:py-16 border-t border-[var(--color-border)] bg-[var(--color-bg-primary)]" style={{ scrollMarginTop: '60px' }}>
+      {/* ── CTA ── */}
+      <section className="py-14 md:py-16">
         <div className="container">
-          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] font-display tracking-tight mb-2">
-            Practice, track, improve
-          </h2>
-          <p className="text-sm text-[var(--color-text-secondary)] max-w-xl mb-8">
-            Build custom tests by subject, focus on unused or incorrect questions, and review accuracy over time.
-          </p>
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div className="p-5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)] transition-colors">
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1.5">
-                Custom practice tests
-              </h3>
-              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                Choose subjects and question count. Timed or untimed.
+          <div className="chiron-cta-wrap chiron-reveal" data-reveal>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight">
+                Enter Chiron.
+              </h2>
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                No account needed — start in demo mode.
               </p>
             </div>
-            <div className="p-5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)] transition-colors">
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1.5">
-                Track progress
-              </h3>
-              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                See accuracy by section and focus on what needs work.
-              </p>
-            </div>
-            <div className="p-5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)] transition-colors">
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1.5">
-                Personalized mode
-              </h3>
-              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                One question at a time — prioritizes unseen or incorrect.
-              </p>
-            </div>
+            <Link
+              to="/login"
+              className="chiron-btn chiron-btn-primary px-6 py-2.5 rounded-md focus-ring inline-flex items-center gap-2"
+            >
+              Continue
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-14 border-t border-[var(--color-border)]">
-        <div className="container text-center max-w-lg mx-auto">
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight mb-2">
-            Ready to practice?
-          </h2>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-6">
-            Start with a demo — no account required. Progress is saved for the session.
-          </p>
-          <Link
-            to="/login"
-            className="btn btn-primary px-6 py-2.5 rounded-md focus-ring inline-flex items-center gap-2"
-          >
-            Get started
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </section>
-
-      <footer className="py-6 border-t border-[var(--color-border)] bg-[var(--color-bg-primary)]">
-        <div className="container flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-[var(--color-text-muted)]">
-          <div className="flex items-center gap-2">
-            <img src={logoUrl} alt="" className="w-5 h-5 rounded object-contain" />
-            <span>{APP_NAME}</span>
-          </div>
-          <span>For study use only.</span>
+      <footer className="py-6 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)]">
+        <div className="container flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-[var(--color-text-muted)]">
+          <span>{APP_NAME}</span>
+          <span>For study use.</span>
         </div>
       </footer>
     </div>

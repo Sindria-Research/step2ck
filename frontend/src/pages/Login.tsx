@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { GoogleLoginButton } from '../components/auth/GoogleLoginButton';
 
-const DEMO_EMAIL = 'demo@step2ck.local';
+const DEMO_EMAIL = 'demo@chiron.local';
 
 export function Login() {
   const { login, loading } = useAuth();

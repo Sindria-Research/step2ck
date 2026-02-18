@@ -78,7 +78,6 @@ export function ExamConfig() {
   const clearAll = () => setSelectedSubjects(new Set());
 
   const isPersonalized = mode === 'personalized';
-  const effectiveCount = isPersonalized ? 1 : questionCount;
   const finalCount = isPersonalized
     ? 1
     : Math.min(

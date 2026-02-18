@@ -37,6 +37,13 @@
   --color-emphasis-muted: #c2410c;
   --color-emphasis-bg: #fef2f2;
 
+  /* Chiron identity colors */
+  --color-brand-ink: #111827;
+  --color-brand-blue: #3b82f6;
+  --color-brand-bone: #f8f5ee;
+  --color-brand-copper: #b45309;
+  --color-brand-glow: rgba(59, 130, 246, 0.2);
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-elevated: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -80,6 +87,12 @@
   --color-emphasis-hover: #f87171;
   --color-emphasis-muted: #fca5a5;
   --color-emphasis-bg: #450a0a;
+
+  --color-brand-ink: #f5f7fb;
+  --color-brand-blue: #60a5fa;
+  --color-brand-bone: #1f2937;
+  --color-brand-copper: #f59e0b;
+  --color-brand-glow: rgba(96, 165, 250, 0.26);
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
@@ -478,29 +491,597 @@ select:focus-visible {
   background: rgba(250, 204, 21, 0.25);
 }
 
-/* ========== Landing (public page) ========== */
-.landing-hero-bg {
-  background: linear-gradient(160deg, var(--color-bg-secondary) 0%, var(--color-emphasis-bg) 50%, var(--color-bg-secondary) 100%);
+/* ========== Chiron landing (public page) ========== */
+.chiron-landing {
+  --chiron-scroll-progress: 0;
+  position: relative;
+  overflow: clip;
+  background:
+    radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--color-brand-bone) 80%, transparent) 0%, transparent 42%),
+    radial-gradient(circle at 85% 0%, color-mix(in srgb, var(--color-brand-glow) 85%, transparent) 0%, transparent 35%),
+    linear-gradient(160deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 44%, var(--color-bg-secondary) 100%);
 }
 
-:root.dark .landing-hero-bg {
-  background: linear-gradient(160deg, var(--color-bg-secondary) 0%, rgba(69, 10, 10, 0.4) 50%, var(--color-bg-secondary) 100%);
+.chiron-reveal {
+  opacity: 0;
+  translate: 0 24px;
+  transition: opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), translate 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, translate;
 }
 
-.landing-cta {
-  background-color: var(--color-emphasis);
-  color: #fff;
+.chiron-reveal.is-visible {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.chiron-reveal-delay-1 {
+  transition-delay: 80ms;
+}
+
+.chiron-reveal-delay-2 {
+  transition-delay: 140ms;
+}
+
+.chiron-reveal-delay-3 {
+  transition-delay: 200ms;
+}
+
+.chiron-ambient-glow {
+  position: absolute;
+  width: 30rem;
+  height: 30rem;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(64px);
+  opacity: 0.33;
+  z-index: 0;
+}
+
+.chiron-ambient-glow-one {
+  top: -14rem;
+  left: -9rem;
+  background: color-mix(in srgb, var(--color-brand-blue) 28%, transparent);
+  animation: chiron-drift-1 12s ease-in-out infinite alternate;
+  translate: 0 calc(var(--chiron-scroll-progress) * -36px);
+}
+
+.chiron-ambient-glow-two {
+  top: 14rem;
+  right: -11rem;
+  background: color-mix(in srgb, var(--color-brand-copper) 24%, transparent);
+  animation: chiron-drift-2 15s ease-in-out infinite alternate;
+  translate: 0 calc(var(--chiron-scroll-progress) * 24px);
+}
+
+/* ── Feature rows ── */
+.chiron-feature-row {
+  padding: 3rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.chiron-feature-row-alt {
+  background: color-mix(in srgb, var(--color-bg-primary) 94%, transparent);
+}
+
+.chiron-feature-grid {
+  display: grid;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .chiron-feature-grid {
+    grid-template-columns: 0.42fr 0.58fr;
+    gap: 2.5rem;
+  }
+
+  .chiron-feature-grid-reverse {
+    grid-template-columns: 0.58fr 0.42fr;
+    direction: rtl;
+  }
+
+  .chiron-feature-grid-reverse > * {
+    direction: ltr;
+  }
+}
+
+.chiron-feature-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-brand-blue);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.chiron-feature-heading {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 0.6rem;
+}
+
+.chiron-feature-body {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  max-width: 28rem;
+}
+
+/* ── Mockup shell ── */
+.chiron-mockup {
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  padding: 1.1rem;
+  background: color-mix(in srgb, var(--color-bg-primary) 90%, transparent);
+  backdrop-filter: blur(8px);
   box-shadow: var(--shadow-sm);
 }
 
-.landing-cta:hover {
-  background-color: var(--color-emphasis-hover);
+.chiron-mockup-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
-.landing-accent-text {
-  color: var(--color-emphasis);
+.chiron-mockup-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.74rem;
+  color: var(--color-text-tertiary);
 }
 
-:root.dark .landing-accent-text {
-  color: var(--color-emphasis-muted);
+.chiron-mockup-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: var(--color-text-muted);
+}
+
+.chiron-mockup-btn {
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-btn);
+  color: #fff;
+  background: var(--color-brand-ink);
+}
+
+:root.dark .chiron-mockup-btn {
+  background: var(--color-brand-blue);
+  color: #0f0f0f;
+}
+
+/* ── Subject tags (interactive) ── */
+.chiron-subject-tag {
+  font-size: 0.76rem;
+  padding: 0.32rem 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.chiron-subject-tag:hover {
+  border-color: var(--color-border-hover);
+}
+
+.chiron-subject-tag.is-selected {
+  border-color: var(--color-brand-blue);
+  background: color-mix(in srgb, var(--color-brand-blue) 14%, var(--color-bg-primary));
+  color: var(--color-text-primary);
+}
+
+/* ── Mode switcher mockup ── */
+.chiron-mode-switcher {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chiron-mode-switcher-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+}
+
+.chiron-mode-switcher-item.is-current {
+  border-color: var(--color-brand-blue);
+  background: color-mix(in srgb, var(--color-brand-blue) 10%, var(--color-bg-primary));
+  color: var(--color-text-primary);
+}
+
+.chiron-mode-switcher-radio {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+  border: 2px solid var(--color-border-hover);
+  flex-shrink: 0;
+}
+
+.chiron-mode-switcher-item.is-current .chiron-mode-switcher-radio {
+  border-color: var(--color-brand-blue);
+  background: var(--color-brand-blue);
+  box-shadow: inset 0 0 0 2px var(--color-bg-primary);
+}
+
+.chiron-mode-switcher-badge {
+  margin-left: auto;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.4rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-brand-blue) 18%, var(--color-bg-primary));
+  color: var(--color-brand-blue);
+}
+
+.chiron-mockup-question {
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  padding: 0.65rem 0.7rem;
+  background: var(--color-bg-primary);
+}
+
+/* ── Progress grid ── */
+.chiron-progress-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+
+@media (max-width: 480px) {
+  .chiron-progress-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chiron-progress-row {
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.6rem;
+  background: var(--color-bg-primary);
+}
+
+.chiron-meter-fill-animated {
+  width: 0;
+  animation: chiron-fill-grow 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-play-state: paused;
+}
+
+.is-visible .chiron-meter-fill-animated {
+  animation-play-state: running;
+}
+
+@keyframes chiron-fill-grow {
+  to { width: var(--fill-target); }
+}
+
+/* ── Review tabs + items ── */
+.chiron-review-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 500;
+  padding: 0.35rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.chiron-review-tab.is-active {
+  border-color: var(--color-brand-blue);
+  background: color-mix(in srgb, var(--color-brand-blue) 14%, var(--color-bg-primary));
+  color: var(--color-text-primary);
+}
+
+.chiron-review-item {
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--color-bg-primary);
+}
+
+.chiron-review-answer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: var(--radius-badge);
+}
+
+.chiron-review-answer.is-wrong {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.chiron-review-answer.is-right {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.chiron-mark {
+  width: 1.85rem;
+  height: 1.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--color-brand-blue) 35%, var(--color-border));
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--color-brand-blue) 22%, var(--color-bg-primary)) 0%,
+    color-mix(in srgb, var(--color-brand-copper) 18%, var(--color-bg-primary)) 100%
+  );
+  color: var(--color-brand-ink);
+  font-size: 0.87rem;
+  font-weight: 700;
+}
+
+.chiron-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background-color: color-mix(in srgb, var(--color-bg-primary) 88%, transparent);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chiron-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, var(--color-brand-blue), var(--color-brand-copper));
+}
+
+.chiron-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.34rem 0.62rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-primary) 92%, transparent);
+  color: var(--color-text-secondary);
+  font-size: 0.74rem;
+  animation: chiron-pill-fade 5.5s ease-in-out infinite;
+}
+
+.chiron-stat-pill:nth-child(2) {
+  animation-delay: 0.9s;
+}
+
+.chiron-stat-pill:nth-child(3) {
+  animation-delay: 1.8s;
+}
+
+.chiron-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  transition: translate 150ms ease-out, background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.chiron-btn:hover {
+  translate: 0 -1px;
+}
+
+.chiron-btn-primary {
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-brand-ink) 0%, color-mix(in srgb, var(--color-brand-blue) 45%, var(--color-brand-ink)) 100%);
+  box-shadow: 0 8px 20px -14px var(--color-brand-blue);
+}
+
+.chiron-btn-primary:hover {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-brand-ink) 88%, #000) 0%, color-mix(in srgb, var(--color-brand-blue) 52%, var(--color-brand-ink)) 100%);
+}
+
+.chiron-btn-subtle {
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-primary) 85%, transparent);
+}
+
+.chiron-btn-subtle:hover {
+  border-color: color-mix(in srgb, var(--color-brand-blue) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-bg-primary) 97%, transparent);
+}
+
+.chiron-panel {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  padding: 1.1rem;
+  background: color-mix(in srgb, var(--color-bg-primary) 88%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* ── Hero question preview ── */
+.chiron-hero-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  text-align: left;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.chiron-hero-choice:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-hover);
+}
+
+.chiron-hero-choice.is-selected {
+  border-color: var(--color-brand-blue);
+  background: color-mix(in srgb, var(--color-brand-blue) 10%, var(--color-bg-primary));
+  color: var(--color-text-primary);
+}
+
+.chiron-hero-choice.is-correct {
+  border-color: var(--color-success) !important;
+  background: var(--color-success-bg) !important;
+  color: var(--color-text-primary);
+}
+
+.chiron-hero-choice.is-selected-wrong {
+  border-color: var(--color-error) !important;
+  background: var(--color-error-bg) !important;
+  color: var(--color-text-primary);
+}
+
+.chiron-hero-choice-letter {
+  width: 1.35rem;
+  height: 1.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-tertiary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.chiron-hero-choice.is-correct .chiron-hero-choice-letter {
+  border-color: var(--color-success);
+  background: var(--color-success);
+  color: #fff;
+}
+
+.chiron-hero-choice.is-selected-wrong .chiron-hero-choice-letter {
+  border-color: var(--color-error);
+  background: var(--color-error);
+  color: #fff;
+}
+
+.chiron-meter-track {
+  width: 100%;
+  height: 0.44rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-bg-tertiary) 92%, var(--color-border));
+}
+
+.chiron-meter-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-brand-blue) 62%, var(--color-brand-ink)) 0%,
+    color-mix(in srgb, var(--color-brand-copper) 62%, var(--color-brand-blue)) 100%
+  );
+  transition: width 220ms ease-out;
+}
+
+.chiron-surface-card {
+  border-radius: 1rem;
+  border: 1px solid var(--color-border);
+  background-color: color-mix(in srgb, var(--color-bg-primary) 96%, transparent);
+  padding: 1.1rem 1.05rem;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), translate var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.chiron-surface-card:hover {
+  translate: 0 -2px;
+  border-color: color-mix(in srgb, var(--color-brand-blue) 28%, var(--color-border));
+  box-shadow: var(--shadow-md);
+}
+
+
+.chiron-cta-wrap {
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background:
+    linear-gradient(
+      140deg,
+      color-mix(in srgb, var(--color-brand-bone) 65%, var(--color-bg-primary)) 0%,
+      color-mix(in srgb, var(--color-bg-primary) 88%, transparent) 70%
+    );
+}
+
+@media (max-width: 768px) {
+  .chiron-cta-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@keyframes chiron-drift-1 {
+  from { transform: translate(0, 0); }
+  to { transform: translate(2rem, 1.5rem); }
+}
+
+@keyframes chiron-drift-2 {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-1.5rem, 2.25rem); }
+}
+
+@keyframes chiron-pill-fade {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chiron-ambient-glow-one,
+  .chiron-ambient-glow-two,
+  .chiron-stat-pill,
+  .chiron-meter-fill-animated {
+    animation: none;
+  }
+
+  .chiron-meter-fill-animated {
+    width: var(--fill-target) !important;
+  }
+
+  .chiron-btn,
+  .chiron-mode-chip,
+  .chiron-surface-card,
+  .chiron-reveal {
+    transition: none;
+  }
+
+  .chiron-reveal {
+    opacity: 1;
+    translate: none;
+  }
 }
