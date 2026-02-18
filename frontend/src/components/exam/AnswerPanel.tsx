@@ -18,6 +18,8 @@ export function AnswerPanel() {
   const choices = currentQuestion.choices;
   const keys = CHOICE_ORDER.filter((k) => k in choices);
   const showSubmitBar = !isSubmitted && selectedAnswer;
+  const correctKey = currentQuestion.correct_answer;
+  const correctAnswerMissing = isSubmitted && !(correctKey in choices);
 
   return (
     <div
@@ -34,7 +36,7 @@ export function AnswerPanel() {
             {keys.map((key) => {
               const label = choices[key];
               const isSelected = selectedAnswer === key;
-              const isCorrect = currentQuestion.correct_answer === key;
+              const isCorrect = correctKey === key;
               const showCorrect = isSubmitted && isCorrect;
               const showWrong = isSubmitted && isSelected && !isCorrect;
               const struck = struckThroughChoices.has(key);
@@ -67,6 +69,13 @@ export function AnswerPanel() {
                 </button>
               );
             })}
+            {correctAnswerMissing && (
+              <div className="p-4 rounded-lg border-2 choice-correct">
+                <span className="font-medium text-[var(--color-text-primary)]">
+                  {correctKey}. <span className="italic text-[var(--color-text-secondary)]">(correct answer — choice text unavailable)</span>
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

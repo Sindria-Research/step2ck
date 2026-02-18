@@ -22,12 +22,17 @@ export function ExplanationPanel() {
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[var(--color-bg-secondary)]">
       <div className="p-6 flex-1 flex flex-col">
-        <div className="mb-4">
+        <div className="mb-4 flex items-center gap-3">
           <span
             className={`badge ${isCorrect ? 'badge-success' : 'badge-error'}`}
           >
             {isCorrect ? 'Correct' : 'Incorrect'}
           </span>
+          {!isCorrect && (
+            <span className="text-sm font-medium text-[var(--color-success)]">
+              Correct answer: {currentQuestion.correct_answer}
+            </span>
+          )}
         </div>
         {currentQuestion.correct_explanation && (
           <div className="mb-4">
