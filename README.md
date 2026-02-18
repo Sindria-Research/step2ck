@@ -111,6 +111,16 @@ The sidebar is organized into three groups:
 - **QBank** — New Test, Previous Tests, Performance, Search
 - **Tools** — Notes, Flashcards, Bookmarks, Lab Values
 
+## Flashcards: import & export
+
+Flashcards support **import** from text in formats used by Quizlet and similar tools:
+
+- **One card per line**, with front and back separated by **tab**, **comma**, or **semicolon**.
+- Example: `term\tdefinition` (Quizlet-style) or `question,answer` (CSV).
+- In the app: open a deck → **Import** → paste your text → Import.
+
+**Export** downloads the current deck as tab-delimited `.txt`, which you can re-import here or into other apps. Anki uses a different format (`.apkg`, a packaged archive); for Anki you can export from Anki as plain text/CSV if available, or use a converter.
+
 ## Env vars
 
 **Backend** (in `.env` or deploy environment):

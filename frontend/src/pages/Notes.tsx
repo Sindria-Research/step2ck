@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Plus, FileText, Trash2, X, Save } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, FileText, Trash2, X, Save, Search } from 'lucide-react';
 import { api } from '../api/api';
 import type { NoteResponse } from '../api/types';
 import { EmptyState } from '../components/common';
+import { RichTextEditor } from '../components/notes/RichTextEditor';
 
 export function Notes() {
   const [notes, setNotes] = useState<NoteResponse[]>([]);
@@ -11,6 +12,25 @@ export function Notes() {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [creating, setCreating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  /** Strip HTML tags for plain-text search */
+  const stripHtml = (html: string) => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return (div.textContent ?? '').replace(/\s+/g, ' ').trim();
+  };
+
+  const filteredNotes = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return notes;
+    return notes.filter((n) => {
+      const titleMatch = (n.title ?? '').toLowerCase().includes(q);
+      const contentPlain = stripHtml(n.content ?? '');
+      const contentMatch = contentPlain.toLowerCase().includes(q);
+      return titleMatch || contentMatch;
+    });
+  }, [notes, searchQuery]);
 
   useEffect(() => {
     api.notes.list()
@@ -26,7 +46,7 @@ export function Notes() {
       setNotes((prev) => [note, ...prev]);
       setEditingId(note.id);
       setEditTitle(note.title);
-      setEditContent(note.content);
+      setEditContent(contentForEditor(note.content));
     } finally {
       setCreating(false);
     }
@@ -45,10 +65,18 @@ export function Notes() {
     if (editingId === id) setEditingId(null);
   };
 
+  /** Normalize content for editor: if plain text (legacy), wrap in a paragraph and escape HTML */
+  const contentForEditor = (raw: string) => {
+    const t = raw.trim();
+    if (!t) return '<p></p>';
+    if (t.startsWith('<')) return raw;
+    return '<p>' + raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>') + '</p>';
+  };
+
   const startEdit = (note: NoteResponse) => {
     setEditingId(note.id);
     setEditTitle(note.title);
-    setEditContent(note.content);
+    setEditContent(contentForEditor(note.content));
   };
 
   const formatDate = (iso: string) => {
@@ -81,8 +109,21 @@ export function Notes() {
 
           <div className="grid md:grid-cols-[280px_1fr] gap-6">
             {/* Notes list sidebar */}
-            <div className="chiron-mockup overflow-y-auto" style={{ maxHeight: '70vh' }}>
-              <p className="chiron-mockup-label mb-3">{notes.length} note{notes.length !== 1 ? 's' : ''}</p>
+            <div className="chiron-mockup overflow-y-auto flex flex-col" style={{ maxHeight: '70vh' }}>
+              <div className="relative mb-3">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" aria-hidden />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search notes..."
+                  className="w-full pl-8 pr-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)]"
+                  aria-label="Search notes"
+                />
+              </div>
+              <p className="chiron-mockup-label mb-3">
+                {searchQuery.trim() ? `${filteredNotes.length} of ${notes.length} note${notes.length !== 1 ? 's' : ''}` : `${notes.length} note${notes.length !== 1 ? 's' : ''}`}
+              </p>
               {loading ? (
                 <div className="space-y-2">
                   {[...Array(3)].map((_, i) => (
@@ -93,9 +134,13 @@ export function Notes() {
                 <p className="text-sm text-[var(--color-text-tertiary)] py-4 text-center">
                   No notes yet. Create one to get started.
                 </p>
+              ) : filteredNotes.length === 0 ? (
+                <p className="text-sm text-[var(--color-text-tertiary)] py-4 text-center">
+                  No notes match &quot;{searchQuery.trim()}&quot;
+                </p>
               ) : (
                 <div className="space-y-1">
-                  {notes.map((note) => (
+                  {filteredNotes.map((note) => (
                     <button
                       key={note.id}
                       type="button"
@@ -152,12 +197,16 @@ export function Notes() {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    placeholder="Start writing..."
-                    className="flex-1 w-full bg-transparent border-none outline-none resize-none text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] leading-relaxed"
-                  />
+                  <div className="flex-1 min-h-0 flex flex-col">
+                    <RichTextEditor
+                      key={editingId}
+                      editorKey={editingId}
+                      value={editContent}
+                      onChange={setEditContent}
+                      placeholder="Start writing..."
+                      className="flex-1 min-h-0 flex flex-col"
+                    />
+                  </div>
                 </>
               ) : (
                 <div className="flex-1 flex items-center justify-center">
