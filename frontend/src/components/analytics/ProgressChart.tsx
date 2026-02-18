@@ -37,17 +37,14 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
 
     if (history.length === 0) {
         return (
-            <div className={`flex items-center justify-center bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-8 text-[var(--color-text-tertiary)] text-sm ${className}`}>
+            <div className={`flex items-center justify-center p-8 text-[var(--color-text-tertiary)] text-sm ${className}`}>
                 No data yet. Start a test to see your progress!
             </div>
         );
     }
 
     return (
-        <div className={`bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-6 shadow-sm ${className}`}>
-            <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-6">
-                Performance Trend <span className="text-xs font-normal text-[var(--color-text-tertiary)] ml-2">(Moving average, last 50)</span>
-            </h3>
+        <div className={className}>
             <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={data}>
