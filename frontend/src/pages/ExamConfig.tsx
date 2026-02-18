@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, ChevronLeft, Check, Sparkles } from 'lucide-react';
+import { Play, Check, Sparkles, ArrowLeft, Settings2, BookOpen, Calculator } from 'lucide-react';
 import { api } from '../api/api';
 
 const SUBJECTS = [
@@ -25,6 +25,8 @@ const QUICK_COUNTS = [10, 20, 40];
 
 export function ExamConfig() {
   const navigate = useNavigate();
+  const rootRef = useRef<HTMLDivElement>(null);
+
   const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(new Set(SUBJECTS));
   const [mode, setMode] = useState<'all' | 'unused' | 'incorrect' | 'personalized'>('all');
   const [questionCount, setQuestionCount] = useState(20);
@@ -33,6 +35,25 @@ export function ExamConfig() {
   const [sections, setSections] = useState<string[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const targets = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]'));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-visible');
+            observer.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -4% 0px' }
+    );
+    targets.forEach((t) => observer.observe(t));
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,10 +102,10 @@ export function ExamConfig() {
   const finalCount = isPersonalized
     ? 1
     : Math.min(
-        customCount ? parseInt(customCount, 10) || questionCount : questionCount,
-        availableCount,
-        questionCount
-      );
+      customCount ? parseInt(customCount, 10) || questionCount : questionCount,
+      availableCount,
+      questionCount
+    );
   const canStart = selectedSubjects.size > 0 && (isPersonalized ? availableCount > 0 : availableCount > 0 && finalCount > 0);
 
   const handleStart = () => {
@@ -105,205 +126,229 @@ export function ExamConfig() {
   const displaySubjects = sections.length > 0 ? SUBJECTS.filter((s) => sections.includes(s)) : SUBJECTS;
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto bg-[var(--color-bg-secondary)]">
-      <div className="max-w-2xl mx-auto p-6 pb-16">
-        <div className="flex items-center gap-3 mb-8">
+    <div ref={rootRef} className="chiron-dash flex-1 overflow-y-auto">
+      <div className="dash-glow dash-glow-one" aria-hidden />
+      <div className="dash-glow dash-glow-two" aria-hidden />
+
+      {/* ── Header ── */}
+      <div className="relative z-[1] pt-8 pb-6 md:pt-12 md:pb-8">
+        <div className="container">
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
-            className="p-2 rounded-lg hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
-            aria-label="Back"
+            className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            Back to dashboard
           </button>
-          <div>
-            <h1 className="text-xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight">
-              New test
-            </h1>
-            <p className="text-sm text-[var(--color-text-tertiary)] mt-0.5">
-              Choose subjects, mode, and length
-            </p>
-          </div>
+          <h1 className="text-2xl md:text-3xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight">
+            New test
+          </h1>
+          <p className="mt-2 text-sm text-[var(--color-text-secondary)] max-w-lg leading-relaxed">
+            Choose your subjects and mode to focus your study.
+          </p>
         </div>
+      </div>
 
-        {/* Subjects */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-[var(--color-text-primary)] uppercase tracking-wider">
-              Subjects
-            </h2>
-            <div className="flex gap-2">
-              <button type="button" onClick={selectAll} className="text-xs font-medium text-[var(--color-text-primary)] hover:underline focus-ring">
-                All
-              </button>
-              <span className="text-[var(--color-border)]">·</span>
-              <button type="button" onClick={clearAll} className="text-xs text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] focus-ring">
-                Clear
-              </button>
+      {/* ── Configuration Stripe ── */}
+      <section className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-reveal" data-reveal>
+        <div className="container">
+          <div className="grid lg:grid-cols-[1fr_380px] gap-8 items-start">
+
+            {/* Left Column: Subjects */}
+            <div className="bg-white border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg-secondary)]/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-[var(--color-text-secondary)]">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Subjects</h2>
+                </div>
+                <div className="flex gap-3">
+                  <button type="button" onClick={selectAll} className="text-xs font-medium text-[var(--color-text-primary)] hover:underline focus-ring">
+                    Select All
+                  </button>
+                  <button type="button" onClick={clearAll} className="text-xs text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] focus-ring">
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6">
+                {sectionsLoading ? (
+                  <div className="text-center text-sm text-[var(--color-text-tertiary)] py-8">
+                    Loading subjects…
+                  </div>
+                ) : sectionsError ? (
+                  <div className="text-sm text-[var(--color-text-secondary)] py-4">
+                    {sectionsError} — using default list.
+                  </div>
+                ) : null}
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {displaySubjects.map((subject) => (
+                    <button
+                      key={subject}
+                      type="button"
+                      onClick={() => toggleSubject(subject)}
+                      className={`flex items-center gap-3 px-4 py-3.5 rounded-lg border text-left transition-all focus-ring ${selectedSubjects.has(subject)
+                        ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_5%,white)] shadow-sm ring-1 ring-[var(--color-brand-blue)]/10'
+                        : 'border-[var(--color-border)] bg-gray-50/50 hover:bg-white hover:border-[var(--color-border-hover)]'
+                        }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${selectedSubjects.has(subject)
+                        ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)]'
+                        : 'bg-white border-[var(--color-border)]'
+                        }`}>
+                        {selectedSubjects.has(subject) && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                      <span className={`text-sm font-medium ${selectedSubjects.has(subject) ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
+                        {subject}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {!sectionsLoading && (
+                  <div className="mt-6 flex items-center gap-2 text-xs text-[var(--color-text-tertiary)] border-t border-[var(--color-border)] pt-4">
+                    <Check className="w-3.5 h-3.5" />
+                    {availableCount} questions available with selected subjects
+                  </div>
+                )}
+
+                {!sectionsLoading && availableCount === 0 && (
+                  <div className="mt-4 p-4 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]">
+                    <p className="font-medium text-[var(--color-text-primary)] mb-1">No questions available</p>
+                    {import.meta.env.DEV ? (
+                      <div className="space-y-1 text-xs">
+                        <p>Ensure backend is running (make dev) and database is seeded.</p>
+                      </div>
+                    ) : (
+                      <p className="mb-0">If this persists, please contact support.</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          {sectionsLoading ? (
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-6 text-center text-sm text-[var(--color-text-tertiary)]">
-              Loading subjects…
-            </div>
-          ) : sectionsError ? (
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-4 text-sm text-[var(--color-text-secondary)]">
-              {sectionsError} — using default list.
-            </div>
-          ) : null}
-          <div className="grid grid-cols-2 gap-2">
-            {displaySubjects.map((subject) => (
-              <button
-                key={subject}
-                type="button"
-                onClick={() => toggleSubject(subject)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all focus-ring text-left ${
-                  selectedSubjects.has(subject)
-                    ? 'border-[var(--color-border-hover)] bg-[var(--color-bg-hover)]'
-                    : 'border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)]'
-                } text-[var(--color-text-primary)]`}
-              >
-                <span className="flex-1 font-medium text-sm">{subject}</span>
-                {selectedSubjects.has(subject) && <Check className="w-4 h-4 shrink-0 text-[var(--color-text-tertiary)]" />}
-              </button>
-            ))}
-          </div>
-          {!sectionsLoading && (
-            <>
-              <p className="mt-2 text-xs text-[var(--color-text-tertiary)]">
-                {availableCount} questions available with selected subjects
-              </p>
-              {availableCount === 0 && (
-                <div className="mt-3 p-4 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]">
-                  <p className="font-medium text-[var(--color-text-primary)] mb-1">No questions available</p>
-                  {import.meta.env.DEV ? (
-                    <ol className="list-decimal list-inside space-y-1 mb-0">
-                      <li>Ensure the backend is running (<code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">make dev</code> or <code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">make backend</code>).</li>
-                      <li>From the project root: <code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">make migrate</code> then <code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">make seed</code>.</li>
-                      <li>Questions file: <code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">data/all_questions.json</code> or <code className="px-1 rounded bg-[var(--color-bg-primary)] text-xs">data/allquestions.json</code>.</li>
-                    </ol>
-                  ) : (
-                    <p className="mb-0">If this persists, please contact support.</p>
-                  )}
+
+            {/* Right Column: Settings */}
+            <div className="space-y-6">
+
+              {/* Mode Selection */}
+              <div className="bg-white border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center gap-3 bg-[var(--color-bg-secondary)]/30">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-[var(--color-text-secondary)]">
+                    <Settings2 className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Mode</h2>
+                </div>
+                <div className="p-4 space-y-2">
+                  {MODES.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setMode(m.id)}
+                      className={`w-full flex items-start gap-3 px-4 py-3 rounded-lg border text-left transition-all focus-ring ${mode === m.id
+                        ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_5%,white)] shadow-sm'
+                        : 'border-[var(--color-border)] bg-gray-50/50 hover:bg-white hover:border-[var(--color-border-hover)]'
+                        }`}
+                    >
+                      <div className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${mode === m.id ? 'border-[var(--color-brand-blue)]' : 'border-[var(--color-border)]'
+                        }`}>
+                        {mode === m.id && <div className="w-2 h-2 rounded-full bg-[var(--color-brand-blue)]" />}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className={`text-sm font-medium ${mode === m.id ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'}`}>{m.label}</p>
+                          {m.id === 'personalized' && <Sparkles className="w-3.5 h-3.5 text-[var(--color-brand-purple)]" />}
+                        </div>
+                        <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5 leading-snug">{m.description}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Question Count */}
+              {!isPersonalized && (
+                <div className="bg-white border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center gap-3 bg-[var(--color-bg-secondary)]/30">
+                    <div className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center text-[var(--color-text-secondary)]">
+                      <Calculator className="w-4 h-4" />
+                    </div>
+                    <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Count</h2>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {QUICK_COUNTS.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setCount(c)}
+                          disabled={c > availableCount}
+                          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all focus-ring border ${questionCount === c && !customCount
+                            ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)] text-white shadow-sm'
+                            : c > availableCount
+                              ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
+                              : 'bg-white border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)] hover:text-[var(--color-text-primary)]'
+                            }`}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setCount(availableCount)}
+                        disabled={availableCount === 0}
+                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all focus-ring border ${questionCount === availableCount && !customCount
+                          ? 'bg-[var(--color-brand-blue)] border-[var(--color-brand-blue)] text-white shadow-sm'
+                          : availableCount === 0
+                            ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
+                            : 'bg-white border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)] hover:text-[var(--color-text-primary)]'
+                          }`}
+                      >
+                        Max
+                      </button>
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        id="custom-count"
+                        type="number"
+                        min={1}
+                        max={availableCount}
+                        value={customCount}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setCustomCount(v);
+                          const n = parseInt(v, 10);
+                          if (v === '') setQuestionCount(20);
+                          else if (!isNaN(n) && n > 0) setQuestionCount(Math.min(n, availableCount));
+                        }}
+                        placeholder="Custom amount..."
+                        className="w-full h-10 px-3 rounded-lg border border-[var(--color-border)] bg-gray-50/50 text-sm focus:bg-white focus:border-[var(--color-brand-blue)] focus:ring-1 focus:ring-[var(--color-brand-blue)] transition-all outline-none"
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
-            </>
-          )}
-        </section>
 
-        {/* Mode */}
-        <section className="mb-8">
-          <h2 className="text-sm font-semibold text-[var(--color-text-primary)] uppercase tracking-wider mb-3">
-            Mode
-          </h2>
-          <div className="space-y-2">
-            {MODES.map((m) => (
               <button
-                key={m.id}
                 type="button"
-                onClick={() => setMode(m.id)}
-                className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl border transition-all text-left focus-ring ${
-                  mode === m.id
-                    ? 'border-[var(--color-border-hover)] bg-[var(--color-bg-hover)]'
-                    : 'border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)]'
-                }`}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                    mode === m.id ? 'border-[var(--color-text-primary)] bg-[var(--color-text-primary)]' : 'border-[var(--color-border)] bg-transparent'
+                onClick={handleStart}
+                disabled={!canStart}
+                className={`w-full group btn flex items-center justify-center gap-2 py-4 rounded-full text-base font-semibold shadow-lg shadow-[var(--color-brand-blue)]/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 focus-ring ${canStart
+                  ? 'bg-[var(--color-brand-blue)] text-white hover:bg-[color-mix(in_srgb,var(--color-brand-blue)_90%,white)]'
+                  : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)] cursor-not-allowed shadow-none'
                   }`}
-                >
-                  {mode === m.id && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                    {m.label}
-                  </p>
-                  <p className="text-xs text-[var(--color-text-tertiary)] truncate">{m.description}</p>
-                </div>
-                {m.id === 'personalized' && (
-                  <Sparkles className="w-4 h-4 shrink-0 text-[var(--color-text-muted)]" aria-hidden />
-                )}
+              >
+                <Play className="w-5 h-5 fill-current" />
+                {isPersonalized ? 'Start Session' : 'Start Test'}
               </button>
-            ))}
+            </div>
           </div>
-        </section>
-
-        {/* Number of questions — hidden when personalized */}
-        {!isPersonalized && (
-          <section className="mb-8">
-            <h2 className="text-sm font-semibold text-[var(--color-text-primary)] uppercase tracking-wider mb-3">
-              Number of questions
-            </h2>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {QUICK_COUNTS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCount(c)}
-                  disabled={c > availableCount}
-                  className={`min-w-[3rem] py-2.5 px-4 rounded-lg text-sm font-semibold transition-all focus-ring ${
-                    questionCount === c && !customCount
-                      ? 'bg-[var(--color-text-primary)] text-white'
-                      : c > availableCount
-                      ? 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)] cursor-not-allowed'
-                      : 'bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-[var(--color-text-primary)] hover:border-[var(--color-border-hover)] hover:bg-[var(--color-bg-hover)]'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setCount(availableCount)}
-                disabled={availableCount === 0}
-                className={`min-w-[3rem] py-2.5 px-4 rounded-lg text-sm font-semibold transition-all focus-ring ${
-                  questionCount === availableCount && !customCount
-                    ? 'bg-[var(--color-text-primary)] text-white'
-                    : availableCount === 0
-                    ? 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)] cursor-not-allowed'
-                    : 'bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-[var(--color-text-primary)] hover:border-[var(--color-border-hover)] hover:bg-[var(--color-bg-hover)]'
-                }`}
-              >
-                All ({availableCount})
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <label htmlFor="custom-count" className="text-xs text-[var(--color-text-tertiary)]">
-                Custom:
-              </label>
-              <input
-                id="custom-count"
-                type="number"
-                min={1}
-                max={availableCount}
-                value={customCount}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setCustomCount(v);
-                  const n = parseInt(v, 10);
-                  if (v === '') setQuestionCount(20);
-                  else if (!isNaN(n) && n > 0) setQuestionCount(Math.min(n, availableCount));
-                }}
-                placeholder="e.g. 15"
-                className="input w-24 h-9 text-center text-sm"
-              />
-            </div>
-          </section>
-        )}
-
-        <button
-          type="button"
-          onClick={handleStart}
-          disabled={!canStart}
-          className={`w-full btn flex items-center justify-center gap-2 py-3.5 rounded-xl text-base font-medium focus-ring ${
-            canStart ? 'btn-primary' : 'btn-secondary opacity-50 cursor-not-allowed'
-          }`}
-        >
-          <Play className="w-5 h-5" />
-          {isPersonalized ? 'Start personalized study' : `Start test (${finalCount} questions)`}
-        </button>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }
