@@ -12,8 +12,22 @@ import { Login } from './pages/Login';
 import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
 import { ExamConfig } from './pages/ExamConfig';
+import { PreviousTests } from './pages/PreviousTests';
+import { Performance } from './pages/Performance';
+import { Search } from './pages/Search';
+import { Notes } from './pages/Notes';
+import { Flashcards } from './pages/Flashcards';
+import { Bookmarks } from './pages/Bookmarks';
 import { LabValues } from './pages/LabValues';
 import { Settings } from './pages/Settings';
+
+function ProtectedPage({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute>
+      <AppLayout>{children}</AppLayout>
+    </ProtectedRoute>
+  );
+}
 
 function App() {
   return (
@@ -26,46 +40,16 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Landing />} />
                   <Route path="/login" element={<Login />} />
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <AppLayout>
-                          <Dashboard />
-                        </AppLayout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/exam/config"
-                    element={
-                      <ProtectedRoute>
-                        <AppLayout>
-                          <ExamConfig />
-                        </AppLayout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/lab-values"
-                    element={
-                      <ProtectedRoute>
-                        <AppLayout>
-                          <LabValues />
-                        </AppLayout>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/settings"
-                    element={
-                      <ProtectedRoute>
-                        <AppLayout>
-                          <Settings />
-                        </AppLayout>
-                      </ProtectedRoute>
-                    }
-                  />
+                  <Route path="/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
+                  <Route path="/exam/config" element={<ProtectedPage><ExamConfig /></ProtectedPage>} />
+                  <Route path="/previous-tests" element={<ProtectedPage><PreviousTests /></ProtectedPage>} />
+                  <Route path="/performance" element={<ProtectedPage><Performance /></ProtectedPage>} />
+                  <Route path="/search" element={<ProtectedPage><Search /></ProtectedPage>} />
+                  <Route path="/notes" element={<ProtectedPage><Notes /></ProtectedPage>} />
+                  <Route path="/flashcards" element={<ProtectedPage><Flashcards /></ProtectedPage>} />
+                  <Route path="/bookmarks" element={<ProtectedPage><Bookmarks /></ProtectedPage>} />
+                  <Route path="/lab-values" element={<ProtectedPage><LabValues /></ProtectedPage>} />
+                  <Route path="/settings" element={<ProtectedPage><Settings /></ProtectedPage>} />
                   <Route
                     path="/exam"
                     element={

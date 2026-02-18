@@ -1,18 +1,65 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, PlusCircle, FlaskConical, Settings, ChevronLeft, ChevronDown, Sun, Moon, LogOut, User } from 'lucide-react';
+import {
+  LayoutDashboard,
+  PlusCircle,
+  ClipboardList,
+  BarChart3,
+  Search,
+  FileText,
+  Layers,
+  Bookmark,
+  FlaskConical,
+  Settings,
+  ChevronLeft,
+  ChevronDown,
+  Sun,
+  Moon,
+  LogOut,
+  User,
+} from 'lucide-react';
 import { useSidebar } from '../../context/SidebarContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { APP_NAME, getLogoUrl } from '../../config/branding';
 
-const mainNav = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/exam/config', label: 'New Test', icon: PlusCircle },
-  { to: '/lab-values', label: 'Lab Values', icon: FlaskConical },
-];
+interface NavItem {
+  to: string;
+  label: string;
+  icon: React.ElementType;
+}
 
-const bottomNav = [{ to: '/settings', label: 'Settings', icon: Settings }];
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Study',
+    items: [
+      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'QBank',
+    items: [
+      { to: '/exam/config', label: 'New Test', icon: PlusCircle },
+      { to: '/previous-tests', label: 'Previous Tests', icon: ClipboardList },
+      { to: '/performance', label: 'Performance', icon: BarChart3 },
+      { to: '/search', label: 'Search', icon: Search },
+    ],
+  },
+  {
+    label: 'Tools',
+    items: [
+      { to: '/notes', label: 'Notes', icon: FileText },
+      { to: '/flashcards', label: 'Flashcards', icon: Layers },
+      { to: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
+      { to: '/lab-values', label: 'Lab Values', icon: FlaskConical },
+    ],
+  },
+];
 
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -37,7 +84,6 @@ export function AppSidebar() {
     navigate('/login');
   };
 
-  // Close user menu on click outside
   useEffect(() => {
     if (!userMenuOpen) return;
     const handleClick = (e: MouseEvent) => {
@@ -49,6 +95,24 @@ export function AppSidebar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [userMenuOpen]);
 
+  const renderNavItem = ({ to, label, icon: Icon }: NavItem) => (
+    <NavLink
+      key={to}
+      to={to}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors focus-ring ${
+          isActive
+            ? 'bg-[var(--color-bg-active)] text-[var(--color-accent-text)]'
+            : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'
+        }`
+      }
+      title={collapsed ? label : undefined}
+    >
+      <Icon className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
+      {!collapsed && <span>{label}</span>}
+    </NavLink>
+  );
+
   return (
     <aside
       className={`shrink-0 flex flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-primary)] transition-[width] duration-200 ease-in-out overflow-hidden ${
@@ -57,7 +121,7 @@ export function AppSidebar() {
       style={{ transitionDuration: '200ms' }}
       aria-label="Main navigation"
     >
-      {/* Logo + app name: click toggles expand/collapse. No chevron when collapsed. */}
+      {/* Logo header */}
       <div
         className={`flex items-center h-14 border-b border-[var(--color-border)] shrink-0 ${collapsed ? 'justify-center px-0' : 'gap-2 px-3'}`}
       >
@@ -88,59 +152,31 @@ export function AppSidebar() {
         )}
       </div>
 
-      <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto min-h-0 flex flex-col">
-        <div className="space-y-0.5">
-          {mainNav.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors focus-ring ${
-                  isActive
-                    ? 'bg-[var(--color-bg-active)] text-[var(--color-accent-text)]'
-                    : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'
-                }`
-              }
-            >
-              <Icon className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
-              {!collapsed && <span>{label}</span>}
-            </NavLink>
-          ))}
+      {/* Navigation */}
+      <nav className="flex-1 p-2 overflow-y-auto min-h-0 flex flex-col gap-1">
+        {navGroups.map((group) => (
+          <div key={group.label}>
+            {!collapsed && (
+              <p className="px-3 pt-3 pb-1.5 text-[0.6rem] font-bold uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+                {group.label}
+              </p>
+            )}
+            {collapsed && group.label !== 'Study' && (
+              <div className="border-t border-[var(--color-border)] my-1.5" />
+            )}
+            <div className="space-y-0.5">
+              {group.items.map(renderNavItem)}
+            </div>
+          </div>
+        ))}
+
+        {/* Bottom: Settings */}
+        <div className="mt-auto pt-2 border-t border-[var(--color-border)]">
+          {renderNavItem({ to: '/settings', label: 'Settings', icon: Settings })}
         </div>
-        {!collapsed && (
-          <div className="mt-auto pt-2 border-t border-[var(--color-border)] space-y-0.5">
-            {bottomNav.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors focus-ring ${
-                    isActive
-                      ? 'bg-[var(--color-bg-active)] text-[var(--color-accent-text)]'
-                      : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'
-                  }`
-                }
-              >
-                <Icon className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
-                <span>{label}</span>
-              </NavLink>
-            ))}
-          </div>
-        )}
-        {collapsed && (
-          <div className="mt-auto pt-2 border-t border-[var(--color-border)]">
-            <NavLink
-              to="/settings"
-              className="flex items-center justify-center p-2 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] focus-ring"
-              title="Settings"
-            >
-              <Settings className="w-4 h-4" />
-            </NavLink>
-          </div>
-        )}
       </nav>
 
-      {/* User area: popup opens upward */}
+      {/* User area */}
       <div className="p-2 border-t border-[var(--color-border)] relative" ref={userMenuRef}>
         {user && !collapsed && (
           <>
@@ -170,7 +206,7 @@ export function AppSidebar() {
                 <button
                   type="button"
                   onClick={() => { toggleTheme(); setUserMenuOpen(false); }}
-                  className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring w-full text-left"
+                  className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring text-left"
                   role="menuitem"
                 >
                   {theme === 'dark' ? <Sun className="w-4 h-4 shrink-0 opacity-70" /> : <Moon className="w-4 h-4 shrink-0 opacity-70" />}
@@ -179,7 +215,7 @@ export function AppSidebar() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring w-full text-left"
+                  className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring text-left"
                   role="menuitem"
                 >
                   <LogOut className="w-4 h-4 shrink-0 opacity-70" />
