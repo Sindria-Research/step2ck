@@ -1,7 +1,7 @@
 """API routes for flashcards and decks."""
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -17,6 +17,7 @@ from app.schemas.flashcard import (
     FlashcardReview,
     FlashcardUpdate,
 )
+from app.services.apkg_parser import parse_apkg
 
 router = APIRouter()
 
@@ -82,7 +83,29 @@ def list_cards(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    deck = db.query(FlashcardDeck).filter(FlashcardDeck.id == deck_id, FlashcardDeck.user_id == user.id).first()
+    if not deck:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Deck not found")
     return db.query(Flashcard).filter(Flashcard.deck_id == deck_id, Flashcard.user_id == user.id).all()
+
+
+@router.get("/decks/{deck_id}/review", response_model=list[FlashcardResponse])
+def get_deck_review_cards(
+    deck_id: int,
+    mode: str = "due",
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Get cards to study in a deck. mode=due: only due/new cards; mode=all: all cards in deck."""
+    deck = db.query(FlashcardDeck).filter(FlashcardDeck.id == deck_id, FlashcardDeck.user_id == user.id).first()
+    if not deck:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Deck not found")
+    q = db.query(Flashcard).filter(Flashcard.deck_id == deck_id, Flashcard.user_id == user.id)
+    if mode == "due":
+        now = datetime.now(timezone.utc)
+        q = q.filter((Flashcard.next_review == None) | (Flashcard.next_review <= now))  # noqa: E711
+    return q.limit(limit).all()
 
 
 @router.get("/due", response_model=list[FlashcardResponse])
@@ -186,3 +209,38 @@ def delete_card(
 
     db.delete(card)
     db.commit()
+
+
+# ── Import .apkg ──
+
+
+@router.post("/import-apkg", response_model=list[FlashcardDeckResponse])
+def import_apkg(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Import Anki .apkg file. Creates one deck per Anki deck with all cards."""
+    if not file.filename or not file.filename.lower().endswith(".apkg"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File must be a .apkg file")
+    data = file.file.read()
+    if len(data) == 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file")
+    try:
+        decks_cards = parse_apkg(data)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+    created_decks: list[FlashcardDeckResponse] = []
+    for deck_name, cards in decks_cards:
+        deck = FlashcardDeck(user_id=user.id, name=deck_name, description=f"Imported from Anki ({len(cards)} cards)")
+        db.add(deck)
+        db.flush()
+        for front, back in cards:
+            card = Flashcard(user_id=user.id, deck_id=deck.id, front=front, back=back)
+            db.add(card)
+        deck.card_count = len(cards)
+        db.commit()
+        db.refresh(deck)
+        created_decks.append(FlashcardDeckResponse.model_validate(deck))
+    return created_decks

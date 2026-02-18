@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/env';
 import type {
   AIExplainRequest,
   AIExplainResponse,
@@ -142,6 +143,8 @@ export const api = {
       request<void>(`/flashcards/decks/${id}`, { method: 'DELETE' }),
     listCards: (deckId: number) =>
       request<FlashcardResponse[]>(`/flashcards/decks/${deckId}/cards`),
+    getDeckReviewCards: (deckId: number, mode: 'due' | 'all' = 'all', limit = 200) =>
+      request<FlashcardResponse[]>(`/flashcards/decks/${deckId}/review?mode=${mode}&limit=${limit}`),
     getDueCards: (limit = 20) =>
       request<FlashcardResponse[]>(`/flashcards/due?limit=${limit}`),
     createCard: (body: FlashcardCreateRequest) =>
@@ -161,6 +164,25 @@ export const api = {
       }),
     deleteCard: (id: number) =>
       request<void>(`/flashcards/cards/${id}`, { method: 'DELETE' }),
+    importApkg: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const url = `${API_BASE}/flashcards/import-apkg`;
+      const token = localStorage.getItem('token');
+      const headers: HeadersInit = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(url, { method: 'POST', headers, body: formData });
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+        throw new Error('Unauthorized');
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail));
+      }
+      return res.json() as Promise<FlashcardDeckResponse[]>;
+    },
   },
   bookmarks: {
     list: () => request<BookmarkResponse[]>('/bookmarks'),

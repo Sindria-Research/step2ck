@@ -1,6 +1,10 @@
-.PHONY: dev setup backend frontend migrate seed
+.PHONY: dev setup backend frontend migrate seed stop-backend
 
-dev:
+# Stop any process already bound to backend port (e.g. previous uvicorn)
+stop-backend:
+	-lsof -ti:8001 | xargs kill -9 2>/dev/null || true
+
+dev: stop-backend
 	npx concurrently "cd backend && PYTHONPATH=. .venv/bin/uvicorn app.main:app --reload --host 127.0.0.1 --port 8001" "cd frontend && npm run dev"
 
 setup:

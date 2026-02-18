@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Plus,
   Layers,
@@ -12,10 +12,12 @@ import {
   Search,
   Upload,
   Download,
+  FileUp,
 } from 'lucide-react';
 import { api } from '../api/api';
 import type { FlashcardDeckResponse, FlashcardResponse } from '../api/types';
 import { EmptyState } from '../components/common';
+import { Modal } from '../components/common/Modal';
 import { parseFlashcardText, exportCardsAsText } from '../utils/importFlashcards';
 
 type View = 'decks' | 'cards' | 'review';
@@ -26,12 +28,17 @@ export function Flashcards() {
   const [selectedDeck, setSelectedDeck] = useState<FlashcardDeckResponse | null>(null);
   const [cards, setCards] = useState<FlashcardResponse[]>([]);
   const [dueCards, setDueCards] = useState<FlashcardResponse[]>([]);
+  const [sessionCards, setSessionCards] = useState<FlashcardResponse[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [showBack, setShowBack] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [newDeckModalOpen, setNewDeckModalOpen] = useState(false);
   const [newDeckName, setNewDeckName] = useState('');
   const [newDeckDescription, setNewDeckDescription] = useState('');
+  const apkgInputRef = useRef<HTMLInputElement>(null);
+  const [apkgImporting, setApkgImporting] = useState(false);
+  const [apkgError, setApkgError] = useState<string | null>(null);
 
   const [deckSearchQuery, setDeckSearchQuery] = useState('');
 
@@ -89,9 +96,19 @@ export function Flashcards() {
       setDecks((prev) => [deck, ...prev]);
       setNewDeckName('');
       setNewDeckDescription('');
+      setNewDeckModalOpen(false);
     } finally {
       setCreating(false);
     }
+  };
+
+  const startDeckStudy = async (deck: FlashcardDeckResponse) => {
+    const list = await api.flashcards.getDeckReviewCards(deck.id, 'all');
+    if (list.length === 0) return;
+    setSessionCards(list);
+    setReviewIndex(0);
+    setShowBack(false);
+    setView('review');
   };
 
   const handleUpdateDeck = async (id: number, updates: { name?: string; description?: string }) => {
@@ -191,21 +208,41 @@ export function Flashcards() {
 
   const startReview = () => {
     if (dueCards.length === 0) return;
+    setSessionCards(null);
     setReviewIndex(0);
     setShowBack(false);
     setView('review');
   };
 
+  const reviewCards = sessionCards ?? dueCards;
+
   const handleReviewAnswer = async (quality: number) => {
-    const card = dueCards[reviewIndex];
+    const card = reviewCards[reviewIndex];
     await api.flashcards.reviewCard(card.id, quality);
-    if (reviewIndex < dueCards.length - 1) {
+    if (reviewIndex < reviewCards.length - 1) {
       setReviewIndex((i) => i + 1);
       setShowBack(false);
     } else {
       setView('decks');
+      setSessionCards(null);
       const fresh = await api.flashcards.getDueCards();
       setDueCards(fresh);
+    }
+  };
+
+  const handleApkgChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setApkgError(null);
+    setApkgImporting(true);
+    try {
+      const created = await api.flashcards.importApkg(file);
+      setDecks((prev) => [...created, ...prev]);
+    } catch (err) {
+      setApkgError(err instanceof Error ? err.message : 'Import failed');
+    } finally {
+      setApkgImporting(false);
     }
   };
 
@@ -256,36 +293,83 @@ export function Flashcards() {
           {/* Decks view */}
           {view === 'decks' && (
             <>
-              <div className="chiron-mockup mb-4">
-                <p className="chiron-mockup-label mb-3">New deck</p>
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={newDeckName}
-                    onChange={(e) => setNewDeckName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateDeck()}
-                    placeholder="Deck name"
-                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] focus:border-transparent transition-[box-shadow]"
-                  />
-                  <input
-                    type="text"
-                    value={newDeckDescription}
-                    onChange={(e) => setNewDeckDescription(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateDeck()}
-                    placeholder="Description (optional)"
-                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] focus:border-transparent transition-[box-shadow]"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleCreateDeck}
-                    disabled={creating || !newDeckName.trim()}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity focus-ring"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Create deck
-                  </button>
-                </div>
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setNewDeckModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 transition-opacity focus-ring"
+                >
+                  <Plus className="w-4 h-4" />
+                  New deck
+                </button>
+                <input
+                  ref={apkgInputRef}
+                  type="file"
+                  accept=".apkg"
+                  onChange={handleApkgChange}
+                  className="hidden"
+                  aria-label="Import Anki .apkg file"
+                />
+                <button
+                  type="button"
+                  onClick={() => apkgInputRef.current?.click()}
+                  disabled={apkgImporting}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[var(--color-border)] text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring disabled:opacity-50"
+                >
+                  <FileUp className="w-4 h-4" />
+                  {apkgImporting ? 'Importing…' : 'Import .apkg'}
+                </button>
+                {apkgError && (
+                  <p className="text-xs text-[var(--color-error)]">{apkgError}</p>
+                )}
               </div>
+
+              <Modal open={newDeckModalOpen} onClose={() => setNewDeckModalOpen(false)} title="New deck" size="sm">
+                <div className="space-y-3">
+                  <div>
+                    <label htmlFor="new-deck-name" className="block text-xs font-medium text-[var(--color-text-muted)] mb-1">Title</label>
+                    <input
+                      id="new-deck-name"
+                      type="text"
+                      value={newDeckName}
+                      onChange={(e) => setNewDeckName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleCreateDeck()}
+                      placeholder="Deck name"
+                      className="w-full px-3 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="new-deck-desc" className="block text-xs font-medium text-[var(--color-text-muted)] mb-1">Description (optional)</label>
+                    <input
+                      id="new-deck-desc"
+                      type="text"
+                      value={newDeckDescription}
+                      onChange={(e) => setNewDeckDescription(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleCreateDeck()}
+                      placeholder="Brief description"
+                      className="w-full px-3 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)]"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewDeckModalOpen(false)}
+                      className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] focus-ring"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreateDeck}
+                      disabled={creating || !newDeckName.trim()}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 focus-ring"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Create
+                    </button>
+                  </div>
+                </div>
+              </Modal>
 
               {/* Deck search */}
               {decks.length > 0 && (
@@ -334,7 +418,7 @@ export function Flashcards() {
                   {filteredDecks.map((deck) => (
                     <div
                       key={deck.id}
-                      className="chiron-mockup chiron-progress-row flex items-center gap-3 py-3 px-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)] transition-colors"
+                      className="chiron-mockup chiron-progress-row flex items-center gap-2 py-3 px-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)] transition-colors"
                     >
                       <button
                         type="button"
@@ -347,6 +431,16 @@ export function Flashcards() {
                           {deck.description && <> · {deck.description}</>}
                           {deck.section && <> · {deck.section}</>}
                         </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => startDeckStudy(deck)}
+                        disabled={deck.card_count === 0}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--color-brand-blue)] text-white text-xs font-medium hover:opacity-90 disabled:opacity-50 focus-ring"
+                        title="Study this deck"
+                      >
+                        <Play className="w-3.5 h-3.5" />
+                        Study
                       </button>
                       <button
                         type="button"
@@ -558,16 +652,16 @@ export function Flashcards() {
           )}
 
           {/* Review view */}
-          {view === 'review' && dueCards.length > 0 && (
+          {view === 'review' && reviewCards.length > 0 && (
             <div className="chiron-mockup max-w-xl mx-auto">
               <div className="flex items-center justify-between gap-4 mb-6">
                 <span className="text-xs font-medium text-[var(--color-text-muted)] tabular-nums">
-                  {reviewIndex + 1} / {dueCards.length}
+                  {reviewIndex + 1} / {reviewCards.length}
                 </span>
                 <div className="flex-1 max-w-[8rem] h-1.5 rounded-full bg-[var(--color-bg-tertiary)] overflow-hidden">
                   <div
                     className="h-full rounded-full bg-[var(--color-brand-blue)] transition-[width] duration-200"
-                    style={{ width: `${((reviewIndex + 1) / dueCards.length) * 100}%` }}
+                    style={{ width: `${((reviewIndex + 1) / reviewCards.length) * 100}%` }}
                   />
                 </div>
               </div>
@@ -575,7 +669,7 @@ export function Flashcards() {
               <div className="py-10 px-2">
                 <div className="min-h-[120px] flex flex-col justify-center">
                   <p className="text-xl font-medium text-[var(--color-text-primary)] leading-relaxed text-center">
-                    {dueCards[reviewIndex].front}
+                    {reviewCards[reviewIndex].front}
                   </p>
                 </div>
 
@@ -583,7 +677,7 @@ export function Flashcards() {
                   <>
                     <div className="mt-8 pt-6 border-t border-[var(--color-border)]">
                       <p className="text-base text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap text-center">
-                        {dueCards[reviewIndex].back}
+                        {reviewCards[reviewIndex].back}
                       </p>
                     </div>
                     <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-muted)] mt-6 mb-3 text-center">
