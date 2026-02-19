@@ -18,6 +18,8 @@ export interface Question {
   correct_answer: string;
   correct_explanation: string | null;
   incorrect_explanation: string | null;
+  status?: 'ready' | 'incomplete' | 'needs_review' | 'broken';
+  status_issues?: string[];
   created_at?: string;
 }
 

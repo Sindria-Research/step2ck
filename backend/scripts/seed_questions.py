@@ -25,6 +25,8 @@ def normalize_question(raw: dict) -> dict:
         "correct_answer": raw.get("correct_answer") or raw.get("correctAnswer", ""),
         "correct_explanation": raw.get("correct_explanation") or raw.get("correctExplanation"),
         "incorrect_explanation": raw.get("incorrect_explanation") or raw.get("incorrectExplanation"),
+        "status": raw.get("status", "ready"),
+        "status_issues": raw.get("status_issues") or raw.get("statusIssues"),
     }
 
 

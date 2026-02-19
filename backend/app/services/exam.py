@@ -5,6 +5,9 @@ from typing import List
 from sqlalchemy.orm import Session
 
 from app.models import Question, UserProgress
+from app.models.question import QUESTION_STATUS_READY, QUESTION_STATUS_INCOMPLETE
+
+USABLE_STATUSES = [QUESTION_STATUS_READY, QUESTION_STATUS_INCOMPLETE]
 
 
 def _shuffle(items: List[Question]) -> List[Question]:
@@ -62,7 +65,10 @@ def generate_exam(
     count: int,
 ) -> List[Question]:
     """Return list of questions for the exam."""
-    q = db.query(Question).filter(Question.section.in_(subjects))
+    q = db.query(Question).filter(
+        Question.section.in_(subjects),
+        Question.status.in_(USABLE_STATUSES),
+    )
     filtered = q.all()
     if not filtered:
         return []

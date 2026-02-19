@@ -1,5 +1,5 @@
 """Question schemas."""
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -18,12 +18,16 @@ class QuestionBase(BaseModel):
 
 class QuestionCreate(QuestionBase):
     id: str
+    status: str = "ready"
+    status_issues: Optional[List[str]] = None
 
 
 class QuestionResponse(QuestionBase):
     model_config = ConfigDict(from_attributes=True)
     id: str
-    created_at: Optional[Any] = None  # datetime; Pydantic serializes to ISO string
+    status: str = "ready"
+    status_issues: Optional[List[str]] = None
+    created_at: Optional[Any] = None
 
 
 class QuestionListResponse(BaseModel):
