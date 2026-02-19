@@ -1,15 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, CreditCard, User, Moon, Sun, Monitor, Target, ArrowRight, Zap, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, CreditCard, User, Moon, Sun, Monitor, Target, ArrowRight, Zap, CheckCircle2, Activity, Sparkles, BookOpen, Search, Infinity, Receipt, ExternalLink, Bug } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../api/api';
-import type { SubscriptionStatus } from '../api/types';
+import type { SubscriptionStatus, DailySummary } from '../api/types';
+import { DatePicker } from '../components/common/DatePicker';
+
+const isDev = import.meta.env.DEV;
 
 export function Settings() {
-  const { user, isPro, refreshUser } = useAuth();
+  const { user, isPro: realIsPro, refreshUser } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const { theme, setTheme } = useTheme();
+  const [devProOverride, setDevProOverride] = useState<boolean | null>(null);
+  const isPro = devProOverride !== null ? devProOverride : realIsPro;
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
   const [examDate, setExamDate] = useState('');
@@ -19,6 +24,7 @@ export function Settings() {
   const [billingLoading, setBillingLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+  const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
 
   useEffect(() => {
     if (searchParams.get('checkout') === 'success') {
@@ -35,6 +41,10 @@ export function Settings() {
       .catch(() => {})
       .finally(() => setBillingLoading(false));
   }, [isPro]);
+
+  useEffect(() => {
+    api.progress.dailySummary().then(setDailySummary).catch(() => {});
+  }, []);
 
   useEffect(() => {
     api.studyProfile.get()
@@ -139,12 +149,10 @@ export function Settings() {
                   <label className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)] block mb-1">
                     Exam Date
                   </label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={examDate}
-                    onChange={(e) => setExamDate(e.target.value)}
+                    onChange={setExamDate}
                     min={new Date().toISOString().split('T')[0]}
-                    className="w-full max-w-xs px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)]"
                   />
                 </div>
                 <div>
@@ -228,6 +236,108 @@ export function Settings() {
                 Dark
               </button>
             </div>
+          </div>
+        </section>
+
+        {/* Usage / Limits */}
+        <section className="card rounded-lg mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center">
+              <Activity className="w-5 h-5 text-[var(--color-text-tertiary)]" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+                Usage
+              </h2>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                {isPro ? 'Unlimited access across all features.' : 'Daily limits reset at midnight UTC.'}
+              </p>
+            </div>
+          </div>
+          <div className="pt-4 border-t border-[var(--color-border)] space-y-4">
+            {(() => {
+              const questionsUsed = dailySummary?.today_count ?? 0;
+              const questionsLimit = isPro ? null : 40;
+              const aiUsed = 0;
+              const aiLimit = isPro ? null : 5;
+
+              const limits: { label: string; icon: React.ReactNode; used: number; cap: number | null }[] = [
+                { label: 'Questions today', icon: <BookOpen className="w-3.5 h-3.5" />, used: questionsUsed, cap: questionsLimit },
+                { label: 'AI explanations', icon: <Sparkles className="w-3.5 h-3.5" />, used: aiUsed, cap: aiLimit },
+                { label: 'Search', icon: <Search className="w-3.5 h-3.5" />, used: 0, cap: isPro ? null : 50 },
+              ];
+
+              return limits.map((item) => {
+                const unlimited = item.cap === null;
+                const pct = unlimited ? 100 : item.cap! > 0 ? Math.min(100, (item.used / item.cap!) * 100) : 0;
+                const nearLimit = !unlimited && item.cap! > 0 && pct >= 80;
+
+                return (
+                  <div key={item.label}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-secondary)]">
+                        {item.icon}
+                        {item.label}
+                      </span>
+                      <span className={`text-xs font-semibold tabular-nums ${
+                        unlimited
+                          ? 'text-[var(--color-brand-blue)]'
+                          : nearLimit
+                            ? 'text-[var(--color-warning)]'
+                            : 'text-[var(--color-text-tertiary)]'
+                      }`}>
+                        {unlimited ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Infinity className="w-3.5 h-3.5" /> Unlimited
+                          </span>
+                        ) : (
+                          `${item.used} / ${item.cap}`
+                        )}
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full overflow-hidden bg-[var(--color-bg-tertiary)]">
+                      {unlimited ? (
+                        <div className="chiron-pro-bar h-full rounded-full w-full" />
+                      ) : (
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            nearLimit
+                              ? 'bg-[var(--color-warning)]'
+                              : 'bg-[var(--color-brand-blue)]'
+                          }`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+            {isPro ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  setPortalLoading(true);
+                  try {
+                    const { portal_url } = await api.billing.createPortal();
+                    if (portal_url) window.location.href = portal_url;
+                  } catch {}
+                  setPortalLoading(false);
+                }}
+                disabled={portalLoading}
+                className="chiron-btn chiron-btn-subtle px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 mt-2"
+              >
+                {portalLoading ? 'Loading...' : 'Manage subscription'}
+              </button>
+            ) : (
+              <Link
+                to="/pricing"
+                className="chiron-btn chiron-btn-primary px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 mt-2"
+              >
+                
+                Manage subscription
+              </Link>
+            )}
           </div>
         </section>
 
@@ -344,6 +454,158 @@ export function Settings() {
             )}
           </div>
         </section>
+
+        {/* Invoices & History */}
+        <section className="card rounded-lg mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center">
+              <Receipt className="w-5 h-5 text-[var(--color-text-tertiary)]" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+                Invoices
+              </h2>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Your billing history and receipts.
+              </p>
+            </div>
+          </div>
+          <div className="pt-4 border-t border-[var(--color-border)]">
+            {billingLoading ? (
+              <p className="text-sm text-[var(--color-text-muted)]">Loading...</p>
+            ) : isPro && subscription ? (
+              <div className="space-y-3">
+                {/* Trial row */}
+                {subscription.status === 'trialing' && subscription.trial_end && (
+                  <div className="flex items-center justify-between py-2.5 px-3 rounded-lg border border-dashed border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_6%,var(--color-bg-primary))]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-md bg-[color-mix(in_srgb,var(--color-brand-blue)_14%,transparent)] flex items-center justify-center">
+                        <Zap className="w-4 h-4 text-[var(--color-brand-blue)]" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                          7-day free trial
+                        </p>
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          Ends {new Date(subscription.trial_end).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-semibold text-[var(--color-success)]">
+                      $0.00
+                    </span>
+                  </div>
+                )}
+
+                {/* Current / upcoming charge row */}
+                {subscription.current_period_end && (
+                  <div className="flex items-center justify-between py-2.5 px-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-md bg-[color-mix(in_srgb,var(--color-brand-blue)_12%,transparent)] flex items-center justify-center">
+                        <Receipt className="w-4 h-4 text-[var(--color-brand-blue)]" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                          Pro — {subscription.interval === 'year' ? 'Annual' : 'Monthly'}
+                        </p>
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          {subscription.status === 'trialing'
+                            ? `First charge on ${new Date(subscription.trial_end!).toLocaleDateString()}`
+                            : `Billed ${new Date(
+                                new Date(subscription.current_period_end).getTime() -
+                                (subscription.interval === 'year' ? 365 : 30) * 86400000
+                              ).toLocaleDateString()}`
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-semibold tabular-nums text-[var(--color-text-primary)]">
+                      ${subscription.interval === 'year' ? '290' : '29'}.00
+                    </span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setPortalLoading(true);
+                    try {
+                      const { portal_url } = await api.billing.createPortal();
+                      if (portal_url) window.location.href = portal_url;
+                    } catch {}
+                    setPortalLoading(false);
+                  }}
+                  disabled={portalLoading}
+                  className="text-sm text-[var(--color-brand-blue)] hover:underline font-medium inline-flex items-center gap-1.5"
+                >
+                  View all invoices in Stripe
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Receipt className="w-8 h-8 text-[var(--color-text-muted)] mx-auto mb-2 opacity-40" />
+                <p className="text-sm text-[var(--color-text-muted)]">No invoices yet</p>
+                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                  Invoices will appear here after you subscribe to Pro.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Dev tools */}
+        {isDev && (
+          <section className="card rounded-lg mb-6 border-dashed !border-[var(--color-warning)]">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-[var(--color-warning-bg)] flex items-center justify-center">
+                <Bug className="w-5 h-5 text-[var(--color-warning)]" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+                  Dev Tools
+                </h2>
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  Only visible in development.
+                </p>
+              </div>
+            </div>
+            <div className="pt-4 border-t border-[var(--color-border)] space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-[var(--color-text-secondary)]">Simulate Pro plan</span>
+                <div className="flex items-center gap-2">
+                  {(['off', 'free', 'pro'] as const).map((mode) => {
+                    const active =
+                      mode === 'off' ? devProOverride === null :
+                      mode === 'free' ? devProOverride === false :
+                      devProOverride === true;
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() =>
+                          setDevProOverride(mode === 'off' ? null : mode === 'pro')
+                        }
+                        className={`px-3 py-1.5 rounded-md border text-xs font-semibold transition-all ${
+                          active
+                            ? 'border-[var(--color-warning)] bg-[var(--color-warning-bg)] text-[var(--color-warning)]'
+                            : 'border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-muted)] hover:border-[var(--color-border-hover)]'
+                        }`}
+                      >
+                        {mode === 'off' ? 'Real' : mode === 'free' ? 'Free' : 'Pro'}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {devProOverride !== null && (
+                <p className="text-xs text-[var(--color-warning)]">
+                  Overriding plan to <strong>{devProOverride ? 'Pro' : 'Free'}</strong> — UI only, no backend change.
+                </p>
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

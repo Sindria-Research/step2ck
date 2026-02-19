@@ -1,8 +1,13 @@
+import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { APP_NAME, APP_TAGLINE, getLogoUrl } from '../config/branding';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { GoogleLoginButton } from '../components/auth/GoogleLoginButton';
+
+const WaveCanvas = lazy(() =>
+  import('../components/landing/WaveCanvas').then((m) => ({ default: m.WaveCanvas }))
+);
 
 const DEMO_EMAIL = 'demo@chiron.local';
 const isDev = import.meta.env.DEV;
@@ -22,17 +27,20 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg-secondary)] p-4 sm:p-6">
+    <div className="chiron-login-page min-h-screen flex items-center justify-center bg-[var(--color-bg-secondary)] p-4 sm:p-6 relative overflow-hidden">
+      <Suspense fallback={null}>
+        <WaveCanvas isDark={theme === 'dark'} />
+      </Suspense>
       <div
-        className="w-full max-w-md panel p-8 text-center animate-slide-up"
+        className="relative z-10 w-full max-w-md panel p-8 text-center animate-slide-up"
         style={{ boxShadow: 'var(--shadow-md)' }}
       >
-        <div className="w-14 h-14 rounded-xl bg-[var(--color-bg-tertiary)] flex items-center justify-center mx-auto mb-6">
-          <img src={getLogoUrl(theme)} alt="" className="w-7 h-7 object-contain" />
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <img src={getLogoUrl(theme)} alt="" className="w-10 h-10 rounded-lg object-contain shrink-0" />
+          <h1 className="text-2xl font-semibold text-[var(--color-text-primary)] font-display tracking-[0.14em] uppercase">
+            {APP_NAME}
+          </h1>
         </div>
-        <h1 className="text-xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight mb-1">
-          {APP_NAME}
-        </h1>
         <p className="text-sm text-[var(--color-text-secondary)] mb-8">
           {APP_TAGLINE}
         </p>

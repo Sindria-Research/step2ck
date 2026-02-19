@@ -812,6 +812,56 @@ select:focus-visible {
   }
 }
 
+/* ── Pro usage bar (animated gradient) ── */
+@keyframes chiron-pro-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.chiron-pro-bar {
+  background: linear-gradient(
+    90deg,
+    var(--color-brand-blue) 0%,
+    #818cf8 20%,
+    #c084fc 40%,
+    var(--color-brand-blue) 60%,
+    #818cf8 80%,
+    #c084fc 100%
+  );
+  background-size: 200% 100%;
+  animation: chiron-pro-shimmer 3s linear infinite;
+}
+
+:root.dark .chiron-pro-bar {
+  background: linear-gradient(
+    90deg,
+    #60a5fa 0%,
+    #a78bfa 20%,
+    #e879f9 40%,
+    #60a5fa 60%,
+    #a78bfa 80%,
+    #e879f9 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Login page: wave fills entire background, centered */
+.chiron-login-page .chiron-wave-canvas {
+  top: -15%;
+  right: -15%;
+  left: -15%;
+  width: 130%;
+  height: 130%;
+  mask-image:
+    radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 75%);
+  -webkit-mask-image:
+    radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 75%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chiron-wave-canvas {
     display: none;

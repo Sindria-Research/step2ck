@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { Calendar, Target, BookOpen, ChevronRight, ChevronLeft, X } from 'lucide-react';
+import { Target, BookOpen, ChevronRight, ChevronLeft, X, Calendar } from 'lucide-react';
 import { api } from '../../api/api';
+import { DatePicker } from '../common/DatePicker';
 
 interface Props {
   open: boolean;
@@ -42,12 +43,11 @@ export function OnboardingModal({ open, onClose, onComplete }: Props) {
       subtitle: 'We\'ll build a timeline to keep you on track.',
       content: (
         <div className="flex flex-col items-center gap-4">
-          <input
-            type="date"
+          <DatePicker
             value={examDate}
-            onChange={(e) => setExamDate(e.target.value)}
+            onChange={setExamDate}
             min={new Date().toISOString().split('T')[0]}
-            className="w-full max-w-xs px-4 py-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] text-center text-lg font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)]"
+            placeholder="mm/dd/yyyy"
           />
           <p className="text-xs text-[var(--color-text-muted)]">You can always change this later in Settings.</p>
         </div>
@@ -134,7 +134,7 @@ export function OnboardingModal({ open, onClose, onComplete }: Props) {
         </button>
 
         {/* Step indicator */}
-        <div className="flex gap-1.5 px-8 pt-6">
+        <div className="flex gap-1.5 px-8 pr-14 pt-6">
           {steps.map((_, i) => (
             <div
               key={i}
