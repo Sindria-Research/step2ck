@@ -83,7 +83,6 @@ export function Dashboard() {
   const fetchStats = useCallback(() => {
     let cancelled = false;
     if (!dashboardHasLoadedOnce) setLoading(true);
-    if (!dashboardHasLoadedOnce) setLoading(true);
 
     Promise.all([
       api.progress.stats(),
