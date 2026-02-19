@@ -4,6 +4,7 @@ import type {
   AIExplainRequest,
   AIExplainResponse,
   BookmarkResponse,
+  DailySummary,
   ExamGenerateRequest,
   ExamGenerateResponse,
   ExamSession,
@@ -19,6 +20,11 @@ import type {
   ProgressRecord,
   ProgressStats,
   Question,
+  SectionTrend,
+  StudyPlanResponse,
+  StudyProfileResponse,
+  StudyProfileUpdate,
+  TimeStats,
   TokenResponse,
   User,
 } from './types';
@@ -67,6 +73,9 @@ export const api = {
         '/progress'
       ),
     stats: () => request<ProgressStats>('/progress/stats'),
+    dailySummary: () => request<DailySummary>('/progress/daily-summary'),
+    timeStats: () => request<TimeStats>('/progress/time-stats'),
+    trends: () => request<SectionTrend[]>('/progress/trends'),
     record: (data: {
       question_id: string;
       correct: boolean;
@@ -196,6 +205,19 @@ export const api = {
       }
       return res.json() as Promise<FlashcardDeckResponse[]>;
     },
+  },
+  studyProfile: {
+    get: () => request<StudyProfileResponse>('/study-profile'),
+    update: (body: StudyProfileUpdate) =>
+      request<StudyProfileResponse>('/study-profile', {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      }),
+  },
+  studyPlan: {
+    get: () => request<StudyPlanResponse>('/study-plan'),
+    generate: () =>
+      request<StudyPlanResponse>('/study-plan/generate', { method: 'POST' }),
   },
   bookmarks: {
     list: () => request<BookmarkResponse[]>('/bookmarks'),

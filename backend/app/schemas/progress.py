@@ -27,4 +27,6 @@ class ProgressStatsResponse(BaseModel):
     total: int
     correct: int
     incorrect: int
-    by_section: list[dict]  # [{"name": str, "accuracy": int, "total": int, "correct": int}]
+    by_section: list[dict]
+    weak_areas: list[dict] = []
+    readiness_score: int = 0

@@ -17,48 +17,18 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.alter_column(
-        "questions",
-        "section",
-        existing_type=sa.String(255),
-        type_=sa.Text(),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "questions",
-        "subsection",
-        existing_type=sa.String(255),
-        type_=sa.Text(),
-        existing_nullable=True,
-    )
-    op.alter_column(
-        "questions",
-        "system",
-        existing_type=sa.String(255),
-        type_=sa.Text(),
-        existing_nullable=True,
-    )
+    bind = op.get_bind()
+    if bind.dialect.name == "sqlite":
+        return
+    op.alter_column("questions", "section", existing_type=sa.String(255), type_=sa.Text(), existing_nullable=False)
+    op.alter_column("questions", "subsection", existing_type=sa.String(255), type_=sa.Text(), existing_nullable=True)
+    op.alter_column("questions", "system", existing_type=sa.String(255), type_=sa.Text(), existing_nullable=True)
 
 
 def downgrade() -> None:
-    op.alter_column(
-        "questions",
-        "section",
-        existing_type=sa.Text(),
-        type_=sa.String(255),
-        existing_nullable=False,
-    )
-    op.alter_column(
-        "questions",
-        "subsection",
-        existing_type=sa.Text(),
-        type_=sa.String(255),
-        existing_nullable=True,
-    )
-    op.alter_column(
-        "questions",
-        "system",
-        existing_type=sa.Text(),
-        type_=sa.String(255),
-        existing_nullable=True,
-    )
+    bind = op.get_bind()
+    if bind.dialect.name == "sqlite":
+        return
+    op.alter_column("questions", "section", existing_type=sa.Text(), type_=sa.String(255), existing_nullable=False)
+    op.alter_column("questions", "subsection", existing_type=sa.Text(), type_=sa.String(255), existing_nullable=True)
+    op.alter_column("questions", "system", existing_type=sa.Text(), type_=sa.String(255), existing_nullable=True)

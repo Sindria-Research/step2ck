@@ -34,6 +34,8 @@ export interface ProgressStats {
   correct: number;
   incorrect: number;
   by_section: Array<{ name: string; total: number; correct: number; accuracy: number }>;
+  weak_areas: Array<{ name: string; accuracy: number; total: number }>;
+  readiness_score: number;
 }
 
 export interface TokenResponse {
@@ -170,6 +172,93 @@ export interface FlashcardCreateRequest {
   front: string;
   back: string;
   question_id?: string;
+}
+
+// ── Study Profile ──
+
+export interface StudyProfileResponse {
+  id: number;
+  user_id: string;
+  exam_date: string | null;
+  target_score: number | null;
+  daily_question_goal: number;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface StudyProfileUpdate {
+  exam_date?: string | null;
+  target_score?: number | null;
+  daily_question_goal?: number | null;
+}
+
+// ── Study Plan ──
+
+export interface StudyPlanWeek {
+  week: number;
+  start: string;
+  end: string;
+  phase: string;
+  focus_sections: string[];
+  question_target: number;
+  completed: number;
+}
+
+export interface StudyPlanData {
+  exam_date: string;
+  weeks_until_exam: number;
+  daily_goal: number;
+  weeks: StudyPlanWeek[];
+}
+
+export interface StudyPlanResponse {
+  plan_data: StudyPlanData | null;
+  generated_at?: string;
+}
+
+// ── Daily Summary ──
+
+export interface DailySummaryDay {
+  date: string;
+  count: number;
+  met_goal: boolean;
+}
+
+export interface DailySummary {
+  today_count: number;
+  daily_goal: number;
+  streak: number;
+  history: DailySummaryDay[];
+}
+
+// ── Time Stats ──
+
+export interface TimeSectionStat {
+  name: string;
+  avg_seconds: number;
+  correct_avg: number;
+  incorrect_avg: number;
+  total: number;
+}
+
+export interface TimeStats {
+  avg_seconds: number;
+  median_seconds: number;
+  by_section: TimeSectionStat[];
+}
+
+// ── Trends ──
+
+export interface TrendWeek {
+  week: string;
+  total: number;
+  correct: number;
+  accuracy: number;
+}
+
+export interface SectionTrend {
+  section: string;
+  weeks: TrendWeek[];
 }
 
 // ── Bookmarks ──

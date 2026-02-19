@@ -25,6 +25,7 @@ const LabValues = lazy(() => import('./pages/LabValues').then((m) => ({ default:
 const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })));
 const ToS = lazy(() => import('./pages/ToS').then((m) => ({ default: m.ToS })));
 const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
+const StudyPlan = lazy(() => import('./pages/StudyPlan').then((m) => ({ default: m.StudyPlan })));
 
 function ProtectedPage({ children }: { children: React.ReactNode }) {
   return (
@@ -79,6 +80,7 @@ function App() {
               <Route path="/flashcards" element={<ProtectedPage><Flashcards /></ProtectedPage>} />
               <Route path="/bookmarks" element={<ProtectedPage><Bookmarks /></ProtectedPage>} />
               <Route path="/lab-values" element={<ProtectedPage><LabValues /></ProtectedPage>} />
+              <Route path="/study-plan" element={<ProtectedPage><StudyPlan /></ProtectedPage>} />
               <Route path="/settings" element={<ProtectedPage><Settings /></ProtectedPage>} />
               <Route
                 path="/exam"

@@ -18,6 +18,7 @@ import {
   BookOpen,
   ClipboardCheck,
   History,
+  CalendarDays,
 } from 'lucide-react';
 import { UserAvatar } from '../common/UserAvatar';
 import { useSidebar } from '../../context/SidebarContext';
@@ -42,6 +43,7 @@ const navGroups: NavGroup[] = [
     label: 'Study',
     items: [
       { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { to: '/study-plan', label: 'Study Plan', icon: CalendarDays },
     ],
   },
   {

@@ -12,9 +12,10 @@ import {
   Clock3,
   Activity,
   Filter,
+  Gauge,
 } from 'lucide-react';
 import { api } from '../api/api';
-import type { ProgressStats, ProgressRecord } from '../api/types';
+import type { ProgressStats, ProgressRecord, DailySummary } from '../api/types';
 import { Skeleton, SkeletonCard, EmptyState, CircularProgress } from '../components/common';
 import { QuestionGoalModal } from '../components/dashboard/QuestionGoalModal';
 import { useQuestionGoal } from '../hooks/useQuestionGoal';
@@ -23,6 +24,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { ProgressChart } from '../components/analytics/ProgressChart';
 import { SectionBreakdown } from '../components/analytics/SectionBreakdown';
+import { OnboardingModal } from '../components/onboarding/OnboardingModal';
 
 let dashboardHasLoadedOnce = false;
 
@@ -60,25 +62,39 @@ export function Dashboard() {
   const [sectionFilter, setSectionFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
   const dashRef = useRef<HTMLDivElement>(null);
 
   const welcomeName =
     user?.display_name?.trim() || user?.email?.split('@')[0] || 'there';
+
+  useEffect(() => {
+    if (!user) return;
+    const dismissed = sessionStorage.getItem('onboarding_dismissed');
+    if (dismissed) return;
+    api.studyProfile.get()
+      .then((p) => {
+        if (!p.exam_date && !p.target_score) setShowOnboarding(true);
+      })
+      .catch(() => {});
+  }, [user]);
 
   const fetchStats = useCallback(() => {
     let cancelled = false;
     if (!dashboardHasLoadedOnce) setLoading(true);
     if (!dashboardHasLoadedOnce) setLoading(true);
 
-    // Fetch stats and history
     Promise.all([
       api.progress.stats(),
-      api.progress.list()
+      api.progress.list(),
+      api.progress.dailySummary().catch(() => null),
     ])
-      .then(([statsData, historyData]) => {
+      .then(([statsData, historyData, daily]) => {
         if (!cancelled) {
           setStats(statsData);
           setHistory(historyData);
+          if (daily) setDailySummary(daily);
           dashboardHasLoadedOnce = true;
         }
       })
@@ -257,39 +273,85 @@ export function Dashboard() {
               </div>
             </div>
 
-            {/* Right mockup: goal progress */}
+            {/* Right mockup: today's progress */}
             <div className="chiron-mockup flex flex-col">
-              <p className="chiron-mockup-label mb-4">Question Goal</p>
-              <div className="flex-1 flex items-center gap-5">
-                <CircularProgress
-                  value={goalPct}
-                  label=""
-                  centerLabel={`${total}/${goal}`}
-                  color="var(--color-success)"
-                  size={80}
-                  strokeWidth={6}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-2xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
-                    {goalPct}%
-                  </p>
-                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-                    {total} of {goal} questions answered
-                  </p>
-                  <div className="chiron-meter-track mt-3">
-                    <div className="chiron-meter-fill" style={{ width: `${goalPct}%` }} />
+              <p className="chiron-mockup-label mb-4">Today&apos;s Progress</p>
+              {dailySummary ? (
+                <>
+                  <div className="flex-1 flex items-center gap-5">
+                    <CircularProgress
+                      value={dailySummary.daily_goal > 0 ? Math.min(100, Math.round((dailySummary.today_count / dailySummary.daily_goal) * 100)) : 0}
+                      label=""
+                      centerLabel={`${dailySummary.today_count}/${dailySummary.daily_goal}`}
+                      color="var(--color-success)"
+                      size={80}
+                      strokeWidth={6}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-2xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
+                          {dailySummary.today_count}
+                        </p>
+                        {dailySummary.streak > 0 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-[color-mix(in_srgb,var(--color-warning)_12%,transparent)] text-[var(--color-warning)]">
+                            🔥 {dailySummary.streak}d streak
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-[var(--color-text-secondary)]">
+                        {dailySummary.today_count >= dailySummary.daily_goal ? 'Daily goal reached!' : `${dailySummary.daily_goal - dailySummary.today_count} more to hit your goal`}
+                      </p>
+                      <div className="flex gap-1 mt-3">
+                        {dailySummary.history.slice(-7).map((day) => (
+                          <div
+                            key={day.date}
+                            title={`${day.date}: ${day.count} questions`}
+                            className={`w-5 h-5 rounded-sm transition-colors ${
+                              day.count === 0
+                                ? 'bg-[var(--color-bg-tertiary)]'
+                                : day.met_goal
+                                  ? 'bg-[var(--color-success)]'
+                                  : 'bg-[color-mix(in_srgb,var(--color-success)_40%,var(--color-bg-tertiary))]'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-[0.6rem] text-[var(--color-text-muted)] mt-1">Last 7 days</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 chiron-mockup-meta">
+                    <button
+                      type="button"
+                      onClick={() => setGoalModalOpen(true)}
+                      className="text-xs font-medium text-[var(--color-brand-blue)] hover:underline transition-colors"
+                    >
+                      Change goal
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center gap-5">
+                  <CircularProgress
+                    value={goalPct}
+                    label=""
+                    centerLabel={`${total}/${goal}`}
+                    color="var(--color-success)"
+                    size={80}
+                    strokeWidth={6}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-2xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
+                      {goalPct}%
+                    </p>
+                    <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+                      {total} of {goal} questions answered
+                    </p>
+                    <div className="chiron-meter-track mt-3">
+                      <div className="chiron-meter-fill" style={{ width: `${goalPct}%` }} />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="mt-4 chiron-mockup-meta">
-                <button
-                  type="button"
-                  onClick={() => setGoalModalOpen(true)}
-                  className="text-xs font-medium text-[var(--color-brand-blue)] hover:underline transition-colors"
-                >
-                  Change goal
-                </button>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -336,9 +398,77 @@ export function Dashboard() {
         </div>
       </section>
 
+      {/* ── Readiness Score Stripe ── */}
+      {hasData && stats && (
+        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 3 } as React.CSSProperties}>
+          <div className="container">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="chiron-mockup flex flex-col items-center text-center py-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Gauge className="w-4 h-4 text-[var(--color-brand-blue)]" />
+                  <p className="chiron-mockup-label">Readiness Score</p>
+                </div>
+                <CircularProgress
+                  value={stats.readiness_score}
+                  label=""
+                  centerLabel={`${stats.readiness_score}`}
+                  color={
+                    stats.readiness_score >= 70
+                      ? 'var(--color-success)'
+                      : stats.readiness_score >= 40
+                        ? 'var(--color-warning)'
+                        : 'var(--color-error)'
+                  }
+                  size={100}
+                  strokeWidth={8}
+                />
+                <p className="text-sm text-[var(--color-text-secondary)] mt-4 max-w-xs">
+                  {stats.readiness_score >= 70
+                    ? 'You\'re making strong progress. Keep it up!'
+                    : stats.readiness_score >= 40
+                      ? 'Good start. Focus on weak areas to improve faster.'
+                      : 'Early stages. Keep practicing consistently.'}
+                </p>
+              </div>
+
+              <div className="chiron-mockup">
+                <div className="flex items-center gap-2 mb-4">
+                  <AlertTriangle className="w-4 h-4 text-[var(--color-warning)]" />
+                  <p className="chiron-mockup-label">Weak Areas</p>
+                </div>
+                {stats.weak_areas.length > 0 ? (
+                  <div className="space-y-3">
+                    {stats.weak_areas.slice(0, 5).map((area) => (
+                      <div key={area.name}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-[var(--color-text-primary)]">{area.name}</span>
+                          <span className="text-xs tabular-nums text-[var(--color-error)]">{area.accuracy}%</span>
+                        </div>
+                        <div className="chiron-meter-track">
+                          <div className="chiron-meter-fill bg-[var(--color-error)]" style={{ width: `${area.accuracy}%` }} />
+                        </div>
+                        <p className="mt-1 text-[0.6rem] text-[var(--color-text-muted)]">
+                          Practice {Math.max(10, 20 - Math.floor(area.total / 5))} more questions to improve
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-[var(--color-text-tertiary)]">
+                    {total >= 50
+                      ? 'No weak areas detected. Great job!'
+                      : 'Answer more questions to identify weak areas (10+ per section).'}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Section Performance Stripe ── */}
       {hasData && bySection.length > 0 && (
-        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 3 } as React.CSSProperties}>
+        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 4 } as React.CSSProperties}>
           <div className="container">
             <div className="grid md:grid-cols-[0.35fr_0.65fr] gap-12 items-start">
               <div>
@@ -404,7 +534,7 @@ export function Dashboard() {
       )}
 
       {/* ── Actions / Utilities Stripe ── */}
-      <section className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 4 } as React.CSSProperties}>
+      <section className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 5 } as React.CSSProperties}>
         <div className="container">
           <div className="grid md:grid-cols-2 gap-8">
             <div>
@@ -428,7 +558,7 @@ export function Dashboard() {
 
       {/* ── Empty State Stripe (only if no data) ── */}
       {!hasData && (
-        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 5 } as React.CSSProperties}>
+        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 6 } as React.CSSProperties}>
           <div className="container">
             <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm max-w-2xl mx-auto p-8">
               <EmptyState
@@ -447,6 +577,18 @@ export function Dashboard() {
         onClose={() => setGoalModalOpen(false)}
         currentGoal={goal}
         onSave={setGoal}
+      />
+
+      <OnboardingModal
+        open={showOnboarding}
+        onClose={() => {
+          setShowOnboarding(false);
+          sessionStorage.setItem('onboarding_dismissed', '1');
+        }}
+        onComplete={() => {
+          setShowOnboarding(false);
+          sessionStorage.setItem('onboarding_dismissed', '1');
+        }}
       />
     </div>
   );

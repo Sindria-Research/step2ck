@@ -10,7 +10,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from app.config import get_settings
-from app.api import health, auth, questions, progress, exams, ai, exam_sessions, notes, flashcards, bookmarks
+from app.api import health, auth, questions, progress, exams, ai, exam_sessions, notes, flashcards, bookmarks, study_profile, study_plan
 
 logging.basicConfig(
     level=get_settings().LOG_LEVEL,
@@ -78,3 +78,5 @@ app.include_router(exam_sessions.router, prefix="/exam-sessions", tags=["exam-se
 app.include_router(notes.router, prefix="/notes", tags=["notes"])
 app.include_router(flashcards.router, prefix="/flashcards", tags=["flashcards"])
 app.include_router(bookmarks.router, prefix="/bookmarks", tags=["bookmarks"])
+app.include_router(study_profile.router, prefix="/study-profile", tags=["study-profile"])
+app.include_router(study_plan.router, prefix="/study-plan", tags=["study-plan"])
