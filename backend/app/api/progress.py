@@ -191,11 +191,25 @@ def get_time_stats(
         .filter(ExamSessionAnswer.time_spent_seconds > 0)
     )
 
-    all_times = base.with_entities(ExamSessionAnswer.time_spent_seconds).all()
-    times_list = sorted([r.time_spent_seconds for r in all_times])
+    agg = base.with_entities(
+        sqlfunc.count().label("cnt"),
+        sqlfunc.avg(ExamSessionAnswer.time_spent_seconds).label("avg"),
+    ).first()
 
-    avg_seconds = round(sum(times_list) / len(times_list), 1) if times_list else 0
-    median_seconds = times_list[len(times_list) // 2] if times_list else 0
+    total_count = agg.cnt or 0
+    avg_seconds = round(float(agg.avg or 0), 1)
+
+    median_seconds = 0
+    if total_count > 0:
+        mid = total_count // 2
+        median_row = (
+            base.with_entities(ExamSessionAnswer.time_spent_seconds)
+            .order_by(ExamSessionAnswer.time_spent_seconds)
+            .offset(mid)
+            .limit(1)
+            .first()
+        )
+        median_seconds = median_row.time_spent_seconds if median_row else 0
 
     section_rows = (
         base.join(Question, Question.id == ExamSessionAnswer.question_id)
@@ -243,44 +257,67 @@ def get_trends(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Weekly accuracy trends by section (top sections by volume)."""
-    rows = (
-        db.query(UserProgress)
+    """Weekly accuracy trends by section (top 8 sections by volume).
+
+    Aggregation is done in SQL to avoid loading all rows into memory.
+    """
+    top_sections_q = (
+        db.query(UserProgress.section, sqlfunc.count().label("cnt"))
         .filter(UserProgress.user_id == current_user.id)
-        .with_entities(
+        .group_by(UserProgress.section)
+        .order_by(sqlfunc.count().desc())
+        .limit(8)
+        .all()
+    )
+    top_sections = [r.section for r in top_sections_q]
+    if not top_sections:
+        return []
+
+    week_expr = cast(UserProgress.created_at, SADate)
+
+    rows = (
+        db.query(
             UserProgress.section,
-            UserProgress.correct,
-            UserProgress.created_at,
+            week_expr.label("day"),
+            sqlfunc.count().label("total"),
+            sqlfunc.sum(case((UserProgress.correct == True, 1), else_=0)).label("correct"),  # noqa: E712
         )
-        .order_by(UserProgress.created_at)
+        .filter(
+            UserProgress.user_id == current_user.id,
+            UserProgress.section.in_(top_sections),
+        )
+        .group_by(UserProgress.section, "day")
+        .order_by(UserProgress.section, "day")
         .all()
     )
 
-    section_weeks: dict[str, dict[str, dict]] = defaultdict(lambda: defaultdict(lambda: {"total": 0, "correct": 0}))
-    section_totals: dict[str, int] = defaultdict(int)
-
+    section_weeks: dict[str, list[dict]] = defaultdict(list)
     for row in rows:
-        ts = row.created_at
-        if isinstance(ts, str):
-            ts = datetime.fromisoformat(ts)
-        if not ts:
-            continue
-        week_start = (ts - timedelta(days=ts.weekday())).strftime("%Y-%m-%d")
-        section_weeks[row.section][week_start]["total"] += 1
-        if row.correct:
-            section_weeks[row.section][week_start]["correct"] += 1
-        section_totals[row.section] += 1
-
-    top_sections = sorted(section_totals, key=section_totals.get, reverse=True)[:8]
+        d = row.day
+        if isinstance(d, str):
+            d = datetime.fromisoformat(d).date()
+        week_start = (d - timedelta(days=d.weekday())).isoformat()
+        section_weeks[row.section].append({
+            "week": week_start,
+            "total": row.total,
+            "correct": int(row.correct or 0),
+        })
 
     result = []
     for section in top_sections:
-        weeks_data = section_weeks[section]
+        merged: dict[str, dict] = {}
+        for entry in section_weeks.get(section, []):
+            w = entry["week"]
+            if w in merged:
+                merged[w]["total"] += entry["total"]
+                merged[w]["correct"] += entry["correct"]
+            else:
+                merged[w] = {"total": entry["total"], "correct": entry["correct"]}
         weeks = []
-        for week_key in sorted(weeks_data.keys()):
-            d = weeks_data[week_key]
+        for wk in sorted(merged):
+            d = merged[wk]
             acc = round((d["correct"] / d["total"]) * 100) if d["total"] else 0
-            weeks.append({"week": week_key, "total": d["total"], "correct": d["correct"], "accuracy": acc})
+            weeks.append({"week": wk, "total": d["total"], "correct": d["correct"], "accuracy": acc})
         result.append({"section": section, "weeks": weeks})
 
     return result
