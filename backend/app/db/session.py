@@ -15,12 +15,25 @@ logger = logging.getLogger(__name__)
 def get_engine():
     settings = get_settings()
     connect_args = {}
-    if settings.DATABASE_URL.startswith("sqlite"):
+    is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+
+    if is_sqlite:
         connect_args["check_same_thread"] = False
+
+    pool_kwargs = {}
+    if not is_sqlite:
+        pool_kwargs = {
+            "pool_size": 10,
+            "max_overflow": 20,
+            "pool_recycle": 1800,
+            "pool_pre_ping": True,
+        }
+
     engine = create_engine(
         settings.DATABASE_URL,
         connect_args=connect_args,
         echo=settings.LOG_LEVEL.upper() == "DEBUG",
+        **pool_kwargs,
     )
     return engine
 
