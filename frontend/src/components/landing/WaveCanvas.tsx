@@ -50,6 +50,7 @@ const FRAGMENT_SHADER = /* glsl */ `
   uniform vec3 uColorMid;
   uniform vec3 uColorLight;
   uniform vec3 uColorAccent;
+  uniform vec3 uColorWarm;
   uniform float uOpacity;
   varying vec2 vUv;
   varying float vElevation;
@@ -59,25 +60,33 @@ const FRAGMENT_SHADER = /* glsl */ `
     float gradientX = vUv.x + sin(uTime * 0.1) * 0.06;
     float mixFactor = smoothstep(0.0, 1.0, gradientX);
 
-    // Twist face: front vs back of ribbon get different colors
+    // Twist face: front vs back get different palettes
     float face = vTwist * 0.5 + 0.5;
 
+    // Front: deep -> mid -> warm along length
     vec3 frontColor = mix(uColorDeep, uColorMid, mixFactor);
+    frontColor = mix(frontColor, uColorWarm, smoothstep(0.4, 0.85, mixFactor) * 0.5);
+
+    // Back: mid -> light -> accent along length
     vec3 backColor = mix(uColorMid, uColorLight, mixFactor);
+    backColor = mix(backColor, uColorAccent, smoothstep(0.3, 0.7, mixFactor) * 0.35);
+
     vec3 baseColor = mix(frontColor, backColor, face);
 
     // Elevation highlights
     float elevNorm = smoothstep(-0.4, 0.4, vElevation);
-    baseColor = mix(baseColor, uColorLight, elevNorm * 0.35);
+    baseColor = mix(baseColor, uColorLight, elevNorm * 0.3);
 
-    // Accent streaks along the ribbon
+    // Warm accent streaks
     float streak = sin(vUv.x * 5.0 + vUv.y * 3.0 + uTime * 0.15) * 0.5 + 0.5;
     streak = smoothstep(0.6, 0.9, streak);
-    baseColor = mix(baseColor, uColorAccent, streak * 0.25);
+    baseColor = mix(baseColor, uColorAccent, streak * 0.2);
 
-    // Soften edges along the width
+    // Fade ends of the ribbon along its length
+    float endFade = smoothstep(0.0, 0.12, vUv.x) * smoothstep(1.0, 0.88, vUv.x);
+    // Soften edges along width
     float edgeFade = smoothstep(0.0, 0.08, vUv.y) * smoothstep(1.0, 0.92, vUv.y);
-    float alpha = uOpacity * edgeFade;
+    float alpha = uOpacity * edgeFade * endFade;
 
     gl_FragColor = vec4(baseColor, alpha);
   }
@@ -88,20 +97,23 @@ interface WaveColors {
   mid: [number, number, number];
   light: [number, number, number];
   accent: [number, number, number];
+  warm: [number, number, number];
 }
 
 const LIGHT_COLORS: WaveColors = {
-  deep: [0.13, 0.19, 0.42],   // deep navy
+  deep: [0.10, 0.14, 0.38],   // deep indigo
   mid: [0.23, 0.51, 0.96],    // brand blue #3b82f6
   light: [0.56, 0.73, 0.99],  // lighter blue
-  accent: [0.70, 0.33, 0.04], // copper accent
+  accent: [0.85, 0.40, 0.08], // warm amber
+  warm: [0.55, 0.22, 0.68],   // violet/purple
 };
 
 const DARK_COLORS: WaveColors = {
-  deep: [0.06, 0.08, 0.18],
-  mid: [0.18, 0.38, 0.78],
-  light: [0.37, 0.65, 0.98],
-  accent: [0.96, 0.62, 0.04],
+  deep: [0.06, 0.06, 0.22],
+  mid: [0.22, 0.42, 0.85],
+  light: [0.42, 0.68, 0.98],
+  accent: [0.96, 0.55, 0.12],
+  warm: [0.62, 0.28, 0.78],
 };
 
 export function WaveCanvas({ isDark = false }: { isDark?: boolean }) {
@@ -138,7 +150,8 @@ export function WaveCanvas({ isDark = false }: { isDark?: boolean }) {
       uColorMid: { value: new THREE.Vector3(...colors.mid) },
       uColorLight: { value: new THREE.Vector3(...colors.light) },
       uColorAccent: { value: new THREE.Vector3(...colors.accent) },
-      uOpacity: { value: 0.88 },
+      uColorWarm: { value: new THREE.Vector3(...colors.warm) },
+      uOpacity: { value: 0.9 },
     };
     uniformsRef.current = uniforms;
 
@@ -196,6 +209,7 @@ export function WaveCanvas({ isDark = false }: { isDark?: boolean }) {
     (u.uColorMid.value as THREE.Vector3).set(...colors.mid);
     (u.uColorLight.value as THREE.Vector3).set(...colors.light);
     (u.uColorAccent.value as THREE.Vector3).set(...colors.accent);
+    (u.uColorWarm.value as THREE.Vector3).set(...colors.warm);
   }, [isDark]);
 
   return (
