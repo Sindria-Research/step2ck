@@ -498,7 +498,7 @@ export function Landing() {
                 Enter Chiron.
               </h2>
               <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                No account needed — start in demo mode.
+                Try it out today - start learning now.
               </p>
             </div>
             <Link
