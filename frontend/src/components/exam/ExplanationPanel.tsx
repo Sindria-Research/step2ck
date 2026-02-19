@@ -5,7 +5,19 @@ import { useExam } from '../../context/ExamContext';
 import { api } from '../../api/api';
 
 export function ExplanationPanel() {
-  const { currentQuestion, selectedAnswer, isSubmitted, nextQuestion, finishExam, currentQuestionIndex, questions } = useExam();
+  const {
+    currentQuestion,
+    selectedAnswer,
+    isSubmitted,
+    nextQuestion,
+    finishExam,
+    currentQuestionIndex,
+    questions,
+    examType,
+    examFinished,
+    lockAnswerAndAdvance,
+    answeredQuestions,
+  } = useExam();
   const [aiExplainActive, setAiExplainActive] = useState(false);
   const [aiExplainLoading, setAiExplainLoading] = useState(false);
   const [aiExplainError, setAiExplainError] = useState<string | null>(null);
@@ -20,13 +32,48 @@ export function ExplanationPanel() {
 
   if (!currentQuestion) return null;
 
-  const showExplanation = isSubmitted;
+  const isTestMode = examType === 'test';
   const isCorrect = selectedAnswer === currentQuestion.correct_answer;
   const hasNext = currentQuestionIndex < questions.length - 1;
+  const isLocked = isTestMode && answeredQuestions.has(currentQuestion.id);
 
-  if (!showExplanation) {
-    return null;
+  // In test mode during the exam: only show navigation, no feedback
+  if (isTestMode && !examFinished) {
+    if (!isLocked) return null;
+    return (
+      <div className="shrink-0 px-6 py-4 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Answer locked. {hasNext ? 'Move to next question.' : 'Finish to see results.'}
+          </p>
+          <div className="flex gap-2">
+            {hasNext ? (
+              <button
+                type="button"
+                onClick={lockAnswerAndAdvance}
+                className="btn btn-primary flex items-center gap-2 py-2 px-4 rounded-lg focus-ring text-sm"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={finishExam}
+                className="btn btn-primary flex items-center gap-2 py-2 px-4 rounded-lg focus-ring text-sm"
+              >
+                Finish Test
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
+
+  // Practice mode or test review: show full explanations
+  const showExplanation = isTestMode ? examFinished && isSubmitted : isSubmitted;
+  if (!showExplanation) return null;
 
   const handleExplainWithAI = async () => {
     if (!currentQuestion) return;
@@ -84,7 +131,7 @@ export function ExplanationPanel() {
           </div>
         )}
 
-        {/* AI Explanation — prominent, inline, with markdown */}
+        {/* AI Explanation */}
         <div className="pt-4 border-t border-[var(--color-border)]">
           {!aiExplainActive ? (
             <button
@@ -97,7 +144,6 @@ export function ExplanationPanel() {
             </button>
           ) : (
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] overflow-hidden">
-              {/* Header */}
               <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />
@@ -123,8 +169,6 @@ export function ExplanationPanel() {
                   </button>
                 </div>
               </div>
-
-              {/* Body */}
               <div className="px-5 py-4">
                 {aiExplainLoading ? (
                   <div className="flex items-center gap-3 py-4">
@@ -147,27 +191,29 @@ export function ExplanationPanel() {
           )}
         </div>
 
-        {/* Next question or Finish exam */}
-        <div className="mt-auto pt-4 flex justify-end">
-          {hasNext ? (
-            <button
-              type="button"
-              onClick={nextQuestion}
-              className="btn btn-primary flex items-center gap-2 py-2.5 px-4 rounded-lg focus-ring"
-            >
-              Next question
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={finishExam}
-              className="btn btn-primary flex items-center gap-2 py-2.5 px-4 rounded-lg focus-ring"
-            >
-              Finish exam
-            </button>
-          )}
-        </div>
+        {/* Next question or Finish */}
+        {!examFinished && (
+          <div className="mt-auto pt-4 flex justify-end">
+            {hasNext ? (
+              <button
+                type="button"
+                onClick={nextQuestion}
+                className="btn btn-primary flex items-center gap-2 py-2.5 px-4 rounded-lg focus-ring"
+              >
+                Next question
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={finishExam}
+                className="btn btn-primary flex items-center gap-2 py-2.5 px-4 rounded-lg focus-ring"
+              >
+                Finish exam
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
