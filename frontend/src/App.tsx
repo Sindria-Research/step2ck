@@ -20,6 +20,8 @@ import { Flashcards } from './pages/Flashcards';
 import { Bookmarks } from './pages/Bookmarks';
 import { LabValues } from './pages/LabValues';
 import { Settings } from './pages/Settings';
+import { ToS } from './pages/ToS';
+import { Privacy } from './pages/Privacy';
 
 function ProtectedPage({ children }: { children: React.ReactNode }) {
   return (
@@ -40,6 +42,8 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Landing />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/tos" element={<ToS />} />
+                  <Route path="/privacy" element={<Privacy />} />
                   <Route path="/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
                   <Route path="/exam/config" element={<ProtectedPage><ExamConfig /></ProtectedPage>} />
                   <Route path="/previous-tests" element={<ProtectedPage><PreviousTests /></ProtectedPage>} />
