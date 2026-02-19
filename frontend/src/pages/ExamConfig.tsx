@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Play, Sparkles, ArrowLeft, Info } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Play, Sparkles, ArrowLeft, Info, Clock } from 'lucide-react';
 import { api } from '../api/api';
+import type { ExamType } from '../context/ExamContext';
 
 const SUBJECTS = [
   'Internal Medicine',
@@ -25,8 +26,10 @@ const QUICK_COUNTS = [10, 20, 40];
 
 export function ExamConfig() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const rootRef = useRef<HTMLDivElement>(null);
 
+  const examType: ExamType = searchParams.get('type') === 'test' ? 'test' : 'practice';
   const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(new Set(SUBJECTS));
   const [mode, setMode] = useState<'all' | 'unused' | 'incorrect' | 'personalized'>('all');
   const [questionCount, setQuestionCount] = useState(20);
@@ -35,6 +38,8 @@ export function ExamConfig() {
   const [sections, setSections] = useState<string[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState<string | null>(null);
+  const [timeLimitPerQ, setTimeLimitPerQ] = useState<number | null>(null);
+  const [timeLimitTotal, setTimeLimitTotal] = useState<number | null>(null);
 
   const [showTip, setShowTip] = useState(() => !localStorage.getItem('chiron-exam-tip-dismissed'));
   const dismissTip = () => {
@@ -108,6 +113,9 @@ export function ExamConfig() {
       subjects: Array.from(selectedSubjects),
       mode: isPersonalized ? 'personalized' : mode,
       count: isPersonalized ? 1 : finalCount,
+      examType,
+      timeLimitPerQuestion: examType === 'test' ? timeLimitPerQ : null,
+      timeLimitTotal: examType === 'test' ? timeLimitTotal : null,
     };
     sessionStorage.setItem('examConfig', JSON.stringify(config));
     navigate('/exam');
@@ -135,10 +143,10 @@ export function ExamConfig() {
                 Back to dashboard
               </button>
               <h1 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.08]">
-                New test
+                {examType === 'test' ? 'New test' : 'New practice'}
               </h1>
               <p className="mt-4 text-base md:text-lg text-[var(--color-text-secondary)] max-w-lg leading-relaxed">
-                Pick your subjects, choose a mode, and start studying.
+                Pick your subjects, choose a mode, and start {examType === 'test' ? 'your exam' : 'studying'}.
               </p>
             </div>
           </div>
@@ -208,18 +216,22 @@ export function ExamConfig() {
           </div>
         </div>
 
-        {/* ── Mode + Count (feature-row-alt, two mockups side by side) ── */}
+        {/* ── Mode + Count + Timing ── */}
         <div className="chiron-feature-row chiron-feature-row-alt">
           <div className="container">
             <div className="chiron-reveal mb-6" data-reveal>
               <p className="chiron-feature-label">Settings</p>
-              <h2 className="chiron-feature-heading">How to study</h2>
+              <h2 className="chiron-feature-heading">
+                {examType === 'test' ? 'Configure your test' : 'How to study'}
+              </h2>
               <p className="chiron-feature-body">
-                Pick a question mode and set how many questions you want.
+                {examType === 'test'
+                  ? 'Pick a question mode, set how many questions you want, and configure time limits.'
+                  : 'Pick a question mode and set how many questions you want.'}
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4 chiron-reveal chiron-reveal-delay-1" data-reveal>
+            <div className={`grid ${examType === 'test' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4 chiron-reveal chiron-reveal-delay-1`} data-reveal>
               {/* Mode panel */}
               <div className="chiron-mockup">
                 <p className="chiron-mockup-label mb-3">Mode</p>
@@ -337,6 +349,68 @@ export function ExamConfig() {
                   </div>
                 </div>
               </div>
+
+              {examType === 'test' && (
+                <div className="chiron-mockup">
+                  <p className="chiron-mockup-label mb-3">Time Limits</p>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" /> Per question
+                      </p>
+                      <div className="flex gap-2 flex-wrap">
+                        {([
+                          { label: 'None', value: null },
+                          { label: '1 min', value: 60 },
+                          { label: '1.5 min', value: 90 },
+                          { label: '2 min', value: 120 },
+                          { label: '3 min', value: 180 },
+                        ] as const).map((opt) => (
+                          <button
+                            key={opt.label}
+                            type="button"
+                            onClick={() => setTimeLimitPerQ(opt.value)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border focus-ring ${
+                              timeLimitPerQ === opt.value
+                                ? 'chiron-btn-primary border-transparent text-white'
+                                : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)]'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" /> Overall
+                      </p>
+                      <div className="flex gap-2 flex-wrap">
+                        {([
+                          { label: 'None', value: null },
+                          { label: '30 min', value: 1800 },
+                          { label: '60 min', value: 3600 },
+                          { label: '90 min', value: 5400 },
+                          { label: '120 min', value: 7200 },
+                        ] as const).map((opt) => (
+                          <button
+                            key={opt.label}
+                            type="button"
+                            onClick={() => setTimeLimitTotal(opt.value)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border focus-ring ${
+                              timeLimitTotal === opt.value
+                                ? 'chiron-btn-primary border-transparent text-white'
+                                : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)]'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -378,7 +452,7 @@ export function ExamConfig() {
                   {isPersonalized ? 'Start your session.' : `Ready — ${finalCount} questions.`}
                 </h2>
                 <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                  {selectedSubjects.size} subjects · {mode === 'all' ? 'All questions' : mode} mode
+                  {selectedSubjects.size} subjects · {mode === 'all' ? 'All questions' : mode} mode · {examType === 'test' ? 'Test' : 'Practice'}
                 </p>
               </div>
               <button
@@ -392,7 +466,7 @@ export function ExamConfig() {
                 }`}
               >
                 <Play className="w-5 h-5 fill-current" />
-                {isPersonalized ? 'Start Session' : 'Start Test'}
+                {isPersonalized ? 'Start Session' : examType === 'test' ? 'Start Test' : 'Start Practice'}
               </button>
             </div>
           </div>
