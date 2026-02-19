@@ -1732,3 +1732,65 @@ select:focus-visible {
 .flashcard-content sup {
   font-size: 0.75em;
 }
+
+/* ── AI Explanation markdown ───────────────────────────────────── */
+.ai-explanation-content p {
+  margin: 0.6em 0;
+  line-height: 1.7;
+}
+.ai-explanation-content p:first-child { margin-top: 0; }
+.ai-explanation-content p:last-child  { margin-bottom: 0; }
+
+.ai-explanation-content strong {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.ai-explanation-content em {
+  font-style: italic;
+}
+
+.ai-explanation-content h1,
+.ai-explanation-content h2,
+.ai-explanation-content h3,
+.ai-explanation-content h4 {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 1em 0 0.4em;
+}
+.ai-explanation-content h1 { font-size: 1.1em; }
+.ai-explanation-content h2 { font-size: 1.05em; }
+.ai-explanation-content h3 { font-size: 1em; }
+
+.ai-explanation-content ul,
+.ai-explanation-content ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+.ai-explanation-content ul { list-style: disc; }
+.ai-explanation-content ol { list-style: decimal; }
+.ai-explanation-content li { margin: 0.3em 0; line-height: 1.6; }
+.ai-explanation-content li > p { margin: 0.2em 0; }
+
+.ai-explanation-content blockquote {
+  margin: 0.6em 0;
+  padding: 0.5em 1em;
+  border-left: 3px solid var(--color-accent);
+  background: var(--color-bg-secondary);
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.ai-explanation-content code {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  font-size: 0.88em;
+  padding: 0.15em 0.35em;
+  border-radius: 0.25rem;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.ai-explanation-content hr {
+  margin: 1em 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
+}

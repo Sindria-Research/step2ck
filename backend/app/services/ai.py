@@ -25,7 +25,7 @@ def _fallback_explanation(
     selection_text: Optional[str],
 ) -> str:
     if selection_text:
-        base = "AI explanations are not configured yet. "
+        base = "Chiron is not configured yet. "
         if question.correct_explanation:
             return (
                 f"{base}For now, use this core teaching point:\n\n"
@@ -46,7 +46,7 @@ def _fallback_explanation(
     if question.incorrect_explanation:
         parts.append(f"Why other options are wrong:\n{question.incorrect_explanation}")
     if not parts:
-        return "AI explanations are not configured yet, and no stored explanation exists."
+        return "Chiron is not configured yet, and no stored explanation exists."
     return "\n\n".join(parts)
 
 
@@ -102,14 +102,18 @@ def generate_ai_explanation(
 
     payload = {
         "model": settings.AI_MODEL,
-        "temperature": 0.2,
-        "max_tokens": 450,
+        "temperature": 0.3,
+        "max_tokens": 800,
         "messages": [
             {
                 "role": "system",
                 "content": (
-                    "You are a concise USMLE Step 2 CK tutor. Explain clearly with clinical reasoning, "
-                    "avoid hallucinations, and stay grounded in the provided question context."
+                    "You are a concise USMLE Step 2 CK tutor. "
+                    "Respond in well-structured markdown. "
+                    "Use **bold** for key terms, bullet lists for differentials, "
+                    "and keep paragraphs short. "
+                    "Explain clearly with clinical reasoning. "
+                    "Stay grounded in the provided question context."
                 ),
             },
             {

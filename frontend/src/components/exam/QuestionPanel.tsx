@@ -1,8 +1,9 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Highlighter, Wand2, Bookmark } from 'lucide-react';
+import { Highlighter, Wand2, Bookmark, Sparkles } from 'lucide-react';
+// Wand2 used in selection toolbar, Sparkles in selection explain popup
+import Markdown from 'react-markdown';
 import { useExam } from '../../context/ExamContext';
 import { useToast } from '../../context/ToastContext';
-import { StreamingText } from '../common/StreamingText';
 import { getSelectionOffsets, segmentTextWithRanges } from '../../utils/selectionUtils';
 import { api } from '../../api/api';
 
@@ -24,7 +25,6 @@ export function QuestionPanel() {
   const [selectionExplainLoading, setSelectionExplainLoading] = useState(false);
   const [selectionExplainError, setSelectionExplainError] = useState<string | null>(null);
   const [selectionExplainText, setSelectionExplainText] = useState('');
-  const [selectionExplainMeta, setSelectionExplainMeta] = useState<{ model: string; fallback: boolean } | null>(null);
   const { addToast } = useToast();
   const [bookmarked, setBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
@@ -102,7 +102,6 @@ export function QuestionPanel() {
     setSelectionExplainLoading(true);
     setSelectionExplainError(null);
     setSelectionExplainText('');
-    setSelectionExplainMeta(null);
     window.getSelection()?.removeAllRanges();
     const selectionText = selectionToolbar.text;
     setSelectionToolbar(null);
@@ -113,10 +112,9 @@ export function QuestionPanel() {
       })
       .then((res) => {
         setSelectionExplainText(res.explanation);
-        setSelectionExplainMeta({ model: res.model, fallback: res.fallback_used });
       })
       .catch((e) => {
-        setSelectionExplainError(e instanceof Error ? e.message : 'Failed to explain selection');
+        setSelectionExplainError(e instanceof Error ? e.message : 'Chiron couldn\u2019t explain this one');
       })
       .finally(() => {
         setSelectionExplainLoading(false);
@@ -128,7 +126,6 @@ export function QuestionPanel() {
     setSelectionExplainLoading(false);
     setSelectionExplainError(null);
     setSelectionExplainText('');
-    setSelectionExplainMeta(null);
   }, [currentQuestion?.id]);
 
   useEffect(() => {
@@ -215,10 +212,10 @@ export function QuestionPanel() {
             type="button"
             onClick={handleExplainSelection}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
-            title="Explain selection (AI)"
+            title="Ask Chiron about selection"
           >
             <Wand2 className="w-3.5 h-3.5 text-[var(--color-accent)]" />
-            Explain selection
+            Ask Chiron
           </button>
           <button
             type="button"
@@ -235,41 +232,38 @@ export function QuestionPanel() {
       {/* Explain selection response */}
       {explainSelectionActive && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-30 rounded-lg">
-          <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl p-6 max-w-md shadow-xl">
-            {selectionExplainLoading ? (
-              <>
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-sm font-medium thinking-text">
-                    Explaining selection…
+          <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />
+                <span className="text-sm font-semibold text-[var(--color-text-primary)]">Chiron</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExplainSelectionActive(false)}
+                className="text-xs text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
+              >
+                Dismiss
+              </button>
+            </div>
+            <div className="px-5 py-4 max-h-[50vh] overflow-y-auto">
+              {selectionExplainLoading ? (
+                <div className="flex items-center gap-3 py-4">
+                  <div className="w-5 h-5 border-2 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm text-[var(--color-text-secondary)] thinking-text">
+                    Chiron is thinking…
                   </span>
                 </div>
-                <p className="text-xs text-[var(--color-text-tertiary)] min-h-[1.5rem]">
-                  <StreamingText text="Analyzing selected text..." charDelay={24} cursor />
+              ) : selectionExplainError ? (
+                <p className="text-sm text-[var(--color-error)]">
+                  {selectionExplainError}
                 </p>
-              </>
-            ) : selectionExplainError ? (
-              <p className="text-xs text-[var(--color-error)] min-h-[1.5rem]">
-                {selectionExplainError}
-              </p>
-            ) : (
-              <>
-                {selectionExplainMeta && (
-                  <p className="text-[0.68rem] uppercase tracking-[0.08em] text-[var(--color-text-muted)] mb-2">
-                    {selectionExplainMeta.fallback ? 'Built-in explanation fallback' : `Model: ${selectionExplainMeta.model}`}
-                  </p>
-                )}
-                <p className="text-xs text-[var(--color-text-tertiary)] min-h-[1.5rem] whitespace-pre-wrap">
-                  <StreamingText text={selectionExplainText} charDelay={10} cursor />
-                </p>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={() => setExplainSelectionActive(false)}
-              className="mt-3 text-xs text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] focus-ring"
-            >
-              Dismiss
-            </button>
+              ) : (
+                <div className="ai-explanation-content text-sm text-[var(--color-text-secondary)] leading-relaxed">
+                  <Markdown>{selectionExplainText}</Markdown>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
