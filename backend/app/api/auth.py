@@ -17,7 +17,7 @@ from app.services.auth import (
 
 router = APIRouter()
 
-DEMO_EMAIL = "demo@step2ck.local"
+DEMO_EMAIL = "demo@chiron.local"
 
 
 @router.post("/login", response_model=Token)
