@@ -33,7 +33,8 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = ""  # Optional; used to verify Google ID tokens (audience check)
 
     # Supabase Auth (required in production)
-    SUPABASE_JWT_SECRET: str = ""
+    SUPABASE_URL: str = ""  # e.g. https://<ref>.supabase.co — used to fetch JWKS for ES256 tokens
+    SUPABASE_JWT_SECRET: str = ""  # HS256 fallback (older Supabase projects)
 
     # CORS: comma-separated string in production (e.g. CORS_ORIGINS=https://app.com)
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]

@@ -1,5 +1,6 @@
 """Auth service: JWT, Supabase Auth, Google OAuth, and user resolution."""
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -12,6 +13,39 @@ from app.config import get_settings
 from app.models import User
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# JWKS cache for Supabase ES256 token verification
+# ---------------------------------------------------------------------------
+_jwks_cache: dict[str, Any] = {}
+_JWKS_CACHE_TTL = 3600  # 1 hour
+
+
+def _fetch_jwks(supabase_url: str) -> list[dict[str, Any]]:
+    """Fetch (and cache) the JWKS from Supabase's well-known endpoint."""
+    now = time.time()
+    cached = _jwks_cache.get(supabase_url)
+    if cached and now - cached["ts"] < _JWKS_CACHE_TTL:
+        return cached["keys"]
+
+    jwks_url = f"{supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json"
+    with httpx.Client(timeout=10.0) as client:
+        r = client.get(jwks_url)
+        r.raise_for_status()
+        keys = r.json().get("keys", [])
+
+    _jwks_cache[supabase_url] = {"keys": keys, "ts": now}
+    return keys
+
+
+_JWKS_ALGORITHMS = {"ES256", "RS256", "EdDSA"}
+
+
+def _find_key_by_kid(keys: list[dict], kid: str) -> Optional[dict]:
+    for k in keys:
+        if k.get("kid") == kid:
+            return k
+    return None
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -119,35 +153,66 @@ def get_or_create_user_from_google(
     return user
 
 
+def _extract_claims(payload: dict[str, Any]) -> Optional[dict[str, Any]]:
+    """Pull the user-relevant claims out of a verified Supabase JWT payload."""
+    sub = payload.get("sub")
+    email = payload.get("email")
+    if not sub or not email:
+        return None
+    user_metadata = payload.get("user_metadata", {})
+    return {
+        "sub": sub,
+        "email": email,
+        "full_name": user_metadata.get("full_name") or user_metadata.get("name"),
+        "avatar_url": user_metadata.get("avatar_url") or user_metadata.get("picture"),
+    }
+
+
 def verify_supabase_token(token: str) -> Optional[dict[str, Any]]:
     """Verify a Supabase-issued JWT and extract user claims.
 
+    Supports ES256 (JWKS, newer Supabase projects) and HS256 (JWT secret, legacy).
     Returns dict with sub, email, full_name, avatar_url on success, None on failure.
     """
     settings = get_settings()
-    if not settings.SUPABASE_JWT_SECRET:
-        return None
-    try:
-        payload = jwt.decode(
-            token,
-            settings.SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
-            options={"require_exp": True, "require_sub": True},
-        )
-        sub = payload.get("sub")
-        email = payload.get("email")
-        if not sub or not email:
-            return None
-        user_metadata = payload.get("user_metadata", {})
-        return {
-            "sub": sub,
-            "email": email,
-            "full_name": user_metadata.get("full_name") or user_metadata.get("name"),
-            "avatar_url": user_metadata.get("avatar_url") or user_metadata.get("picture"),
-        }
-    except JWTError as exc:
-        logger.debug("Supabase JWT verification failed: %s", exc)
-        return None
+
+    # --- JWKS verification (preferred for newer Supabase signing keys) ---
+    if settings.SUPABASE_URL:
+        try:
+            header = jwt.get_unverified_header(token)
+            kid = header.get("kid")
+            alg = header.get("alg")
+            if kid and alg in _JWKS_ALGORITHMS:
+                keys = _fetch_jwks(settings.SUPABASE_URL)
+                key = _find_key_by_kid(keys, kid)
+                if key:
+                    payload = jwt.decode(
+                        token,
+                        key,
+                        algorithms=[alg],
+                        audience="authenticated",
+                        options={"require_exp": True, "require_sub": True},
+                    )
+                    return _extract_claims(payload)
+        except JWTError as exc:
+            logger.debug("Supabase JWKS (%s) verification failed: %s", alg, exc)
+        except httpx.HTTPError as exc:
+            logger.warning("Failed to fetch Supabase JWKS: %s", exc)
+
+    # --- HS256 fallback (legacy Supabase projects using JWT secret) ---
+    if settings.SUPABASE_JWT_SECRET:
+        try:
+            payload = jwt.decode(
+                token,
+                settings.SUPABASE_JWT_SECRET,
+                algorithms=["HS256"],
+                options={"require_exp": True, "require_sub": True},
+            )
+            return _extract_claims(payload)
+        except JWTError as exc:
+            logger.debug("Supabase HS256 verification failed: %s", exc)
+
+    return None
 
 
 def get_or_create_user_from_supabase(
