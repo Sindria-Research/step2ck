@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { SidebarProvider } from './context/SidebarContext';
@@ -98,6 +99,7 @@ function App() {
           </Suspense>
         </ThemeProvider>
       </BrowserRouter>
+      <Analytics />
     </ErrorBoundary>
   );
 }
