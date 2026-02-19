@@ -122,12 +122,6 @@ export function Flashcards() {
     setView('review');
   };
 
-  const handleUpdateDeck = async (id: number, updates: { name?: string; description?: string }) => {
-    const updated = await api.flashcards.updateDeck(id, updates);
-    setDecks((prev) => prev.map((d) => (d.id === id ? updated : d)));
-    if (selectedDeck?.id === id) setSelectedDeck(updated);
-  };
-
   const handleDeleteDeck = async (id: number) => {
     await api.flashcards.deleteDeck(id);
     setDecks((prev) => prev.filter((d) => d.id !== id));
