@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { ChevronRight, Sparkles, Layers } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { useExam } from '../../context/ExamContext';
+import { useToast } from '../../context/ToastContext';
 import { api } from '../../api/api';
 
 export function ExplanationPanel() {
@@ -18,17 +19,60 @@ export function ExplanationPanel() {
     lockAnswerAndAdvance,
     answeredQuestions,
   } = useExam();
+  const { addToast } = useToast();
   const [aiExplainActive, setAiExplainActive] = useState(false);
   const [aiExplainLoading, setAiExplainLoading] = useState(false);
   const [aiExplainError, setAiExplainError] = useState<string | null>(null);
   const [aiExplainText, setAiExplainText] = useState('');
+  const [flashcardCreated, setFlashcardCreated] = useState(false);
+  const [flashcardLoading, setFlashcardLoading] = useState(false);
 
   useEffect(() => {
     setAiExplainActive(false);
     setAiExplainLoading(false);
     setAiExplainError(null);
     setAiExplainText('');
+    setFlashcardCreated(false);
   }, [currentQuestion?.id]);
+
+  const handleCreateFlashcard = useCallback(async () => {
+    if (!currentQuestion || flashcardLoading || flashcardCreated) return;
+    setFlashcardLoading(true);
+    try {
+      const decks = await api.flashcards.listDecks();
+      let deck = decks.find((d) => d.name === 'Missed Questions');
+      if (!deck) {
+        deck = await api.flashcards.createDeck({
+          name: 'Missed Questions',
+          description: 'Auto-generated from incorrect exam answers',
+        });
+      }
+
+      const stem = currentQuestion.question_stem.length > 300
+        ? currentQuestion.question_stem.slice(0, 300) + '…'
+        : currentQuestion.question_stem;
+
+      const correctKey = currentQuestion.correct_answer;
+      const correctText = currentQuestion.choices[correctKey] ?? '';
+      let back = `**${correctKey}. ${correctText}**`;
+      if (currentQuestion.correct_explanation) {
+        back += `\n\n${currentQuestion.correct_explanation}`;
+      }
+
+      await api.flashcards.createCard({
+        deck_id: deck.id,
+        front: stem,
+        back,
+        question_id: currentQuestion.id,
+      });
+      setFlashcardCreated(true);
+      addToast('Flashcard created in "Missed Questions" deck', 'success');
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Failed to create flashcard', 'error');
+    } finally {
+      setFlashcardLoading(false);
+    }
+  }, [currentQuestion, flashcardLoading, flashcardCreated, addToast]);
 
   if (!currentQuestion) return null;
 
@@ -97,7 +141,7 @@ export function ExplanationPanel() {
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[var(--color-bg-secondary)]">
       <div className="p-6 flex-1 flex flex-col gap-5">
-        {/* Result badge + correct answer */}
+        {/* Result badge + correct answer + flashcard button */}
         <div className="flex items-center gap-3">
           <span className={`badge ${isCorrect ? 'badge-success' : 'badge-error'}`}>
             {isCorrect ? 'Correct' : 'Incorrect'}
@@ -106,6 +150,22 @@ export function ExplanationPanel() {
             <span className="text-sm font-medium text-[var(--color-success)]">
               Correct answer: {currentQuestion.correct_answer}
             </span>
+          )}
+          {!isCorrect && (
+            <button
+              type="button"
+              onClick={handleCreateFlashcard}
+              disabled={flashcardCreated || flashcardLoading}
+              className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all focus-ring border ${
+                flashcardCreated
+                  ? 'border-[var(--color-success)] text-[var(--color-success)] bg-[color-mix(in_srgb,var(--color-success)_8%,transparent)] cursor-default'
+                  : 'border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)]'
+              }`}
+              title={flashcardCreated ? 'Flashcard saved' : 'Save as flashcard'}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              {flashcardLoading ? 'Saving…' : flashcardCreated ? 'Saved' : 'Save as Flashcard'}
+            </button>
           )}
         </div>
 
