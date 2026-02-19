@@ -24,7 +24,7 @@ export function Header({ examContext = null }: HeaderProps) {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   return (

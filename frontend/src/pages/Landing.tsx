@@ -171,14 +171,6 @@ export function Landing() {
             >
               Features
             </a>
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="p-2 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors focus-ring"
-              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
             <Link to="/login" className="btn btn-ghost text-sm px-4 py-2 rounded-md focus-ring">
               Sign in
             </Link>
@@ -506,7 +498,7 @@ export function Landing() {
                 Enter Chiron.
               </h2>
               <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                No account needed — start in demo mode.
+                Try it out today - start learning now.
               </p>
             </div>
             <Link

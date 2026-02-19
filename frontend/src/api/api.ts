@@ -22,7 +22,7 @@ import type {
   TokenResponse,
   User,
 } from './types';
-import { request } from './request';
+import { request, isPublicPath } from './request';
 
 export const api = {
   auth: {
@@ -180,7 +180,9 @@ export const api = {
       if (res.status === 401) {
         if (supabase) await supabase.auth.signOut();
         localStorage.removeItem('token');
-        window.location.href = '/login';
+        if (!isPublicPath(window.location.pathname)) {
+          window.location.href = '/login';
+        }
         throw new Error('Unauthorized');
       }
       if (!res.ok) {

@@ -17,18 +17,18 @@
 - [x] Bookmarks (save questions for later review)
 - [x] Grouped sidebar navigation (Study / QBank / Tools)
 - [x] Chiron branding and design system
+- [x] Google OAuth via Supabase (full flow: frontend button, Supabase auth, backend JWKS verification)
+- [x] Supabase JWKS token verification (ES256/RS256/EdDSA with cached key discovery)
+- [x] Bookmark toggle on exam question panel
+- [x] Bookmark count badge in sidebar
+- [x] Exam session auto-creation on exam start
+- [x] Retake from Previous Tests (regenerate same config)
 
 ## In Progress
 
 ### Exam Sessions Integration
-- [ ] Wire exam completion to auto-create an ExamSession record
-- [ ] Wire individual question answers to ExamSessionAnswer records
-- [ ] Enable review mode from Previous Tests (load session answers + questions)
-- [ ] Enable retake from Previous Tests (regenerate same config)
-
-### Bookmarks Integration
-- [ ] Add bookmark toggle to the exam question panel
-- [ ] Show bookmark count in sidebar or dashboard
+- [ ] Wire individual question answers to ExamSessionAnswer records (answers recorded but not persisted to session)
+- [ ] Enable review mode from Previous Tests (load session answers + questions instead of regenerating)
 
 ### Notes Integration
 - [ ] Add quick-note button on exam explanation panel
@@ -37,7 +37,6 @@
 ## Planned
 
 ### Auth
-- [ ] Google OAuth (backend ready, frontend button placeholder)
 - [ ] Email/password registration + email verification
 - [ ] Refresh tokens for longer sessions
 

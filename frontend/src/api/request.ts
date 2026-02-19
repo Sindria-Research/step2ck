@@ -5,6 +5,12 @@ const getToken = (): string | null => {
   return localStorage.getItem('token');
 };
 
+/** Paths that are public (no auth required). Used to avoid redirecting to login on 401 when user is on these pages. */
+export function isPublicPath(pathname: string): boolean {
+  const p = pathname.replace(/\/$/, '') || '/';
+  return p === '/' || p === '/login' || p === '/tos' || p === '/privacy';
+}
+
 export const setToken = (token: string | null) => {
   if (token) localStorage.setItem('token', token);
   else localStorage.removeItem('token');
@@ -47,7 +53,9 @@ export async function request<T>(
   if (res.status === 401) {
     if (supabase) await supabase.auth.signOut();
     setToken(null);
-    window.location.href = '/login';
+    if (!isPublicPath(window.location.pathname)) {
+      window.location.href = '/login';
+    }
     throw new Error('Unauthorized');
   }
   if (!res.ok) {

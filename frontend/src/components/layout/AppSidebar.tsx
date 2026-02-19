@@ -115,7 +115,7 @@ export function AppSidebar() {
   const handleLogout = () => {
     setUserMenuOpen(false);
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   useEffect(() => {
