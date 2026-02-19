@@ -19,6 +19,7 @@ interface ExamConfig {
   timeLimitPerQuestion?: number | null;
   timeLimitTotal?: number | null;
   existingSessionId?: number | null;
+  questionIds?: string[] | null;
 }
 
 export interface HighlightRange {
@@ -220,12 +221,19 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     setTimeLimitTotal(config.timeLimitTotal ?? null);
 
     try {
-      const res = await api.exams.generate({
-        subjects: config.subjects,
-        mode: config.mode,
-        count: config.count,
-      });
-      const questionList = res.questions ?? [];
+      let questionList: Question[];
+
+      if (config.questionIds?.length) {
+        questionList = await api.questions.getByIds(config.questionIds);
+      } else {
+        const res = await api.exams.generate({
+          subjects: config.subjects,
+          mode: config.mode,
+          count: config.count,
+        });
+        questionList = res.questions ?? [];
+      }
+
       setQuestions(questionList);
       setCurrentQuestionIndex(0);
       setSelectedAnswer(null);

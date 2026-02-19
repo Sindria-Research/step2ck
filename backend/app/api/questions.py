@@ -64,6 +64,21 @@ def question_stats(db: Session = Depends(get_db)):
     return {status: count for status, count in rows}
 
 
+@router.post("/by-ids", response_model=list[QuestionResponse])
+def get_questions_by_ids(
+    body: dict,
+    db: Session = Depends(get_db),
+):
+    """Fetch questions by a list of IDs, preserving the requested order."""
+    ids = body.get("ids", [])
+    if not ids:
+        return []
+    rows = db.query(Question).filter(Question.id.in_(ids)).all()
+    by_id = {q.id: q for q in rows}
+    ordered = [by_id[qid] for qid in ids if qid in by_id]
+    return [QuestionResponse.model_validate(q) for q in ordered]
+
+
 @router.get("/{question_id}", response_model=QuestionResponse)
 def get_question(question_id: str, db: Session = Depends(get_db)):
     """Get a single question by id."""

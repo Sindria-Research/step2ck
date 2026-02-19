@@ -55,6 +55,11 @@ export const api = {
     get: (id: string) => request<Question>(`/questions/${id}`),
     sections: () =>
       request<{ sections: string[] }>('/questions/sections'),
+    getByIds: (ids: string[]) =>
+      request<Question[]>('/questions/by-ids', {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      }),
   },
   progress: {
     list: () =>

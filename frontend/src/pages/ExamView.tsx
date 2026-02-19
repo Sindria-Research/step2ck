@@ -38,6 +38,7 @@ export function ExamView() {
         timeLimitPerQuestion: config.timeLimitPerQuestion ?? null,
         timeLimitTotal: config.timeLimitTotal ?? null,
         existingSessionId: config.existingSessionId ?? null,
+        questionIds: config.questionIds ?? null,
       });
     } catch {
       navigate('/exam/config');

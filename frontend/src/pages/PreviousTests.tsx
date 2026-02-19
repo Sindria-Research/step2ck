@@ -30,32 +30,47 @@ export function PreviousTests() {
       : { examType: 'test' as const, questionMode: mode };
   };
 
-  const handleContinueOrReview = (session: ExamSession) => {
+  const getSessionQuestionIds = async (sessionId: number): Promise<string[]> => {
+    try {
+      const detail = await api.examSessions.get(sessionId);
+      return detail.answers
+        .sort((a, b) => a.order_index - b.order_index)
+        .map((a) => a.question_id);
+    } catch {
+      return [];
+    }
+  };
+
+  const handleContinueOrReview = async (session: ExamSession) => {
     const subjects = session.subjects
       ? session.subjects.split(',').map((s) => s.trim())
       : [];
     const { examType, questionMode } = parseSessionMode(session.mode);
+    const questionIds = await getSessionQuestionIds(session.id);
     const config = {
       subjects,
       mode: questionMode,
       count: session.total_questions,
       examType,
       existingSessionId: session.id,
+      questionIds: questionIds.length > 0 ? questionIds : undefined,
     };
     sessionStorage.setItem('examConfig', JSON.stringify(config));
     navigate('/exam');
   };
 
-  const handleRetake = (session: ExamSession) => {
+  const handleRetake = async (session: ExamSession) => {
     const subjects = session.subjects
       ? session.subjects.split(',').map((s) => s.trim())
       : [];
     const { examType, questionMode } = parseSessionMode(session.mode);
+    const questionIds = await getSessionQuestionIds(session.id);
     const config = {
       subjects,
       mode: questionMode,
       count: session.total_questions,
       examType,
+      questionIds: questionIds.length > 0 ? questionIds : undefined,
     };
     sessionStorage.setItem('examConfig', JSON.stringify(config));
     navigate('/exam');
