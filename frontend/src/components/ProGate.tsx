@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Lock, Zap, ArrowRight } from 'lucide-react';
+import { Lock, Zap, ArrowRight, Crown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface ProGateProps {
@@ -122,6 +122,56 @@ export function UpgradePrompt({ message, compact }: UpgradePromptProps) {
       >
         Upgrade
         <ArrowRight className="w-3 h-3" />
+      </Link>
+    </div>
+  );
+}
+
+
+interface FreeTierBannerProps {
+  used?: number;
+  limit?: number;
+  feature: string;
+}
+
+export function FreeTierBanner({ used, limit, feature }: FreeTierBannerProps) {
+  const { isPro } = useAuth();
+  if (isPro) return null;
+
+  const showUsage = used != null && limit != null;
+  const atLimit = showUsage && used >= limit;
+
+  return (
+    <div className={`rounded-xl border p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 ${
+      atLimit
+        ? 'border-[var(--color-error)]/30 bg-[var(--color-error)]/5'
+        : 'border-[var(--color-brand-blue)]/20 bg-gradient-to-r from-[var(--color-brand-blue)]/5 to-transparent'
+    }`}>
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+        atLimit ? 'bg-[var(--color-error)]/10' : 'bg-[var(--color-brand-blue)]/10'
+      }`}>
+        <Crown className={`w-4.5 h-4.5 ${atLimit ? 'text-[var(--color-error)]' : 'text-[var(--color-brand-blue)]'}`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-[var(--color-text-primary)]">
+          {atLimit ? `You've reached the free plan limit` : 'Free plan'}
+        </p>
+        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+          {showUsage
+            ? `${used}/${limit} ${feature} used. ${atLimit ? 'Upgrade for unlimited.' : 'Upgrade to Pro for unlimited access.'}`
+            : `Limited ${feature} on free plan. Upgrade to Pro for unlimited access.`}
+        </p>
+      </div>
+      <Link
+        to="/pricing"
+        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shrink-0 ${
+          atLimit
+            ? 'bg-[var(--color-brand-blue)] text-white hover:brightness-110 shadow-sm'
+            : 'bg-[var(--color-brand-blue)]/10 text-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue)]/20'
+        }`}
+      >
+        <Zap className="w-3.5 h-3.5" />
+        Upgrade to Pro
       </Link>
     </div>
   );

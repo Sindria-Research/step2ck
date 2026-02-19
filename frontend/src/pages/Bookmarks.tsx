@@ -3,6 +3,7 @@ import { Bookmark as BookmarkIcon, Trash2, BookOpen } from 'lucide-react';
 import { api } from '../api/api';
 import type { BookmarkResponse, Question } from '../api/types';
 import { EmptyState } from '../components/common';
+import { FreeTierBanner } from '../components/ProGate';
 
 export function Bookmarks() {
   const [bookmarks, setBookmarks] = useState<BookmarkResponse[]>([]);
@@ -45,11 +46,12 @@ export function Bookmarks() {
 
       <section className="py-14 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>
         <div className="container max-w-4xl">
-          <div className="mb-8">
+          <div className="mb-6">
             <p className="chiron-feature-label">Tools</p>
             <h1 className="chiron-feature-heading">Bookmarks</h1>
             <p className="chiron-feature-body mt-2">Questions you've saved for later review.</p>
           </div>
+          <FreeTierBanner used={bookmarks.length} limit={25} feature="bookmarks" />
 
           {loading ? (
             <div className="space-y-3">

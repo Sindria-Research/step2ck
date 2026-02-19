@@ -278,6 +278,11 @@ export function ExamConfig() {
                     );
                   })}
                 </div>
+                {!isPro && (
+                  <div className="mt-3">
+                    <UpgradePrompt message="Unlock Personalized mode and unlimited daily questions." />
+                  </div>
+                )}
               </div>
 
               {/* Count panel */}

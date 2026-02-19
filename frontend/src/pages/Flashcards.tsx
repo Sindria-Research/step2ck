@@ -20,6 +20,7 @@ import { EmptyState } from '../components/common';
 import { Modal } from '../components/common/Modal';
 import { parseFlashcardText, exportCardsAsText } from '../utils/importFlashcards';
 import { formatFlashcardContent } from '../utils/formatFlashcardContent';
+import { FreeTierBanner } from '../components/ProGate';
 
 type View = 'decks' | 'cards' | 'review';
 
@@ -274,6 +275,8 @@ export function Flashcards() {
               </button>
             )}
           </header>
+
+          {view === 'decks' && <FreeTierBanner used={decks.length} limit={3} feature="decks" />}
 
           {/* Due banner */}
           {view === 'decks' && dueCards.length > 0 && (

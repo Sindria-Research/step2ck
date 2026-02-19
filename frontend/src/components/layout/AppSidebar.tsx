@@ -19,6 +19,7 @@ import {
   ClipboardCheck,
   History,
   CalendarDays,
+  Crown,
 } from 'lucide-react';
 import { UserAvatar } from '../common/UserAvatar';
 import { useSidebar } from '../../context/SidebarContext';
@@ -243,8 +244,27 @@ export function AppSidebar() {
           </div>
         ))}
 
-        {/* Bottom: Settings */}
+        {/* Bottom: Upgrade + Settings */}
         <div className="mt-auto pt-2 border-t border-[var(--color-border)]">
+          {!isPro && !collapsed && (
+            <NavLink
+              to="/pricing"
+              className="flex items-center gap-2.5 mx-1 mb-1.5 px-3 py-2.5 rounded-lg border border-[var(--color-brand-blue)]/25 bg-[var(--color-brand-blue)]/8 text-[var(--color-brand-blue)] text-sm font-medium hover:bg-[var(--color-brand-blue)]/15 transition-all focus-ring"
+            >
+              <Crown className="w-4 h-4 shrink-0" />
+              <span className="flex-1">Upgrade to Pro</span>
+            </NavLink>
+          )}
+          {!isPro && collapsed && (
+            <NavLink
+              to="/pricing"
+              className="flex items-center justify-center p-2 mx-auto mb-1 rounded-lg border border-[var(--color-brand-blue)]/25 bg-[var(--color-brand-blue)]/8 text-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue)]/15 transition-all focus-ring"
+              title="Upgrade to Pro"
+              aria-label="Upgrade to Pro"
+            >
+              <Crown className="w-4 h-4" />
+            </NavLink>
+          )}
           {renderNavItem({ to: '/settings', label: 'Settings', icon: Settings })}
         </div>
       </nav>

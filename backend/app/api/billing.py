@@ -16,12 +16,19 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+_stripe_configured = False
+
+
 def _get_stripe() -> None:
-    """Ensure stripe API key is configured."""
+    """Ensure stripe API key is configured (set once, then skip)."""
+    global _stripe_configured
+    if _stripe_configured:
+        return
     settings = get_settings()
     if not settings.STRIPE_SECRET_KEY:
         raise HTTPException(status_code=503, detail="Billing is not configured")
     stripe.api_key = settings.STRIPE_SECRET_KEY
+    _stripe_configured = True
 
 
 def _get_or_create_customer(user: User, db: Session) -> str:

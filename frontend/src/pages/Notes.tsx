@@ -4,6 +4,7 @@ import { api } from '../api/api';
 import type { NoteResponse } from '../api/types';
 import { EmptyState } from '../components/common';
 import { RichTextEditor } from '../components/notes/RichTextEditor';
+import { FreeTierBanner } from '../components/ProGate';
 
 export function Notes() {
   const [notes, setNotes] = useState<NoteResponse[]>([]);
@@ -90,7 +91,7 @@ export function Notes() {
 
       <section className="py-14 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>
         <div className="container max-w-5xl">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <p className="chiron-feature-label">Tools</p>
               <h1 className="chiron-feature-heading">Notes</h1>
@@ -106,6 +107,7 @@ export function Notes() {
               New Note
             </button>
           </div>
+          <FreeTierBanner used={notes.length} limit={10} feature="notes" />
 
           <div className="grid md:grid-cols-[280px_1fr] gap-6">
             {/* Notes list sidebar */}

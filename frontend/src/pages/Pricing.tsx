@@ -12,8 +12,6 @@ import {
   CalendarDays,
   Clock3,
   FileText,
-  Layers,
-  Bookmark,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/api';
