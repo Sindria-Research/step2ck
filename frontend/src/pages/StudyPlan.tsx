@@ -16,8 +16,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { api } from '../api/api';
-import type { StudyPlanData, StudyPlanWeek } from '../api/types';
-import { EmptyState, Skeleton, SkeletonCard } from '../components/common';
+import type { StudyPlanData, StudyPlanWeek, DailySummary } from '../api/types';
+import { EmptyState, Skeleton, SkeletonCard, CircularProgress } from '../components/common';
 
 const PHASE_STYLES: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   foundation: {
@@ -217,6 +217,88 @@ function StudyCalendar({ plan }: { plan: StudyPlanData }) {
   );
 }
 
+// ─── Today's Progress ───
+
+function TodayProgress({
+  dailySummary,
+  onPractice,
+}: {
+  dailySummary: DailySummary | null;
+  onPractice: () => void;
+}) {
+  const todayCount = dailySummary?.today_count ?? 0;
+  const dailyGoal = dailySummary?.daily_goal ?? 0;
+  const streak = dailySummary?.streak ?? 0;
+  const goalPct = dailyGoal > 0 ? Math.min(100, Math.round((todayCount / dailyGoal) * 100)) : 0;
+  const goalMet = todayCount >= dailyGoal && dailyGoal > 0;
+  const remaining = Math.max(0, dailyGoal - todayCount);
+  const last7 = dailySummary?.history.slice(-7) ?? [];
+
+  return (
+    <div className="chiron-mockup flex flex-col">
+      <p className="chiron-mockup-label mb-4">Today</p>
+
+      <div className="flex-1 flex items-center gap-4">
+        <CircularProgress
+          value={goalPct}
+          label=""
+          centerLabel={`${todayCount}/${dailyGoal}`}
+          color={goalMet ? 'var(--color-success)' : 'var(--color-brand-blue)'}
+          size={76}
+          strokeWidth={6}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-2xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
+              {todayCount}
+            </p>
+            {streak > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-[color-mix(in_srgb,var(--color-warning)_12%,transparent)] text-[var(--color-warning)]">
+                🔥 {streak}d
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            {goalMet ? 'Daily goal reached!' : `${remaining} more to hit your goal`}
+          </p>
+
+          {last7.length > 0 && (
+            <>
+              <div className="flex gap-1 mt-3">
+                {last7.map((day) => (
+                  <div
+                    key={day.date}
+                    title={`${day.date}: ${day.count} questions`}
+                    className={`w-5 h-5 rounded-sm transition-colors ${
+                      day.count === 0
+                        ? 'bg-[var(--color-bg-tertiary)]'
+                        : day.met_goal
+                          ? 'bg-[var(--color-success)]'
+                          : 'bg-[color-mix(in_srgb,var(--color-success)_40%,var(--color-bg-tertiary))]'
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="text-[0.6rem] text-[var(--color-text-muted)] mt-1">Last 7 days</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {!goalMet && (
+        <button
+          type="button"
+          onClick={onPractice}
+          className="mt-4 chiron-btn chiron-btn-primary px-4 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-2 w-full"
+        >
+          Start Practice
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── Week Card ───
 
 function WeekCard({
@@ -347,14 +429,19 @@ export function StudyPlan() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
 
   const fetchPlan = useCallback(() => {
     setLoading(true);
     setError(null);
-    api.studyPlan.get()
-      .then((res) => {
+    Promise.all([
+      api.studyPlan.get(),
+      api.progress.dailySummary().catch(() => null),
+    ])
+      .then(([res, daily]) => {
         setPlan(res.plan_data);
         setGeneratedAt(res.generated_at ?? null);
+        if (daily) setDailySummary(daily);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load study plan'))
       .finally(() => setLoading(false));
@@ -526,7 +613,7 @@ export function StudyPlan() {
                 <p className="chiron-feature-label">Overview</p>
               </div>
 
-              <div className="grid lg:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Stats */}
                 <div className="chiron-mockup">
                   <p className="chiron-mockup-label mb-4">Progress</p>
@@ -567,6 +654,9 @@ export function StudyPlan() {
                     </div>
                   </div>
                 </div>
+
+                {/* Today's Progress */}
+                <TodayProgress dailySummary={dailySummary} onPractice={() => navigate('/exam/config?type=practice')} />
 
                 {/* Calendar */}
                 <StudyCalendar plan={plan} />

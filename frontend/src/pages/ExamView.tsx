@@ -15,6 +15,14 @@ export function ExamView() {
   const initialLoadDone = useRef(false);
   const [initialLoadStarted, setInitialLoadStarted] = useState(false);
 
+  // Reset load guard when exam state is cleared (e.g. retake)
+  useEffect(() => {
+    if (questions.length === 0 && initialLoadDone.current && !loading) {
+      initialLoadDone.current = false;
+      setInitialLoadStarted(false);
+    }
+  }, [questions.length, loading]);
+
   useEffect(() => {
     if (initialLoadDone.current) return;
     const raw = sessionStorage.getItem('examConfig');
@@ -43,7 +51,7 @@ export function ExamView() {
     } catch {
       navigate('/exam/config');
     }
-  }, [loadExam, navigate]);
+  }, [loadExam, navigate, initialLoadStarted]);
 
   const showLoading = loading || (initialLoadStarted && questions.length === 0 && !loadError);
 
