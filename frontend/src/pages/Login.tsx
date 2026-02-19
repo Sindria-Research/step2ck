@@ -8,7 +8,7 @@ const DEMO_EMAIL = 'demo@chiron.local';
 const isDev = import.meta.env.DEV;
 
 export function Login() {
-  const { login, loading } = useAuth();
+  const { login } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
 
@@ -20,17 +20,6 @@ export function Login() {
       console.error(e);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg-secondary)]">
-        <div
-          className="w-10 h-10 border-2 border-[var(--color-border)] border-t-[var(--color-accent)] rounded-full animate-spin"
-          aria-label="Loading"
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg-secondary)] p-4 sm:p-6">

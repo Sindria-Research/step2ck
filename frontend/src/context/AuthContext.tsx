@@ -39,31 +39,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshUser = useCallback(async () => {
-    if (supabase) {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.access_token) {
-        setToken(data.session.access_token);
-        await fetchBackendUser();
+    try {
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.access_token) {
+          setToken(data.session.access_token);
+          await fetchBackendUser();
+        } else {
+          setToken(null);
+          setUser(null);
+        }
       } else {
-        setToken(null);
-        setUser(null);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setUser(null);
+        } else {
+          await fetchBackendUser();
+        }
       }
-    } else {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setUser(null);
-      } else {
-        await fetchBackendUser();
-      }
+    } catch {
+      setToken(null);
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [fetchBackendUser]);
 
   useEffect(() => {
     if (initialised.current) return;
     initialised.current = true;
 
-    refreshUser();
+    const AUTH_INIT_TIMEOUT_MS = 8_000;
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, AUTH_INIT_TIMEOUT_MS);
+
+    refreshUser().finally(() => clearTimeout(timeout));
 
     if (!supabase) return;
 

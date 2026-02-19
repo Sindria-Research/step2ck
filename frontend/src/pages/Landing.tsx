@@ -120,15 +120,7 @@ export function Landing() {
     };
   }, [loading, user]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg-secondary)]">
-        <div className="skeleton h-10 w-48 rounded-md" aria-hidden />
-      </div>
-    );
-  }
-
-  if (user) return null;
+  if (!loading && user) return null;
 
   const toggleSubject = (s: string) => {
     setSelectedSubjects((prev) => {

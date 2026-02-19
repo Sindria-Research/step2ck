@@ -1,6 +1,8 @@
 import { API_BASE } from '../config/env';
 import { supabase } from '../lib/supabase';
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 const getToken = (): string | null => {
   return localStorage.getItem('token');
 };
@@ -22,10 +24,14 @@ export const setToken = (token: string | null) => {
  */
 async function resolveToken(): Promise<string | null> {
   if (supabase) {
-    const { data } = await supabase.auth.getSession();
-    if (data.session?.access_token) {
-      setToken(data.session.access_token);
-      return data.session.access_token;
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.access_token) {
+        setToken(data.session.access_token);
+        return data.session.access_token;
+      }
+    } catch {
+      // Supabase unreachable or session expired — fall through to localStorage
     }
   }
   return getToken();
@@ -33,13 +39,14 @@ async function resolveToken(): Promise<string | null> {
 
 export interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
+  timeoutMs?: number;
 }
 
 export async function request<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { skipAuth, ...fetchOptions } = options;
+  const { skipAuth, timeoutMs = REQUEST_TIMEOUT_MS, ...fetchOptions } = options;
   const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -49,7 +56,26 @@ export async function request<T>(
     const token = await resolveToken();
     if (token) (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
-  const res = await fetch(url, { ...fetchOptions, headers });
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...fetchOptions,
+      headers,
+      signal: fetchOptions.signal ?? controller.signal,
+    });
+  } catch (err: unknown) {
+    clearTimeout(timer);
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error(`Request timed out: ${path}`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+
   if (res.status === 401) {
     if (supabase) await supabase.auth.signOut();
     setToken(null);
