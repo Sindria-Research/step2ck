@@ -80,7 +80,7 @@ def decode_token(token: str) -> Optional[str]:
 
 def get_or_create_demo_user(db: Session) -> User:
     """Get or create the single demo user for unauthenticated use."""
-    demo_email = "demo@step2ck.local"
+    demo_email = "demo@chiron.local"
     user = db.query(User).filter(User.email == demo_email).first()
     if user:
         return user

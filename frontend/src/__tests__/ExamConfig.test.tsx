@@ -36,7 +36,7 @@ describe('ExamConfig', () => {
 
     it('renders the page title', async () => {
         await renderExamConfig();
-        expect(screen.getByText('New test')).toBeInTheDocument();
+        expect(screen.getByText('New practice')).toBeInTheDocument();
     });
 
     it.skip('renders subject list after loading', async () => {
@@ -65,14 +65,15 @@ describe('ExamConfig', () => {
         expect(screen.getByText('Max')).toBeInTheDocument();
     });
 
-    it('shows summary card', async () => {
+    it('shows summary info in count panel', async () => {
         await renderExamConfig();
-        expect(screen.getByText('Summary')).toBeInTheDocument();
+        expect(screen.getAllByText('Subjects').length).toBeGreaterThan(0);
+        expect(screen.getByText('Available')).toBeInTheDocument();
     });
 
     it('shows first-time tip', async () => {
         await renderExamConfig();
-        expect(screen.getByText(/Tip: Try Personalized Mode/)).toBeInTheDocument();
+        expect(screen.getByText('Try Personalized Mode')).toBeInTheDocument();
     });
 
     it('dismisses tip and remembers', async () => {
@@ -88,7 +89,7 @@ describe('ExamConfig', () => {
 
     it('renders start button', async () => {
         await renderExamConfig();
-        expect(screen.getByText('Start Test')).toBeInTheDocument();
+        expect(screen.getByText('Start Practice')).toBeInTheDocument();
     });
 
     it('shows back to dashboard link', async () => {

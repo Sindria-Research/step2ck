@@ -68,10 +68,9 @@ describe('Landing Page', () => {
         expect(screen.getByText(new RegExp(year))).toBeInTheDocument();
     });
 
-    it('has dark mode toggle in nav', async () => {
+    it('has sign in link in nav', async () => {
         await renderLanding();
-        const toggles = screen.getAllByLabelText(/switch to/i);
-        expect(toggles.length).toBeGreaterThan(0);
+        expect(screen.getByText('Sign in')).toBeInTheDocument();
     });
 
     it('renders CTA section', async () => {

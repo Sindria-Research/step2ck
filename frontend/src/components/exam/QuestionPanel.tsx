@@ -12,7 +12,10 @@ export function QuestionPanel() {
     currentQuestion,
     addHighlight,
     getHighlights,
+    examType,
+    examFinished,
   } = useExam();
+  const isTestMode = examType === 'test' && !examFinished;
   const stemRef = useRef<HTMLDivElement>(null);
   const [selectionToolbar, setSelectionToolbar] = useState<{
     start: number;
@@ -193,7 +196,9 @@ export function QuestionPanel() {
           )}
         </div>
         <p className="mt-6 text-xs text-[var(--color-text-tertiary)]">
-          Select text to highlight or explain. Right‑click an answer to strikethrough.
+          {isTestMode
+            ? 'Select text to highlight. Right\u2011click an answer to strikethrough.'
+            : 'Select text to highlight or explain. Right\u2011click an answer to strikethrough.'}
         </p>
       </div>
 
@@ -208,15 +213,17 @@ export function QuestionPanel() {
             transform: 'translate(-50%, -100%)',
           }}
         >
-          <button
-            type="button"
-            onClick={handleExplainSelection}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
-            title="Ask Chiron about selection"
-          >
-            <Wand2 className="w-3.5 h-3.5 text-[var(--color-accent)]" />
-            Ask Chiron
-          </button>
+          {!isTestMode && (
+            <button
+              type="button"
+              onClick={handleExplainSelection}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
+              title="Ask Chiron about selection"
+            >
+              <Wand2 className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+              Ask Chiron
+            </button>
+          )}
           <button
             type="button"
             onClick={handleHighlight}
@@ -230,7 +237,7 @@ export function QuestionPanel() {
       )}
 
       {/* Explain selection response */}
-      {explainSelectionActive && (
+      {!isTestMode && explainSelectionActive && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-30 rounded-lg">
           <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">

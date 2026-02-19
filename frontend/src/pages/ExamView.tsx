@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExam } from '../context/ExamContext';
+import { useExamKeyboard } from '../hooks/useExamKeyboard';
 import { QuestionPanel } from '../components/exam/QuestionPanel';
 import { AnswerPanel } from '../components/exam/AnswerPanel';
 import { ExplanationPanel } from '../components/exam/ExplanationPanel';
+import { TimerBar } from '../components/exam/TimerBar';
+import { TestReviewPanel } from '../components/exam/TestReviewPanel';
 
 export function ExamView() {
-  const { loadExam, loading, loadError, questions } = useExam();
+  const { loadExam, loading, loadError, questions, examType, examFinished } = useExam();
+  useExamKeyboard();
   const navigate = useNavigate();
   const initialLoadDone = useRef(false);
   const [initialLoadStarted, setInitialLoadStarted] = useState(false);
@@ -30,6 +34,10 @@ export function ExamView() {
         subjects: config.subjects,
         mode: config.mode || 'all',
         count: config.count ?? 20,
+        examType: config.examType || 'practice',
+        timeLimitPerQuestion: config.timeLimitPerQuestion ?? null,
+        timeLimitTotal: config.timeLimitTotal ?? null,
+        existingSessionId: config.existingSessionId ?? null,
       });
     } catch {
       navigate('/exam/config');
@@ -85,14 +93,23 @@ export function ExamView() {
     );
   }
 
+  if (examType === 'test' && examFinished) {
+    return <TestReviewPanel />;
+  }
+
+  const isTestMode = examType === 'test';
+
   return (
-    <div className="flex-1 flex overflow-hidden">
-      <div className="w-1/2 border-r border-[var(--color-border)] flex flex-col overflow-hidden">
-        <QuestionPanel />
-      </div>
-      <div className="w-1/2 flex flex-col overflow-hidden">
-        <AnswerPanel />
-        <ExplanationPanel />
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {isTestMode && <TimerBar />}
+      <div className="flex-1 flex overflow-hidden">
+        <div className="w-1/2 border-r border-[var(--color-border)] flex flex-col overflow-hidden">
+          <QuestionPanel />
+        </div>
+        <div className="w-1/2 flex flex-col overflow-hidden">
+          <AnswerPanel />
+          <ExplanationPanel />
+        </div>
       </div>
     </div>
   );

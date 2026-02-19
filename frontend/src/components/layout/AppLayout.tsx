@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { AppSidebar } from './AppSidebar';
 import { ExamBar } from './ExamBar';
 import { Sidebar } from './Sidebar';
@@ -29,6 +31,9 @@ export function AppLayout({
 }: AppLayoutProps) {
   const location = useLocation();
   const isExamPage = location.pathname === '/exam';
+  const [questionSidebarOpen, setQuestionSidebarOpen] = useState(true);
+
+  const shouldShowQuestionSidebar = showSidebar && isExamPage && examContext;
 
   return (
     <div className="h-screen flex bg-[var(--color-bg-secondary)] overflow-hidden">
@@ -46,8 +51,33 @@ export function AppLayout({
           />
         )}
         <div className="flex-1 flex min-w-0 overflow-hidden">
-          {showSidebar && isExamPage && examContext && (
-            <Sidebar examContext={examContext} />
+          {shouldShowQuestionSidebar && (
+            <>
+              {questionSidebarOpen ? (
+                <div className="relative shrink-0">
+                  <Sidebar examContext={examContext} />
+                  <button
+                    type="button"
+                    onClick={() => setQuestionSidebarOpen(false)}
+                    className="absolute top-3 right-3 p-1.5 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring z-10"
+                    title="Hide question list"
+                  >
+                    <PanelLeftClose className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="shrink-0 border-r border-[var(--color-border)] bg-[var(--color-bg-primary)] flex items-start pt-3 px-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setQuestionSidebarOpen(true)}
+                    className="p-1.5 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
+                    title="Show question list"
+                  >
+                    <PanelLeftOpen className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </>
           )}
           <main className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto" role="main">
             {children}

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  PlusCircle,
   ClipboardList,
   BarChart3,
   Search,
@@ -16,6 +15,9 @@ import {
   Sun,
   Moon,
   LogOut,
+  BookOpen,
+  ClipboardCheck,
+  History,
 } from 'lucide-react';
 import { UserAvatar } from '../common/UserAvatar';
 import { useSidebar } from '../../context/SidebarContext';
@@ -43,10 +45,22 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'QBank',
+    label: 'Practice',
     items: [
-      { to: '/exam/config', label: 'New Test', icon: PlusCircle },
+      { to: '/exam/config?type=practice', label: 'New Practice', icon: BookOpen },
+      { to: '/practice-history', label: 'Practice History', icon: History },
+    ],
+  },
+  {
+    label: 'Test',
+    items: [
+      { to: '/exam/config?type=test', label: 'New Test', icon: ClipboardCheck },
       { to: '/previous-tests', label: 'Previous Tests', icon: ClipboardList },
+    ],
+  },
+  {
+    label: 'Review',
+    items: [
       { to: '/performance', label: 'Performance', icon: BarChart3 },
       { to: '/search', label: 'Search', icon: Search },
     ],
@@ -115,32 +129,42 @@ export function AppSidebar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [userMenuOpen]);
 
-  const renderNavItem = ({ to, label, icon: Icon }: NavItem, badge?: number | null) => (
-    <NavLink
-      key={to}
-      to={to}
-      className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors focus-ring ${
-          isActive
-            ? 'bg-[var(--color-bg-active)] text-[var(--color-accent-text)]'
-            : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'
-        }`
-      }
-      title={collapsed ? label : undefined}
-    >
-      <Icon className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
-      {!collapsed && (
-        <>
-          <span className="flex-1 truncate">{label}</span>
-          {badge != null && badge > 0 && (
-            <span className="text-[0.65rem] font-medium tabular-nums text-[var(--color-text-muted)]" aria-label={`${badge} bookmarks`}>
-              {badge}
-            </span>
-          )}
-        </>
-      )}
-    </NavLink>
-  );
+  const renderNavItem = ({ to, label, icon: Icon }: NavItem, badge?: number | null) => {
+    const hasQuery = to.includes('?');
+    const [basePath, queryString] = hasQuery ? to.split('?') : [to, ''];
+
+    const isItemActive = hasQuery
+      ? location.pathname === basePath && location.search === `?${queryString}`
+      : location.pathname === basePath || location.pathname.startsWith(`${basePath}/`);
+
+    return (
+      <NavLink
+        key={to}
+        to={to}
+        end={hasQuery}
+        className={() =>
+          `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors focus-ring ${
+            isItemActive
+              ? 'bg-[var(--color-bg-active)] text-[var(--color-accent-text)]'
+              : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'
+          }`
+        }
+        title={collapsed ? label : undefined}
+      >
+        <Icon className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
+        {!collapsed && (
+          <>
+            <span className="flex-1 truncate">{label}</span>
+            {badge != null && badge > 0 && (
+              <span className="text-[0.65rem] font-medium tabular-nums text-[var(--color-text-muted)]" aria-label={`${badge} bookmarks`}>
+                {badge}
+              </span>
+            )}
+          </>
+        )}
+      </NavLink>
+    );
+  };
 
   return (
     <aside

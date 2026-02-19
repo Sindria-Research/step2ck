@@ -1,32 +1,123 @@
-import { useEffect, useState } from 'react';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { ChevronRight, Sparkles, Layers } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { useExam } from '../../context/ExamContext';
+import { useToast } from '../../context/ToastContext';
 import { api } from '../../api/api';
 
 export function ExplanationPanel() {
-  const { currentQuestion, selectedAnswer, isSubmitted, nextQuestion, finishExam, currentQuestionIndex, questions } = useExam();
+  const {
+    currentQuestion,
+    selectedAnswer,
+    isSubmitted,
+    nextQuestion,
+    finishExam,
+    currentQuestionIndex,
+    questions,
+    examType,
+    examFinished,
+    lockAnswerAndAdvance,
+    answeredQuestions,
+  } = useExam();
+  const { addToast } = useToast();
   const [aiExplainActive, setAiExplainActive] = useState(false);
   const [aiExplainLoading, setAiExplainLoading] = useState(false);
   const [aiExplainError, setAiExplainError] = useState<string | null>(null);
   const [aiExplainText, setAiExplainText] = useState('');
+  const [flashcardCreated, setFlashcardCreated] = useState(false);
+  const [flashcardLoading, setFlashcardLoading] = useState(false);
 
   useEffect(() => {
     setAiExplainActive(false);
     setAiExplainLoading(false);
     setAiExplainError(null);
     setAiExplainText('');
+    setFlashcardCreated(false);
   }, [currentQuestion?.id]);
+
+  const handleCreateFlashcard = useCallback(async () => {
+    if (!currentQuestion || flashcardLoading || flashcardCreated) return;
+    setFlashcardLoading(true);
+    try {
+      const decks = await api.flashcards.listDecks();
+      let deck = decks.find((d) => d.name === 'Missed Questions');
+      if (!deck) {
+        deck = await api.flashcards.createDeck({
+          name: 'Missed Questions',
+          description: 'Auto-generated from incorrect exam answers',
+        });
+      }
+
+      const stem = currentQuestion.question_stem.length > 300
+        ? currentQuestion.question_stem.slice(0, 300) + '…'
+        : currentQuestion.question_stem;
+
+      const correctKey = currentQuestion.correct_answer;
+      const correctText = currentQuestion.choices[correctKey] ?? '';
+      let back = `**${correctKey}. ${correctText}**`;
+      if (currentQuestion.correct_explanation) {
+        back += `\n\n${currentQuestion.correct_explanation}`;
+      }
+
+      await api.flashcards.createCard({
+        deck_id: deck.id,
+        front: stem,
+        back,
+        question_id: currentQuestion.id,
+      });
+      setFlashcardCreated(true);
+      addToast('Flashcard created in "Missed Questions" deck', 'success');
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Failed to create flashcard', 'error');
+    } finally {
+      setFlashcardLoading(false);
+    }
+  }, [currentQuestion, flashcardLoading, flashcardCreated, addToast]);
 
   if (!currentQuestion) return null;
 
-  const showExplanation = isSubmitted;
+  const isTestMode = examType === 'test';
   const isCorrect = selectedAnswer === currentQuestion.correct_answer;
   const hasNext = currentQuestionIndex < questions.length - 1;
+  const isLocked = isTestMode && answeredQuestions.has(currentQuestion.id);
 
-  if (!showExplanation) {
-    return null;
+  // In test mode during the exam: only show navigation, no feedback
+  if (isTestMode && !examFinished) {
+    if (!isLocked) return null;
+    return (
+      <div className="shrink-0 px-6 py-4 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Answer locked. {hasNext ? 'Move to next question.' : 'Finish to see results.'}
+          </p>
+          <div className="flex gap-2">
+            {hasNext ? (
+              <button
+                type="button"
+                onClick={lockAnswerAndAdvance}
+                className="btn btn-primary flex items-center gap-2 py-2 px-4 rounded-lg focus-ring text-sm"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={finishExam}
+                className="btn btn-primary flex items-center gap-2 py-2 px-4 rounded-lg focus-ring text-sm"
+              >
+                Finish Test
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
+
+  // Practice mode or test review: show full explanations
+  const showExplanation = isTestMode ? examFinished && isSubmitted : isSubmitted;
+  if (!showExplanation) return null;
 
   const handleExplainWithAI = async () => {
     if (!currentQuestion) return;
@@ -50,7 +141,7 @@ export function ExplanationPanel() {
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[var(--color-bg-secondary)]">
       <div className="p-6 flex-1 flex flex-col gap-5">
-        {/* Result badge + correct answer */}
+        {/* Result badge + correct answer + flashcard button */}
         <div className="flex items-center gap-3">
           <span className={`badge ${isCorrect ? 'badge-success' : 'badge-error'}`}>
             {isCorrect ? 'Correct' : 'Incorrect'}
@@ -59,6 +150,22 @@ export function ExplanationPanel() {
             <span className="text-sm font-medium text-[var(--color-success)]">
               Correct answer: {currentQuestion.correct_answer}
             </span>
+          )}
+          {!isCorrect && (
+            <button
+              type="button"
+              onClick={handleCreateFlashcard}
+              disabled={flashcardCreated || flashcardLoading}
+              className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all focus-ring border ${
+                flashcardCreated
+                  ? 'border-[var(--color-success)] text-[var(--color-success)] bg-[color-mix(in_srgb,var(--color-success)_8%,transparent)] cursor-default'
+                  : 'border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)]'
+              }`}
+              title={flashcardCreated ? 'Flashcard saved' : 'Save as flashcard'}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              {flashcardLoading ? 'Saving…' : flashcardCreated ? 'Saved' : 'Save as Flashcard'}
+            </button>
           )}
         </div>
 
@@ -84,7 +191,7 @@ export function ExplanationPanel() {
           </div>
         )}
 
-        {/* AI Explanation — prominent, inline, with markdown */}
+        {/* AI Explanation */}
         <div className="pt-4 border-t border-[var(--color-border)]">
           {!aiExplainActive ? (
             <button
@@ -97,7 +204,6 @@ export function ExplanationPanel() {
             </button>
           ) : (
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] overflow-hidden">
-              {/* Header */}
               <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />
@@ -123,8 +229,6 @@ export function ExplanationPanel() {
                   </button>
                 </div>
               </div>
-
-              {/* Body */}
               <div className="px-5 py-4">
                 {aiExplainLoading ? (
                   <div className="flex items-center gap-3 py-4">
@@ -147,27 +251,29 @@ export function ExplanationPanel() {
           )}
         </div>
 
-        {/* Next question or Finish exam */}
-        <div className="mt-auto pt-4 flex justify-end">
-          {hasNext ? (
-            <button
-              type="button"
-              onClick={nextQuestion}
-              className="btn btn-primary flex items-center gap-2 py-2.5 px-4 rounded-lg focus-ring"
-            >
-              Next question
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={finishExam}
-              className="btn btn-primary flex items-center gap-2 py-2.5 px-4 rounded-lg focus-ring"
-            >
-              Finish exam
-            </button>
-          )}
-        </div>
+        {/* Next question or Finish */}
+        {!examFinished && (
+          <div className="mt-auto pt-4 flex justify-end">
+            {hasNext ? (
+              <button
+                type="button"
+                onClick={nextQuestion}
+                className="btn btn-primary flex items-center gap-2 py-2.5 px-4 rounded-lg focus-ring"
+              >
+                Next question
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={finishExam}
+                className="btn btn-primary flex items-center gap-2 py-2.5 px-4 rounded-lg focus-ring"
+              >
+                Finish exam
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

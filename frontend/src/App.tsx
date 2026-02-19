@@ -13,6 +13,7 @@ import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
 import { ExamConfig } from './pages/ExamConfig';
 import { PreviousTests } from './pages/PreviousTests';
+import { PracticeHistory } from './pages/PracticeHistory';
 import { Performance } from './pages/Performance';
 import { Search } from './pages/Search';
 import { Notes } from './pages/Notes';
@@ -60,6 +61,7 @@ function App() {
               <Route path="/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
               <Route path="/exam/config" element={<ProtectedPage><ExamConfig /></ProtectedPage>} />
               <Route path="/previous-tests" element={<ProtectedPage><PreviousTests /></ProtectedPage>} />
+              <Route path="/practice-history" element={<ProtectedPage><PracticeHistory /></ProtectedPage>} />
               <Route path="/performance" element={<ProtectedPage><Performance /></ProtectedPage>} />
               <Route path="/search" element={<ProtectedPage><Search /></ProtectedPage>} />
               <Route path="/notes" element={<ProtectedPage><Notes /></ProtectedPage>} />
