@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, CheckCircle2, XCircle, RotateCcw, Trash2, ChevronRight } from 'lucide-react';
+import { BookOpen, CheckCircle2, XCircle, RotateCcw, Trash2, ChevronRight } from 'lucide-react';
 import { api } from '../api/api';
 import type { ExamSession } from '../api/types';
 import { EmptyState } from '../components/common';
 
-export function PreviousTests() {
+export function PracticeHistory() {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState<ExamSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,7 @@ export function PreviousTests() {
 
   useEffect(() => {
     api.examSessions.list(filter === 'all' ? undefined : filter)
-      .then((all) => setSessions(all.filter((s) => s.mode.startsWith('test:'))))
+      .then((all) => setSessions(all.filter((s) => s.mode.startsWith('practice:') || !s.mode.includes(':'))))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [filter]);
@@ -27,7 +27,7 @@ export function PreviousTests() {
     const match = mode.match(/^(practice|test):(.+)$/);
     return match
       ? { examType: match[1] as 'practice' | 'test', questionMode: match[2] }
-      : { examType: 'test' as const, questionMode: mode };
+      : { examType: 'practice' as const, questionMode: mode };
   };
 
   const handleContinueOrReview = (session: ExamSession) => {
@@ -74,9 +74,9 @@ export function PreviousTests() {
         <div className="container">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <p className="chiron-feature-label">Test</p>
-              <h1 className="chiron-feature-heading">Previous Tests</h1>
-              <p className="chiron-feature-body mt-2">Review past test sessions. Only sessions started in Test mode appear here.</p>
+              <p className="chiron-feature-label">Practice</p>
+              <h1 className="chiron-feature-heading">Practice History</h1>
+              <p className="chiron-feature-body mt-2">Review past practice sessions and track your progress.</p>
             </div>
 
             <div className="flex gap-2">
@@ -106,10 +106,10 @@ export function PreviousTests() {
           ) : sessions.length === 0 ? (
             <div className="chiron-mockup">
               <EmptyState
-                icon={Clock}
-                title="No tests yet"
-                description="Complete a test to see it appear here."
-                action={{ label: 'Create a Test', onClick: () => navigate('/exam/config?type=test') }}
+                icon={BookOpen}
+                title="No practice sessions yet"
+                description="Start a practice session to see it appear here."
+                action={{ label: 'Start Practice', onClick: () => navigate('/exam/config?type=practice') }}
               />
             </div>
           ) : (
