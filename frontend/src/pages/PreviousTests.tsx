@@ -23,6 +23,32 @@ export function PreviousTests() {
     setSessions((prev) => prev.filter((s) => s.id !== id));
   };
 
+  const handleContinueOrReview = (session: ExamSession) => {
+    const subjects = session.subjects
+      ? session.subjects.split(',').map((s) => s.trim())
+      : [];
+    const config = {
+      subjects,
+      mode: session.mode,
+      count: session.total_questions,
+    };
+    sessionStorage.setItem('examConfig', JSON.stringify(config));
+    navigate('/exam');
+  };
+
+  const handleRetake = (session: ExamSession) => {
+    const subjects = session.subjects
+      ? session.subjects.split(',').map((s) => s.trim())
+      : [];
+    const config = {
+      subjects,
+      mode: session.mode,
+      count: session.total_questions,
+    };
+    sessionStorage.setItem('examConfig', JSON.stringify(config));
+    navigate('/exam');
+  };
+
   const formatDate = (iso: string) => {
     const d = new Date(iso);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -117,7 +143,8 @@ export function PreviousTests() {
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           type="button"
-                          title="Review"
+                          title={session.status === 'in_progress' ? 'Continue' : 'Review'}
+                          onClick={() => handleContinueOrReview(session)}
                           className="p-2 rounded-lg text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
                         >
                           <ChevronRight className="w-4 h-4" />
@@ -126,6 +153,7 @@ export function PreviousTests() {
                           <button
                             type="button"
                             title="Retake"
+                            onClick={() => handleRetake(session)}
                             className="p-2 rounded-lg text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-brand-blue)] transition-colors"
                           >
                             <RotateCcw className="w-4 h-4" />
