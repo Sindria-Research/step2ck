@@ -142,21 +142,21 @@ export function Landing() {
         aria-label="Main"
       >
         <div className="container h-16 flex items-center justify-between">
-          <Link
-            to="/"
-            className="group inline-flex items-center gap-3 focus-ring rounded-md px-1 py-1.5"
-            aria-label={`${APP_NAME} home`}
-          >
-            <img
-              src={getLogoUrl(theme)}
-              alt=""
-              className="w-7 h-7 rounded-md object-contain shrink-0"
-            />
-            <span className="text-base font-semibold tracking-[0.14em] uppercase text-[var(--color-text-primary)]">
-              {APP_NAME}
-            </span>
-          </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-6">
+            <Link
+              to="/"
+              className="group inline-flex items-center gap-3 focus-ring rounded-md px-1 py-1.5"
+              aria-label={`${APP_NAME} home`}
+            >
+              <img
+                src={getLogoUrl(theme)}
+                alt=""
+                className="w-7 h-7 rounded-md object-contain shrink-0"
+              />
+              <span className="text-base font-semibold tracking-[0.14em] uppercase text-[var(--color-text-primary)]">
+                {APP_NAME}
+              </span>
+            </Link>
             <a
               href="#features"
               className="hidden md:inline-flex text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-3 py-2 rounded-md transition-colors focus-ring"
@@ -169,6 +169,8 @@ export function Landing() {
             >
               Pricing
             </a>
+          </div>
+          <div className="flex items-center gap-2">
             <Link to="/login" className="btn btn-ghost text-sm px-4 py-2 rounded-md focus-ring">
               Sign in
             </Link>
