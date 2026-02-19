@@ -47,7 +47,11 @@ export async function request<T>(
   if (res.status === 401) {
     if (supabase) await supabase.auth.signOut();
     setToken(null);
-    window.location.href = '/login';
+    const path = window.location.pathname;
+    const publicPaths = ['/', '/login', '/tos', '/privacy'];
+    if (!publicPaths.includes(path)) {
+      window.location.href = '/login';
+    }
     throw new Error('Unauthorized');
   }
   if (!res.ok) {
