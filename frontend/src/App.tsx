@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { SidebarProvider } from './context/SidebarContext';
@@ -31,44 +31,55 @@ function ProtectedPage({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AuthLayout() {
+  return (
+    <ToastProvider>
+      <AuthProvider>
+        <SidebarProvider>
+          <Outlet />
+        </SidebarProvider>
+      </AuthProvider>
+    </ToastProvider>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
         <ThemeProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <SidebarProvider>
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/tos" element={<ToS />} />
-                  <Route path="/privacy" element={<Privacy />} />
-                  <Route path="/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
-                  <Route path="/exam/config" element={<ProtectedPage><ExamConfig /></ProtectedPage>} />
-                  <Route path="/previous-tests" element={<ProtectedPage><PreviousTests /></ProtectedPage>} />
-                  <Route path="/performance" element={<ProtectedPage><Performance /></ProtectedPage>} />
-                  <Route path="/search" element={<ProtectedPage><Search /></ProtectedPage>} />
-                  <Route path="/notes" element={<ProtectedPage><Notes /></ProtectedPage>} />
-                  <Route path="/flashcards" element={<ProtectedPage><Flashcards /></ProtectedPage>} />
-                  <Route path="/bookmarks" element={<ProtectedPage><Bookmarks /></ProtectedPage>} />
-                  <Route path="/lab-values" element={<ProtectedPage><LabValues /></ProtectedPage>} />
-                  <Route path="/settings" element={<ProtectedPage><Settings /></ProtectedPage>} />
-                  <Route
-                    path="/exam"
-                    element={
-                      <ProtectedRoute>
-                        <ExamProvider>
-                          <ExamLayoutWrapper />
-                        </ExamProvider>
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
-              </SidebarProvider>
-            </AuthProvider>
-          </ToastProvider>
+          <Routes>
+            {/* Public pages — no auth providers, no Supabase session check */}
+            <Route path="/tos" element={<ToS />} />
+            <Route path="/privacy" element={<Privacy />} />
+
+            {/* Everything else — wrapped in auth/toast/sidebar providers */}
+            <Route element={<AuthLayout />}>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
+              <Route path="/exam/config" element={<ProtectedPage><ExamConfig /></ProtectedPage>} />
+              <Route path="/previous-tests" element={<ProtectedPage><PreviousTests /></ProtectedPage>} />
+              <Route path="/performance" element={<ProtectedPage><Performance /></ProtectedPage>} />
+              <Route path="/search" element={<ProtectedPage><Search /></ProtectedPage>} />
+              <Route path="/notes" element={<ProtectedPage><Notes /></ProtectedPage>} />
+              <Route path="/flashcards" element={<ProtectedPage><Flashcards /></ProtectedPage>} />
+              <Route path="/bookmarks" element={<ProtectedPage><Bookmarks /></ProtectedPage>} />
+              <Route path="/lab-values" element={<ProtectedPage><LabValues /></ProtectedPage>} />
+              <Route path="/settings" element={<ProtectedPage><Settings /></ProtectedPage>} />
+              <Route
+                path="/exam"
+                element={
+                  <ProtectedRoute>
+                    <ExamProvider>
+                      <ExamLayoutWrapper />
+                    </ExamProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Route>
+          </Routes>
         </ThemeProvider>
       </BrowserRouter>
     </ErrorBoundary>
