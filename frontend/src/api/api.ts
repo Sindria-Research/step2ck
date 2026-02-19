@@ -60,7 +60,7 @@ export const api = {
     },
     get: (id: string) => request<Question>(`/questions/${id}`),
     sections: () =>
-      request<{ sections: string[] }>('/questions/sections'),
+      request<{ sections: string[] }>('/questions/sections', { cacheTtlMs: 120_000 }),
     getByIds: (ids: string[]) =>
       request<Question[]>('/questions/by-ids', {
         method: 'POST',
@@ -72,10 +72,10 @@ export const api = {
       request<Array<{ question_id: string; correct: boolean; section: string }>>(
         '/progress'
       ),
-    stats: () => request<ProgressStats>('/progress/stats'),
-    dailySummary: () => request<DailySummary>('/progress/daily-summary'),
-    timeStats: () => request<TimeStats>('/progress/time-stats'),
-    trends: () => request<SectionTrend[]>('/progress/trends'),
+    stats: () => request<ProgressStats>('/progress/stats', { cacheTtlMs: 30_000 }),
+    dailySummary: () => request<DailySummary>('/progress/daily-summary', { cacheTtlMs: 30_000 }),
+    timeStats: () => request<TimeStats>('/progress/time-stats', { cacheTtlMs: 60_000 }),
+    trends: () => request<SectionTrend[]>('/progress/trends', { cacheTtlMs: 60_000 }),
     record: (data: {
       question_id: string;
       correct: boolean;
