@@ -8,6 +8,8 @@ import type {
   ExamGenerateRequest,
   ExamGenerateResponse,
   ExamSession,
+  ExamSessionAnswer,
+  ExamSessionAnswerUpdateRequest,
   ExamSessionCreateRequest,
   ExamSessionDetail,
   FlashcardCreateRequest,
@@ -119,6 +121,16 @@ export const api = {
       }),
     delete: (id: number) =>
       request<void>(`/exam-sessions/${id}`, { method: 'DELETE' }),
+    updateAnswer: (sessionId: number, questionId: string, body: ExamSessionAnswerUpdateRequest) =>
+      request<ExamSessionAnswer>(`/exam-sessions/${sessionId}/answers/${encodeURIComponent(questionId)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    batchUpdateAnswers: (sessionId: number, answers: Array<{ question_id: string } & ExamSessionAnswerUpdateRequest>) =>
+      request<ExamSessionAnswer[]>(`/exam-sessions/${sessionId}/answers`, {
+        method: 'PATCH',
+        body: JSON.stringify({ answers }),
+      }),
   },
   notes: {
     list: (params?: { question_id?: string; section?: string }) => {

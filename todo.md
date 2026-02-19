@@ -23,16 +23,13 @@
 - [x] Bookmark count badge in sidebar
 - [x] Exam session auto-creation on exam start
 - [x] Retake from Previous Tests (regenerate same config)
+- [x] Wire individual question answers to ExamSessionAnswer records (per-answer PATCH + batch update on finish)
+- [x] Enable review mode from Previous Tests (hydrates saved answers, supports both test and practice review)
+- [x] Quick-note button on exam explanation panel (creates pre-filled note from question context)
 
 ## In Progress
 
-### Exam Sessions Integration
-- [ ] Wire individual question answers to ExamSessionAnswer records (answers recorded but not persisted to session)
-- [ ] Enable review mode from Previous Tests (load session answers + questions instead of regenerating)
-
-### Notes Integration
-- [ ] Add quick-note button on exam explanation panel
-- [ ] Pre-fill note with question context when created from exam
+(none)
 
 ## Planned
 

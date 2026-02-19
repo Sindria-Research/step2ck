@@ -2,7 +2,7 @@
 
 ## Active
 
-- **Exam sessions not persisted:** Completing an exam does not yet create an `ExamSession` record in the backend. The Previous Tests page will show empty until this wiring is completed. The backend endpoints and models are ready.
+- ~~**Exam sessions not persisted:** Session is now created on exam start, per-answer data (answer_selected, correct, time_spent_seconds) is persisted on submit and batch-updated on finish, and session aggregate counts are PATCHed on completion.~~
 - **Personalized mode single-fetch:** Personalized mode fetches one question per request when clicking "Next"; consider batching or prefetching for smoother UX.
 - **Demo mode progress:** Stored in the database for the single demo user; clearing the DB or redeploying resets it.
 - **Focus management:** When opening modals or moving between question panels, focus is not always moved for screen readers.

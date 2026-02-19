@@ -62,6 +62,7 @@ export function PracticeHistory() {
       examType,
       existingSessionId: session.id,
       questionIds: questionIds.length > 0 ? questionIds : undefined,
+      reviewMode: session.status === 'completed',
     };
     sessionStorage.setItem('examConfig', JSON.stringify(config));
     navigate('/exam');

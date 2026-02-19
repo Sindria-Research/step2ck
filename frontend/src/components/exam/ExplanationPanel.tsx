@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ChevronRight, Sparkles, Layers } from 'lucide-react';
+import { ChevronRight, Sparkles, Layers, StickyNote } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { useExam } from '../../context/ExamContext';
 import { useToast } from '../../context/ToastContext';
@@ -18,6 +18,7 @@ export function ExplanationPanel() {
     examFinished,
     lockAnswerAndAdvance,
     answeredQuestions,
+    isReviewMode,
   } = useExam();
   const { addToast } = useToast();
   const [aiExplainActive, setAiExplainActive] = useState(false);
@@ -26,6 +27,8 @@ export function ExplanationPanel() {
   const [aiExplainText, setAiExplainText] = useState('');
   const [flashcardCreated, setFlashcardCreated] = useState(false);
   const [flashcardLoading, setFlashcardLoading] = useState(false);
+  const [noteCreated, setNoteCreated] = useState(false);
+  const [noteLoading, setNoteLoading] = useState(false);
 
   useEffect(() => {
     setAiExplainActive(false);
@@ -33,6 +36,7 @@ export function ExplanationPanel() {
     setAiExplainError(null);
     setAiExplainText('');
     setFlashcardCreated(false);
+    setNoteCreated(false);
   }, [currentQuestion?.id]);
 
   const handleCreateFlashcard = useCallback(async () => {
@@ -73,6 +77,47 @@ export function ExplanationPanel() {
       setFlashcardLoading(false);
     }
   }, [currentQuestion, flashcardLoading, flashcardCreated, addToast]);
+
+  const handleCreateNote = useCallback(async () => {
+    if (!currentQuestion || noteLoading || noteCreated) return;
+    setNoteLoading(true);
+    try {
+      const esc = (t: string) =>
+        t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      const stemPreview = currentQuestion.question_stem.length > 60
+        ? currentQuestion.question_stem.slice(0, 60) + '…'
+        : currentQuestion.question_stem;
+      const title = `${currentQuestion.section} — ${stemPreview}`;
+
+      const correctKey = currentQuestion.correct_answer;
+      const correctText = currentQuestion.choices[correctKey] ?? '';
+
+      let content = '';
+      if (selectedAnswer && selectedAnswer !== correctKey) {
+        const selectedText = currentQuestion.choices[selectedAnswer] ?? '';
+        content += `<h3>Your Answer</h3><p><strong>${esc(selectedAnswer)}.</strong> ${esc(selectedText)}</p>`;
+      }
+      content += `<h3>Question</h3><p>${esc(currentQuestion.question_stem)}</p>`;
+      content += `<h3>Correct Answer</h3><p><strong>${esc(correctKey)}.</strong> ${esc(correctText)}</p>`;
+      if (currentQuestion.correct_explanation) {
+        content += `<h3>Explanation</h3><p>${esc(currentQuestion.correct_explanation)}</p>`;
+      }
+
+      await api.notes.create({
+        title,
+        content,
+        question_id: currentQuestion.id,
+        section: currentQuestion.section,
+      });
+      setNoteCreated(true);
+      addToast('Note saved', 'success');
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Failed to save note', 'error');
+    } finally {
+      setNoteLoading(false);
+    }
+  }, [currentQuestion, selectedAnswer, noteLoading, noteCreated, addToast]);
 
   if (!currentQuestion) return null;
 
@@ -141,8 +186,8 @@ export function ExplanationPanel() {
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[var(--color-bg-secondary)]">
       <div className="p-6 flex-1 flex flex-col gap-5">
-        {/* Result badge + correct answer + flashcard button */}
-        <div className="flex items-center gap-3">
+        {/* Result badge + correct answer + action buttons */}
+        <div className="flex items-center gap-3 flex-wrap">
           <span className={`badge ${isCorrect ? 'badge-success' : 'badge-error'}`}>
             {isCorrect ? 'Correct' : 'Incorrect'}
           </span>
@@ -151,22 +196,38 @@ export function ExplanationPanel() {
               Correct answer: {currentQuestion.correct_answer}
             </span>
           )}
-          {!isCorrect && (
+          <div className="ml-auto flex items-center gap-2">
             <button
               type="button"
-              onClick={handleCreateFlashcard}
-              disabled={flashcardCreated || flashcardLoading}
-              className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all focus-ring border ${
-                flashcardCreated
+              onClick={handleCreateNote}
+              disabled={noteCreated || noteLoading}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all focus-ring border ${
+                noteCreated
                   ? 'border-[var(--color-success)] text-[var(--color-success)] bg-[color-mix(in_srgb,var(--color-success)_8%,transparent)] cursor-default'
                   : 'border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)]'
               }`}
-              title={flashcardCreated ? 'Flashcard saved' : 'Save as flashcard'}
+              title={noteCreated ? 'Note saved' : 'Save as note'}
             >
-              <Layers className="w-3.5 h-3.5" />
-              {flashcardLoading ? 'Saving…' : flashcardCreated ? 'Saved' : 'Save as Flashcard'}
+              <StickyNote className="w-3.5 h-3.5" />
+              {noteLoading ? 'Saving…' : noteCreated ? 'Saved' : 'Save Note'}
             </button>
-          )}
+            {!isCorrect && (
+              <button
+                type="button"
+                onClick={handleCreateFlashcard}
+                disabled={flashcardCreated || flashcardLoading}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all focus-ring border ${
+                  flashcardCreated
+                    ? 'border-[var(--color-success)] text-[var(--color-success)] bg-[color-mix(in_srgb,var(--color-success)_8%,transparent)] cursor-default'
+                    : 'border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)]'
+                }`}
+                title={flashcardCreated ? 'Flashcard saved' : 'Save as flashcard'}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                {flashcardLoading ? 'Saving…' : flashcardCreated ? 'Saved' : 'Save as Flashcard'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Built-in explanations */}
@@ -269,7 +330,7 @@ export function ExplanationPanel() {
                 onClick={finishExam}
                 className="btn btn-primary flex items-center gap-2 py-2.5 px-4 rounded-lg focus-ring"
               >
-                Finish exam
+                {isReviewMode ? 'Exit Review' : 'Finish exam'}
               </button>
             )}
           </div>
