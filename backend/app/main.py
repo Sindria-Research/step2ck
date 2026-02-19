@@ -5,6 +5,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from app.config import get_settings
 from app.api import health, auth, questions, progress, exams, ai, exam_sessions, notes, flashcards, bookmarks
@@ -15,15 +18,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
-    if "change-me-in-production" in settings.SECRET_KEY and "sqlite" not in settings.DATABASE_URL:
-        logger.warning(
-            "SECRET_KEY appears to be the default while using non-SQLite DB. "
-            "Set SECRET_KEY in production (e.g. openssl rand -hex 32)."
-        )
+    if "change-me-in-production" in settings.SECRET_KEY:
+        if settings.ENVIRONMENT == "production":
+            raise RuntimeError(
+                "SECRET_KEY is still the default — refusing to start in production. "
+                "Set SECRET_KEY to a strong random value (openssl rand -hex 32)."
+            )
+        logger.warning("SECRET_KEY is the default. Set SECRET_KEY before deploying.")
     logger.info("Application startup")
     yield
     logger.info("Application shutdown")
@@ -34,6 +41,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,

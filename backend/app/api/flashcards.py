@@ -182,7 +182,7 @@ def review_card(
         elif card.repetitions == 1:
             card.interval_days = 6
         else:
-            card.interval_days = round(card.interval_days * card.ease_factor)
+            card.interval_days = max(1, round(card.interval_days * card.ease_factor))
         card.repetitions += 1
 
     card.ease_factor = max(1.3, card.ease_factor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)))

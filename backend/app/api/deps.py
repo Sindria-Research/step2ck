@@ -21,7 +21,7 @@ def _resolve_token(token: str, db: Session) -> Optional[User]:
     """Try to resolve a bearer token to a User. Supabase JWT first, then local JWT."""
     settings = get_settings()
 
-    if settings.SUPABASE_JWT_SECRET:
+    if settings.SUPABASE_JWT_SECRET or settings.SUPABASE_URL:
         payload = verify_supabase_token(token)
         if payload:
             return get_or_create_user_from_supabase(

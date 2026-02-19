@@ -1,7 +1,7 @@
 """API routes for notes."""
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -19,13 +19,15 @@ def list_notes(
     section: Optional[str] = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
 ):
     q = db.query(Note).filter(Note.user_id == user.id)
     if question_id:
         q = q.filter(Note.question_id == question_id)
     if section:
         q = q.filter(Note.section == section)
-    return q.order_by(Note.updated_at.desc()).all()
+    return q.order_by(Note.updated_at.desc()).offset(offset).limit(limit).all()
 
 
 @router.post("", response_model=NoteResponse, status_code=status.HTTP_201_CREATED)

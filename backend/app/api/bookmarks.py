@@ -1,8 +1,9 @@
 """API routes for bookmarks."""
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -32,8 +33,10 @@ def _normalize_created_at(value):
 def list_bookmarks(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    limit: int = Query(200, ge=1, le=500),
+    offset: int = Query(0, ge=0),
 ):
-    rows = db.query(Bookmark).filter(Bookmark.user_id == user.id).order_by(Bookmark.created_at.desc()).all()
+    rows = db.query(Bookmark).filter(Bookmark.user_id == user.id).order_by(Bookmark.created_at.desc()).offset(offset).limit(limit).all()
     return [
         BookmarkResponse(
             id=bm.id,
@@ -73,7 +76,21 @@ def create_bookmark(
 
     bookmark = Bookmark(user_id=user.id, question_id=body.question_id)
     db.add(bookmark)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        existing = db.query(Bookmark).filter(
+            Bookmark.user_id == user.id, Bookmark.question_id == body.question_id
+        ).first()
+        if existing:
+            return BookmarkResponse(
+                id=existing.id,
+                user_id=existing.user_id,
+                question_id=existing.question_id,
+                created_at=_normalize_created_at(existing.created_at) or datetime.now(),
+            )
+        raise HTTPException(status_code=500, detail="Failed to create bookmark")
     db.refresh(bookmark)
     return BookmarkResponse(
         id=bookmark.id,

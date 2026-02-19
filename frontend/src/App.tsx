@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
@@ -8,21 +9,22 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 import { ExamLayoutWrapper } from './components/ExamLayoutWrapper';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { Login } from './pages/Login';
-import { Landing } from './pages/Landing';
-import { Dashboard } from './pages/Dashboard';
-import { ExamConfig } from './pages/ExamConfig';
-import { PreviousTests } from './pages/PreviousTests';
-import { PracticeHistory } from './pages/PracticeHistory';
-import { Performance } from './pages/Performance';
-import { Search } from './pages/Search';
-import { Notes } from './pages/Notes';
-import { Flashcards } from './pages/Flashcards';
-import { Bookmarks } from './pages/Bookmarks';
-import { LabValues } from './pages/LabValues';
-import { Settings } from './pages/Settings';
-import { ToS } from './pages/ToS';
-import { Privacy } from './pages/Privacy';
+
+const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
+const Landing = lazy(() => import('./pages/Landing').then((m) => ({ default: m.Landing })));
+const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })));
+const ExamConfig = lazy(() => import('./pages/ExamConfig').then((m) => ({ default: m.ExamConfig })));
+const PreviousTests = lazy(() => import('./pages/PreviousTests').then((m) => ({ default: m.PreviousTests })));
+const PracticeHistory = lazy(() => import('./pages/PracticeHistory').then((m) => ({ default: m.PracticeHistory })));
+const Performance = lazy(() => import('./pages/Performance').then((m) => ({ default: m.Performance })));
+const Search = lazy(() => import('./pages/Search').then((m) => ({ default: m.Search })));
+const Notes = lazy(() => import('./pages/Notes').then((m) => ({ default: m.Notes })));
+const Flashcards = lazy(() => import('./pages/Flashcards').then((m) => ({ default: m.Flashcards })));
+const Bookmarks = lazy(() => import('./pages/Bookmarks').then((m) => ({ default: m.Bookmarks })));
+const LabValues = lazy(() => import('./pages/LabValues').then((m) => ({ default: m.LabValues })));
+const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })));
+const ToS = lazy(() => import('./pages/ToS').then((m) => ({ default: m.ToS })));
+const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
 
 function ProtectedPage({ children }: { children: React.ReactNode }) {
   return (
@@ -44,11 +46,20 @@ function AuthLayout() {
   );
 }
 
+function PageFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg-secondary)]">
+      <div className="w-8 h-8 border-2 border-[var(--color-border)] border-t-[var(--color-accent)] rounded-full animate-spin" />
+    </div>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
         <ThemeProvider>
+          <Suspense fallback={<PageFallback />}>
           <Routes>
             {/* Public pages — no auth providers, no Supabase session check */}
             <Route path="/tos" element={<ToS />} />
@@ -82,6 +93,7 @@ function App() {
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Routes>
+          </Suspense>
         </ThemeProvider>
       </BrowserRouter>
     </ErrorBoundary>

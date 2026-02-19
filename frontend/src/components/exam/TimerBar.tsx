@@ -44,19 +44,19 @@ export function TimerBar() {
   const questionUrgent = questionRemaining !== null && questionRemaining <= 10;
   const totalUrgent = totalRemaining !== null && totalRemaining <= 60;
 
-  // Auto-advance when per-question timer hits 0
   useEffect(() => {
+    if (examFinished) return;
     if (questionRemaining !== null && questionRemaining <= 0) {
       lockAnswerAndAdvance();
     }
-  }, [questionRemaining, lockAnswerAndAdvance]);
+  }, [questionRemaining, lockAnswerAndAdvance, examFinished]);
 
-  // Auto-finish when overall timer hits 0
   useEffect(() => {
+    if (examFinished) return;
     if (totalRemaining !== null && totalRemaining <= 0) {
       finishExam();
     }
-  }, [totalRemaining, finishExam]);
+  }, [totalRemaining, finishExam, examFinished]);
 
   const answered = answeredQuestions.size;
 

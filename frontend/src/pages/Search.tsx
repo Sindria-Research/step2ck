@@ -12,12 +12,16 @@ export function Search() {
   const [searched, setSearched] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string>('');
   const [sections, setSections] = useState<string[]>([]);
+  const [sectionsError, setSectionsError] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [bookmarkTogglingId, setBookmarkTogglingId] = useState<string | null>(null);
 
   useEffect(() => {
-    api.questions.sections().then((r) => setSections(r.sections)).catch(() => {});
+    api.questions.sections()
+      .then((r) => setSections(r.sections))
+      .catch((e) => setSectionsError(e instanceof Error ? e.message : 'Failed to load sections'));
   }, []);
 
   useEffect(() => {
@@ -27,6 +31,7 @@ export function Search() {
   const handleSearch = useCallback(async () => {
     setLoading(true);
     setSearched(true);
+    setSearchError(null);
     try {
       const res = await api.questions.list({
         sections: selectedSection ? [selectedSection] : undefined,
@@ -40,8 +45,9 @@ export function Search() {
           )
         : res.items;
       setResults(filtered);
-    } catch {
+    } catch (e) {
       setResults([]);
+      setSearchError(e instanceof Error ? e.message : 'Search failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -122,8 +128,23 @@ export function Search() {
             </div>
           </div>
 
+          {sectionsError && (
+            <div className="chiron-mockup mb-4">
+              <p className="text-xs text-[var(--color-error)]">{sectionsError} — section filter may be incomplete.</p>
+            </div>
+          )}
+
+          {searchError && (
+            <div className="chiron-mockup mb-4 text-center py-6">
+              <p className="text-sm text-[var(--color-error)] mb-3">{searchError}</p>
+              <button type="button" onClick={handleSearch} className="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
+                Retry
+              </button>
+            </div>
+          )}
+
           {/* Results */}
-          {searched && (
+          {searched && !searchError && (
             <div className="chiron-mockup">
               <p className="chiron-mockup-label mb-4">
                 {results.length} result{results.length !== 1 ? 's' : ''} found

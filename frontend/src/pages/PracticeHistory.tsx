@@ -9,18 +9,25 @@ export function PracticeHistory() {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState<ExamSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'completed' | 'in_progress'>('all');
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
     api.examSessions.list(filter === 'all' ? undefined : filter)
-      .then((all) => setSessions(all.filter((s) => s.mode.startsWith('practice:') || !s.mode.includes(':'))))
-      .catch(() => {})
+      .then((all) => setSessions(Array.isArray(all) ? all.filter((s) => s.mode.startsWith('practice:') || !s.mode.includes(':')) : []))
+      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load practice history'))
       .finally(() => setLoading(false));
   }, [filter]);
 
   const handleDelete = async (id: number) => {
-    await api.examSessions.delete(id);
-    setSessions((prev) => prev.filter((s) => s.id !== id));
+    try {
+      await api.examSessions.delete(id);
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+    } catch {
+      // Silently ignore — session may already be deleted
+    }
   };
 
   const parseSessionMode = (mode: string) => {
@@ -33,6 +40,7 @@ export function PracticeHistory() {
   const getSessionQuestionIds = async (sessionId: number): Promise<string[]> => {
     try {
       const detail = await api.examSessions.get(sessionId);
+      if (!detail?.answers?.length) return [];
       return detail.answers
         .sort((a, b) => a.order_index - b.order_index)
         .map((a) => a.question_id);
@@ -112,7 +120,14 @@ export function PracticeHistory() {
             </div>
           </div>
 
-          {loading ? (
+          {error ? (
+            <div className="chiron-mockup text-center py-8">
+              <p className="text-sm text-[var(--color-error)] mb-3">{error}</p>
+              <button type="button" onClick={() => setFilter(filter)} className="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
+                Retry
+              </button>
+            </div>
+          ) : loading ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="chiron-mockup animate-pulse h-20" />

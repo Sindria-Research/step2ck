@@ -1,5 +1,7 @@
 """AI endpoints."""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -9,10 +11,13 @@ from app.schemas.ai import AIExplainRequest, AIExplainResponse
 from app.services.ai import generate_ai_explanation
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/explain", response_model=AIExplainResponse)
+@limiter.limit("20/minute")
 def explain(
+    request: Request,
     body: AIExplainRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),

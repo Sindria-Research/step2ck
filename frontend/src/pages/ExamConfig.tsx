@@ -70,9 +70,13 @@ export function ExamConfig() {
     let cancelled = false;
     setSectionsLoading(true);
     setSectionsError(null);
-    api.questions
-      .sections()
-      .then((res) => { if (!cancelled) setSections(res.sections); })
+
+    Promise.all([api.questions.sections(), api.questions.list({ limit: 1 })])
+      .then(([secRes, countRes]) => {
+        if (cancelled) return;
+        setSections(secRes.sections);
+        setAvailableCount(countRes.total);
+      })
       .catch((e) => { if (!cancelled) setSectionsError(e instanceof Error ? e.message : 'Failed to load subjects'); })
       .finally(() => { if (!cancelled) setSectionsLoading(false); });
     return () => { cancelled = true; };
@@ -83,7 +87,7 @@ export function ExamConfig() {
     const subList = Array.from(selectedSubjects).filter((s) => sections.includes(s));
     if (subList.length === 0) { setAvailableCount(0); return; }
     api.questions
-      .list({ sections: subList, limit: 500 })
+      .list({ sections: subList, limit: 1 })
       .then((res) => setAvailableCount(res.total))
       .catch(() => setAvailableCount(0));
   }, [selectedSubjects, sections]);

@@ -12,15 +12,20 @@ export function PreviousTests() {
   const [filter, setFilter] = useState<'all' | 'completed' | 'in_progress'>('all');
 
   useEffect(() => {
+    setLoading(true);
     api.examSessions.list(filter === 'all' ? undefined : filter)
-      .then((all) => setSessions(all.filter((s) => s.mode.startsWith('test:'))))
-      .catch(() => {})
+      .then((all) => setSessions(Array.isArray(all) ? all.filter((s) => s.mode.startsWith('test:')) : []))
+      .catch(() => setSessions([]))
       .finally(() => setLoading(false));
   }, [filter]);
 
   const handleDelete = async (id: number) => {
-    await api.examSessions.delete(id);
-    setSessions((prev) => prev.filter((s) => s.id !== id));
+    try {
+      await api.examSessions.delete(id);
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+    } catch {
+      // Silently ignore — session may already be deleted
+    }
   };
 
   const parseSessionMode = (mode: string) => {
@@ -33,6 +38,7 @@ export function PreviousTests() {
   const getSessionQuestionIds = async (sessionId: number): Promise<string[]> => {
     try {
       const detail = await api.examSessions.get(sessionId);
+      if (!detail?.answers?.length) return [];
       return detail.answers
         .sort((a, b) => a.order_index - b.order_index)
         .map((a) => a.question_id);

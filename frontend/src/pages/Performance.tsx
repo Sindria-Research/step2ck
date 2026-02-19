@@ -8,13 +8,18 @@ export function Performance() {
   const [stats, setStats] = useState<ProgressStats | null>(null);
   const [history, setHistory] = useState<Array<{ question_id: string; correct: boolean; section: string }>>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchData = () => {
+    setLoading(true);
+    setError(null);
     Promise.all([api.progress.stats(), api.progress.list()])
       .then(([s, h]) => { setStats(s); setHistory(h); })
-      .catch(() => {})
+      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load performance data'))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { fetchData(); }, []);
 
   const bySection = stats?.by_section ?? [];
   const total = stats?.total ?? 0;
@@ -32,6 +37,15 @@ export function Performance() {
             <h1 className="chiron-feature-heading">Performance</h1>
             <p className="chiron-feature-body mt-2">Comprehensive analytics across all your question bank activity.</p>
           </div>
+
+          {error && (
+            <div className="chiron-mockup mb-8 text-center py-8">
+              <p className="text-sm text-[var(--color-error)] mb-3">{error}</p>
+              <button type="button" onClick={fetchData} className="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
+                Retry
+              </button>
+            </div>
+          )}
 
           {/* Summary row */}
           <div className="grid sm:grid-cols-3 gap-4 mb-8">

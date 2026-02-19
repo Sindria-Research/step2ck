@@ -1,5 +1,6 @@
 """Questions endpoints."""
-from typing import List, Optional
+import time
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -12,6 +13,20 @@ from app.schemas.question import QuestionListResponse, QuestionResponse
 router = APIRouter()
 
 USABLE_STATUSES = [QUESTION_STATUS_READY, QUESTION_STATUS_INCOMPLETE]
+
+_cache: dict[str, tuple[float, Any]] = {}
+CACHE_TTL = 300  # 5 minutes
+
+
+def _get_cached(key: str):
+    entry = _cache.get(key)
+    if entry and (time.monotonic() - entry[0]) < CACHE_TTL:
+        return entry[1]
+    return None
+
+
+def _set_cached(key: str, value: Any):
+    _cache[key] = (time.monotonic(), value)
 
 
 @router.get("", response_model=QuestionListResponse)
@@ -46,22 +61,35 @@ def list_questions(
 
 @router.get("/sections")
 def list_sections(db: Session = Depends(get_db)):
-    """Return distinct section names (only from usable questions)."""
+    """Return distinct section names (only from usable questions). Cached for 5 min."""
+    cached = _get_cached("sections")
+    if cached is not None:
+        return cached
     rows = (
         db.query(Question.section)
         .filter(Question.status.in_(USABLE_STATUSES))
         .distinct()
         .all()
     )
-    return {"sections": [r[0] for r in rows]}
+    result = {"sections": [r[0] for r in rows]}
+    _set_cached("sections", result)
+    return result
 
 
 @router.get("/stats")
 def question_stats(db: Session = Depends(get_db)):
-    """Return count of questions per status."""
+    """Return count of questions per status. Cached for 5 min."""
+    cached = _get_cached("stats")
+    if cached is not None:
+        return cached
     from sqlalchemy import func
     rows = db.query(Question.status, func.count()).group_by(Question.status).all()
-    return {status: count for status, count in rows}
+    result = {s: count for s, count in rows}
+    _set_cached("stats", result)
+    return result
+
+
+MAX_BY_IDS = 200
 
 
 @router.post("/by-ids", response_model=list[QuestionResponse])
@@ -73,6 +101,8 @@ def get_questions_by_ids(
     ids = body.get("ids", [])
     if not ids:
         return []
+    if len(ids) > MAX_BY_IDS:
+        raise HTTPException(status_code=400, detail=f"Maximum {MAX_BY_IDS} IDs per request")
     rows = db.query(Question).filter(Question.id.in_(ids)).all()
     by_id = {q.id: q for q in rows}
     ordered = [by_id[qid] for qid in ids if qid in by_id]

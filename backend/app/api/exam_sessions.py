@@ -2,8 +2,8 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user
 from app.db import get_db
@@ -24,11 +24,13 @@ def list_sessions(
     status_filter: Optional[str] = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
 ):
     q = db.query(ExamSession).filter(ExamSession.user_id == user.id)
     if status_filter:
         q = q.filter(ExamSession.status == status_filter)
-    return q.order_by(ExamSession.started_at.desc()).all()
+    return q.order_by(ExamSession.started_at.desc()).offset(offset).limit(limit).all()
 
 
 @router.post("", response_model=ExamSessionResponse, status_code=status.HTTP_201_CREATED)
@@ -37,10 +39,13 @@ def create_session(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    if not body.question_ids:
+        raise HTTPException(status_code=400, detail="question_ids must not be empty")
+
     session = ExamSession(
         user_id=user.id,
         mode=body.mode,
-        total_questions=body.total_questions,
+        total_questions=len(body.question_ids),
         subjects=body.subjects,
         status="in_progress",
     )
@@ -61,9 +66,12 @@ def get_session(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    session = db.query(ExamSession).filter(
-        ExamSession.id == session_id, ExamSession.user_id == user.id
-    ).first()
+    session = (
+        db.query(ExamSession)
+        .options(selectinload(ExamSession.answers))
+        .filter(ExamSession.id == session_id, ExamSession.user_id == user.id)
+        .first()
+    )
     if not session:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
     return session

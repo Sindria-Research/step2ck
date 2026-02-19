@@ -1,5 +1,7 @@
 """Auth endpoints."""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -16,12 +18,14 @@ from app.services.auth import (
 )
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 DEMO_EMAIL = "demo@chiron.local"
 
 
 @router.post("/login", response_model=Token)
-def login(data: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, data: LoginRequest, db: Session = Depends(get_db)):
     """Login: demo mode (dev only) or email+password for real user."""
     is_demo = data.email == DEMO_EMAIL or not data.password
     if is_demo:
@@ -40,7 +44,8 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/google", response_model=Token)
-def google_login(data: GoogleLoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def google_login(request: Request, data: GoogleLoginRequest, db: Session = Depends(get_db)):
     """Login or register with Google ID token. Verifies token and upserts user."""
     payload = verify_google_id_token(data.id_token)
     if not payload:

@@ -1,7 +1,8 @@
 """Progress endpoints."""
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import case, func as sqlfunc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -18,12 +19,16 @@ router = APIRouter()
 def get_progress(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    limit: int = Query(200, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
 ):
-    """Return current user's progress records (question_id, correct)."""
+    """Return current user's progress records (question_id, correct) with pagination."""
     rows = (
         db.query(UserProgress)
         .filter(UserProgress.user_id == current_user.id)
         .order_by(UserProgress.created_at.desc())
+        .offset(offset)
+        .limit(limit)
         .all()
     )
     return [
@@ -37,32 +42,40 @@ def get_stats(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Aggregate stats: total, correct, incorrect, by_section."""
-    rows = (
-        db.query(UserProgress)
-        .filter(UserProgress.user_id == current_user.id)
+    """Aggregate stats using SQL — no full table scan into Python."""
+    base = db.query(UserProgress).filter(UserProgress.user_id == current_user.id)
+
+    totals = base.with_entities(
+        sqlfunc.count().label("total"),
+        sqlfunc.sum(case((UserProgress.correct == True, 1), else_=0)).label("correct"),  # noqa: E712
+    ).first()
+
+    total = totals.total or 0
+    correct = int(totals.correct or 0)
+    incorrect = total - correct
+
+    section_rows = (
+        base.with_entities(
+            UserProgress.section,
+            sqlfunc.count().label("total"),
+            sqlfunc.sum(case((UserProgress.correct == True, 1), else_=0)).label("correct"),  # noqa: E712
+        )
+        .group_by(UserProgress.section)
         .all()
     )
-    correct = sum(1 for r in rows if r.correct)
-    incorrect = len(rows) - correct
-    section_map = {}
-    for r in rows:
-        if r.section not in section_map:
-            section_map[r.section] = {"total": 0, "correct": 0}
-        section_map[r.section]["total"] += 1
-        if r.correct:
-            section_map[r.section]["correct"] += 1
+
     by_section = [
         {
-            "name": name,
-            "total": d["total"],
-            "correct": d["correct"],
-            "accuracy": round((d["correct"] / d["total"]) * 100) if d["total"] else 0,
+            "name": row.section,
+            "total": row.total,
+            "correct": int(row.correct or 0),
+            "accuracy": round((int(row.correct or 0) / row.total) * 100) if row.total else 0,
         }
-        for name, d in section_map.items()
+        for row in section_rows
     ]
+
     return ProgressStatsResponse(
-        total=len(rows),
+        total=total,
         correct=correct,
         incorrect=incorrect,
         by_section=by_section,

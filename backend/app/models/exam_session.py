@@ -22,7 +22,7 @@ class ExamSession(Base):
     unanswered_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     accuracy: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     subjects: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(16), nullable=False, default="in_progress")
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="in_progress", index=True)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
@@ -37,7 +37,7 @@ class ExamSessionAnswer(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     session_id: Mapped[int] = mapped_column(Integer, ForeignKey("exam_sessions.id", ondelete="CASCADE"), nullable=False, index=True)
-    question_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    question_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     answer_selected: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     correct: Mapped[Optional[bool]] = mapped_column(nullable=True)
     time_spent_seconds: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
