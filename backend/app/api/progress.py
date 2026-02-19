@@ -16,6 +16,7 @@ from app.models.exam_session import ExamSessionAnswer, ExamSession
 from app.models.study_profile import UserStudyProfile
 from app.models.question import Question
 from app.schemas.progress import ProgressRecordCreate, ProgressRecordResponse, ProgressStatsResponse
+from app.services.plans import count_today_progress, get_plan_limits
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -339,6 +340,15 @@ def record_progress(
     db: Session = Depends(get_db),
 ):
     """Record one answer (append; multiple attempts allowed)."""
+    limits = get_plan_limits(current_user.plan)
+    used_today = count_today_progress(current_user.id, db)
+    if used_today >= limits.daily_questions:
+        raise HTTPException(
+            status_code=429,
+            detail="Daily question limit reached",
+            headers={"X-Upgrade-Required": "true"},
+        )
+
     try:
         rec = UserProgress(
             user_id=current_user.id,

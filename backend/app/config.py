@@ -42,6 +42,13 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
 
+    # Stripe
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRO_MONTHLY_PRICE_ID: str = ""
+    STRIPE_PRO_ANNUAL_PRICE_ID: str = ""
+
     # AI (OpenAI-compatible API)
     AI_API_KEY: str = ""
     AI_MODEL: str = "gpt-4o-mini"

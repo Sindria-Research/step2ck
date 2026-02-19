@@ -1,4 +1,5 @@
 """User schemas."""
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -18,6 +19,8 @@ class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
     id: str
     plan: str = "free"
+    plan_interval: Optional[str] = None
+    plan_expires_at: Optional[datetime] = None
 
 
 class Token(BaseModel):

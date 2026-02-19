@@ -5,6 +5,9 @@ export interface User {
   email: string;
   display_name: string | null;
   avatar_url: string | null;
+  plan: 'free' | 'pro';
+  plan_interval: 'month' | 'year' | null;
+  plan_expires_at: string | null;
 }
 
 export interface Question {
@@ -266,6 +269,25 @@ export interface TrendWeek {
 export interface SectionTrend {
   section: string;
   weeks: TrendWeek[];
+}
+
+// ── Billing ──
+
+export interface CheckoutResponse {
+  checkout_url: string;
+}
+
+export interface PortalResponse {
+  portal_url: string;
+}
+
+export interface SubscriptionStatus {
+  plan: 'free' | 'pro';
+  status: 'active' | 'trialing' | 'past_due' | 'canceled' | null;
+  interval: 'month' | 'year' | null;
+  current_period_end: string | null;
+  cancel_at: string | null;
+  trial_end: string | null;
 }
 
 // ── Bookmarks ──

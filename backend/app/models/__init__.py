@@ -8,6 +8,7 @@ from app.models.flashcard import FlashcardDeck, Flashcard
 from app.models.bookmark import Bookmark
 from app.models.study_profile import UserStudyProfile
 from app.models.study_plan import StudyPlan
+from app.models.usage_log import UsageLog
 
 __all__ = [
     "Question",
@@ -21,4 +22,5 @@ __all__ = [
     "Bookmark",
     "UserStudyProfile",
     "StudyPlan",
+    "UsageLog",
 ]

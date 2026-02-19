@@ -163,6 +163,12 @@ export function Landing() {
             >
               Features
             </a>
+            <a
+              href="#pricing"
+              className="hidden md:inline-flex text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-3 py-2 rounded-md transition-colors focus-ring"
+            >
+              Pricing
+            </a>
             <Link to="/login" className="btn btn-ghost text-sm px-4 py-2 rounded-md focus-ring">
               Sign in
             </Link>
@@ -440,6 +446,87 @@ export function Landing() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Pricing ── */}
+      <section id="pricing" className="py-14 md:py-16 border-t border-[var(--color-border)]">
+        <div className="container">
+          <div className="text-center mb-10 chiron-reveal" data-reveal>
+            <p className="text-sm font-bold uppercase tracking-widest text-[var(--color-brand-blue)] mb-3">
+              Pricing
+            </p>
+            <h2 className="text-3xl md:text-4xl font-semibold font-display tracking-tight text-[var(--color-text-primary)]">
+              Start free. Upgrade when ready.
+            </h2>
+            <p className="mt-3 text-base text-[var(--color-text-secondary)] max-w-lg mx-auto">
+              Get full access to the question bank for free. Upgrade to Pro for unlimited AI, personalized exams, and more.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-[720px] mx-auto chiron-reveal chiron-reveal-delay-1" data-reveal>
+            {/* Free card */}
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-6 flex flex-col">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Free</h3>
+              <p className="text-sm text-[var(--color-text-secondary)] mt-1 mb-4">Core question bank access</p>
+              <div className="mb-5">
+                <span className="text-3xl font-bold text-[var(--color-text-primary)]">$0</span>
+                <span className="text-sm text-[var(--color-text-muted)] ml-1">forever</span>
+              </div>
+              <ul className="space-y-2 flex-1 text-sm text-[var(--color-text-secondary)]">
+                {['40 questions / day', '5 AI explanations / day', 'Basic analytics', 'Search & Lab Values'].map((f) => (
+                  <li key={f} className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-success)] shrink-0" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/login"
+                className="mt-5 py-2.5 text-center rounded-lg border border-[var(--color-border)] text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors block"
+              >
+                Get started
+              </Link>
+            </div>
+
+            {/* Pro card */}
+            <div className="rounded-xl border-2 border-[var(--color-brand-blue)] bg-[var(--color-bg-primary)] p-6 flex flex-col relative">
+              <div className="absolute -top-3 left-6 bg-[var(--color-brand-blue)] text-white text-[0.65rem] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+                Most Popular
+              </div>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+                Pro <Zap className="w-4 h-4 text-[var(--color-brand-blue)]" />
+              </h3>
+              <p className="text-sm text-[var(--color-text-secondary)] mt-1 mb-4">Everything unlimited</p>
+              <div className="mb-5">
+                <span className="text-3xl font-bold text-[var(--color-text-primary)]">$29</span>
+                <span className="text-sm text-[var(--color-text-muted)] ml-1">/ month</span>
+              </div>
+              <ul className="space-y-2 flex-1 text-sm text-[var(--color-text-secondary)]">
+                {['Unlimited AI explanations', 'Personalized exam mode', 'AI study plan', 'Full performance analytics', 'Unlimited notes & flashcards'].map((f) => (
+                  <li key={f} className="flex items-center gap-2">
+                    <Zap className="w-3.5 h-3.5 text-[var(--color-brand-blue)] shrink-0" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/login"
+                className="mt-5 py-2.5 text-center rounded-lg bg-[var(--color-brand-blue)] text-white text-sm font-medium hover:opacity-90 transition-opacity block"
+              >
+                Start 7-day free trial
+              </Link>
+            </div>
+          </div>
+
+          <div className="text-center mt-6 chiron-reveal chiron-reveal-delay-1" data-reveal>
+            <Link
+              to="/pricing"
+              className="text-sm text-[var(--color-brand-blue)] hover:underline font-medium inline-flex items-center gap-1.5"
+            >
+              View full feature comparison <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       </section>

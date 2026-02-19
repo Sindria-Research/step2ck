@@ -18,6 +18,8 @@ import {
 import { api } from '../api/api';
 import type { StudyPlanData, StudyPlanWeek, DailySummary } from '../api/types';
 import { EmptyState, Skeleton, SkeletonCard, CircularProgress } from '../components/common';
+import { useAuth } from '../context/AuthContext';
+import { ProGate } from '../components/ProGate';
 
 const PHASE_STYLES: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   foundation: {
@@ -424,6 +426,7 @@ function WeekCard({
 
 export function StudyPlan() {
   const navigate = useNavigate();
+  const { isPro } = useAuth();
   const [plan, setPlan] = useState<StudyPlanData | null>(null);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -487,6 +490,22 @@ export function StudyPlan() {
       pct: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0,
     }));
   }, [plan]);
+
+  if (!isPro) {
+    return (
+      <div className="chiron-dash flex-1 overflow-y-auto">
+        <div className="dash-glow dash-glow-one" aria-hidden />
+        <div className="dash-glow dash-glow-two" aria-hidden />
+        <div className="relative z-[1] py-20">
+          <div className="container">
+            <ProGate feature="AI Study Plan">
+              <div className="h-[400px]" />
+            </ProGate>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="chiron-dash flex-1 overflow-y-auto">

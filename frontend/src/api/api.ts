@@ -4,6 +4,7 @@ import type {
   AIExplainRequest,
   AIExplainResponse,
   BookmarkResponse,
+  CheckoutResponse,
   DailySummary,
   ExamGenerateRequest,
   ExamGenerateResponse,
@@ -19,6 +20,7 @@ import type {
   NoteCreateRequest,
   NoteResponse,
   NoteUpdateRequest,
+  PortalResponse,
   ProgressRecord,
   ProgressStats,
   Question,
@@ -26,6 +28,7 @@ import type {
   StudyPlanResponse,
   StudyProfileResponse,
   StudyProfileUpdate,
+  SubscriptionStatus,
   TimeStats,
   TokenResponse,
   User,
@@ -230,6 +233,14 @@ export const api = {
     get: () => request<StudyPlanResponse>('/study-plan'),
     generate: () =>
       request<StudyPlanResponse>('/study-plan/generate', { method: 'POST' }),
+  },
+  billing: {
+    createCheckout: (interval: 'month' | 'year') =>
+      request<CheckoutResponse>(`/billing/checkout/${interval}`, { method: 'POST' }),
+    createPortal: () =>
+      request<PortalResponse>('/billing/portal', { method: 'POST' }),
+    getSubscription: () =>
+      request<SubscriptionStatus>('/billing/subscription'),
   },
   bookmarks: {
     list: () => request<BookmarkResponse[]>('/bookmarks'),

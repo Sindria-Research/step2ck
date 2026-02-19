@@ -9,6 +9,11 @@ from app.db import get_db
 from app.models import Question, User
 from app.schemas.ai import AIExplainRequest, AIExplainResponse
 from app.services.ai import generate_ai_explanation
+from app.services.plans import (
+    count_today_ai_explains,
+    get_plan_limits,
+    log_usage,
+)
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
@@ -23,7 +28,15 @@ def explain(
     db: Session = Depends(get_db),
 ):
     """Return AI-generated explanation for a question or a selected snippet."""
-    _ = current_user  # Reserved for future auditing / rate-limits.
+    limits = get_plan_limits(current_user.plan)
+    used = count_today_ai_explains(current_user.id, db)
+    if used >= limits.daily_ai_explains:
+        raise HTTPException(
+            status_code=429,
+            detail="Daily AI explanation limit reached",
+            headers={"X-Upgrade-Required": "true"},
+        )
+
     question = db.query(Question).filter(Question.id == body.question_id).first()
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
@@ -33,6 +46,11 @@ def explain(
         selected_answer=body.selected_answer,
         selection_text=body.selection_text,
     )
+
+    log_usage(current_user.id, "ai_explain", db)
+    db.commit()
+
+    remaining = max(0, limits.daily_ai_explains - used - 1)
     return AIExplainResponse(
         explanation=explanation,
         model=model,

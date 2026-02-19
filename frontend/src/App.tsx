@@ -27,6 +27,7 @@ const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m
 const ToS = lazy(() => import('./pages/ToS').then((m) => ({ default: m.ToS })));
 const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
 const StudyPlan = lazy(() => import('./pages/StudyPlan').then((m) => ({ default: m.StudyPlan })));
+const Pricing = lazy(() => import('./pages/Pricing').then((m) => ({ default: m.Pricing })));
 
 function ProtectedPage({ children }: { children: React.ReactNode }) {
   return (
@@ -71,6 +72,7 @@ function App() {
             <Route element={<AuthLayout />}>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
               <Route path="/exam/config" element={<ProtectedPage><ExamConfig /></ProtectedPage>} />
               <Route path="/previous-tests" element={<ProtectedPage><PreviousTests /></ProtectedPage>} />

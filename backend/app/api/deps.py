@@ -1,5 +1,5 @@
 """Shared FastAPI dependencies."""
-from typing import Optional
+from typing import Callable, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -13,6 +13,7 @@ from app.services.auth import (
     get_or_create_user_from_supabase,
     verify_supabase_token,
 )
+from app.services.plans import get_plan_limits, is_pro, PLAN_PRO
 
 security = HTTPBearer(auto_error=False)
 
@@ -72,3 +73,14 @@ def get_current_user(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Authentication required",
     )
+
+
+def require_pro(current_user: User = Depends(get_current_user)) -> User:
+    """Dependency that enforces Pro plan."""
+    if current_user.plan != PLAN_PRO:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Pro plan required",
+            headers={"X-Upgrade-Required": "true"},
+        )
+    return current_user

@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, Sparkles, ArrowLeft, Info, Clock } from 'lucide-react';
 import { api } from '../api/api';
 import type { ExamType } from '../context/ExamContext';
+import { useAuth } from '../context/AuthContext';
+import { ProBadge, UpgradePrompt } from '../components/ProGate';
 
 const SUBJECTS = [
   'Internal Medicine',
@@ -28,6 +30,7 @@ export function ExamConfig() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const rootRef = useRef<HTMLDivElement>(null);
+  const { isPro } = useAuth();
 
   const examType: ExamType = searchParams.get('type') === 'test' ? 'test' : 'practice';
   const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(new Set(SUBJECTS));
@@ -240,33 +243,40 @@ export function ExamConfig() {
               <div className="chiron-mockup">
                 <p className="chiron-mockup-label mb-3">Mode</p>
                 <div className="space-y-1.5">
-                  {MODES.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setMode(m.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-all focus-ring ${
-                        mode === m.id
-                          ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_8%,var(--color-bg-primary))]'
-                          : 'border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)]'
-                      }`}
-                    >
-                      <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        mode === m.id ? 'border-[var(--color-brand-blue)]' : 'border-[var(--color-border)]'
-                      }`}>
-                        {mode === m.id && <span className="w-2 h-2 rounded-full bg-[var(--color-brand-blue)]" />}
-                      </span>
-                      <div className="min-w-0">
-                        <span className="flex items-center gap-1.5">
-                          <span className={`text-sm font-medium ${mode === m.id ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
-                            {m.label}
-                          </span>
-                          {m.id === 'personalized' && <Sparkles className="w-3.5 h-3.5 text-[var(--color-brand-blue)]" />}
+                  {MODES.map((m) => {
+                    const locked = !isPro && m.id === 'personalized';
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => !locked && setMode(m.id)}
+                        disabled={locked}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-all focus-ring ${
+                          locked
+                            ? 'border-[var(--color-border)] bg-[var(--color-bg-tertiary)] opacity-60 cursor-not-allowed'
+                            : mode === m.id
+                              ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_8%,var(--color-bg-primary))]'
+                              : 'border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)]'
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          mode === m.id ? 'border-[var(--color-brand-blue)]' : 'border-[var(--color-border)]'
+                        }`}>
+                          {mode === m.id && <span className="w-2 h-2 rounded-full bg-[var(--color-brand-blue)]" />}
                         </span>
-                        <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{m.desc}</p>
-                      </div>
-                    </button>
-                  ))}
+                        <div className="min-w-0 flex-1">
+                          <span className="flex items-center gap-1.5">
+                            <span className={`text-sm font-medium ${mode === m.id ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
+                              {m.label}
+                            </span>
+                            {m.id === 'personalized' && <Sparkles className="w-3.5 h-3.5 text-[var(--color-brand-blue)]" />}
+                            {locked && <ProBadge />}
+                          </span>
+                          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{m.desc}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

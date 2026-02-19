@@ -26,6 +26,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 import { APP_NAME, getLogoUrl } from '../../config/branding';
+import { ProBadge } from '../ProGate';
 
 interface NavItem {
   to: string;
@@ -82,7 +83,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebar();
-  const { user, logout } = useAuth();
+  const { user, logout, isPro } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState<number | null>(null);
@@ -135,7 +136,10 @@ export function AppSidebar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [userMenuOpen]);
 
+  const PRO_ROUTES = new Set(['/study-plan']);
+
   const renderNavItem = ({ to, label, icon: Icon }: NavItem, badge?: number | null) => {
+    const showProBadge = !isPro && PRO_ROUTES.has(to.split('?')[0]);
     const hasQuery = to.includes('?');
     const [basePath, queryString] = hasQuery ? to.split('?') : [to, ''];
 
@@ -161,6 +165,7 @@ export function AppSidebar() {
         {!collapsed && (
           <>
             <span className="flex-1 truncate">{label}</span>
+            {showProBadge && <ProBadge />}
             {badge != null && badge > 0 && (
               <span className="text-[0.65rem] font-medium tabular-nums text-[var(--color-text-muted)]" aria-label={`${badge} bookmarks`}>
                 {badge}

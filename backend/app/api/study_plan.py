@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import case, func as sqlfunc
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_pro
 from app.db import get_db
 from app.models import User, UserProgress
 from app.models.study_plan import StudyPlan
@@ -88,7 +88,7 @@ def _generate_plan_data(
 @router.get("")
 def get_study_plan(
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_pro),
 ):
     plan = db.query(StudyPlan).filter(StudyPlan.user_id == user.id).first()
     if not plan:
@@ -99,7 +99,7 @@ def get_study_plan(
 @router.post("/generate")
 def generate_study_plan(
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_pro),
 ):
     profile = db.query(UserStudyProfile).filter(UserStudyProfile.user_id == user.id).first()
     if not profile:

@@ -1,18 +1,40 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronLeft, CreditCard, User, Moon, Sun, Monitor, Target } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ChevronLeft, CreditCard, User, Moon, Sun, Monitor, Target, ArrowRight, Zap, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../api/api';
+import type { SubscriptionStatus } from '../api/types';
 
 export function Settings() {
-  const { user } = useAuth();
+  const { user, isPro, refreshUser } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { theme, setTheme } = useTheme();
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
   const [examDate, setExamDate] = useState('');
   const [targetScore, setTargetScore] = useState(240);
   const [dailyGoal, setDailyGoal] = useState(40);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const [billingLoading, setBillingLoading] = useState(true);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('checkout') === 'success') {
+      setCheckoutSuccess(true);
+      refreshUser();
+      searchParams.delete('checkout');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, refreshUser]);
+
+  useEffect(() => {
+    api.billing.getSubscription()
+      .then(setSubscription)
+      .catch(() => {})
+      .finally(() => setBillingLoading(false));
+  }, [isPro]);
 
   useEffect(() => {
     api.studyProfile.get()
@@ -209,6 +231,19 @@ export function Settings() {
           </div>
         </section>
 
+        {/* Checkout success banner */}
+        {checkoutSuccess && (
+          <div className="mb-6 rounded-lg border border-[var(--color-success)] bg-[var(--color-success-bg)] p-4 flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-[var(--color-success)] shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-[var(--color-success)]">Welcome to Pro!</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                Your subscription is active. Enjoy unlimited access to all features.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Billing */}
         <section className="card rounded-lg mb-6">
           <div className="flex items-center gap-3 mb-4">
@@ -225,9 +260,88 @@ export function Settings() {
             </div>
           </div>
           <div className="pt-4 border-t border-[var(--color-border)]">
-            <p className="text-sm text-[var(--color-text-tertiary)]">
-              Billing is not yet available. It will appear here when enabled.
-            </p>
+            {billingLoading ? (
+              <p className="text-sm text-[var(--color-text-muted)]">Loading...</p>
+            ) : isPro ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-brand-blue)] text-white text-xs font-bold uppercase tracking-wider">
+                    <Zap className="w-3 h-3" /> Pro
+                  </span>
+                  {subscription?.status === 'trialing' && (
+                    <span className="text-xs text-[var(--color-text-muted)]">Trial active</span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {subscription?.interval && (
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                        Billing
+                      </p>
+                      <p className="text-[var(--color-text-primary)] mt-0.5 capitalize">{subscription.interval}ly</p>
+                    </div>
+                  )}
+                  {subscription?.current_period_end && (
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                        {subscription.cancel_at ? 'Access until' : 'Next renewal'}
+                      </p>
+                      <p className="text-[var(--color-text-primary)] mt-0.5">
+                        {new Date(subscription.current_period_end).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                  {subscription?.trial_end && subscription.status === 'trialing' && (
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                        Trial ends
+                      </p>
+                      <p className="text-[var(--color-text-primary)] mt-0.5">
+                        {new Date(subscription.trial_end).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {subscription?.cancel_at && (
+                  <p className="text-xs text-[var(--color-warning)]">
+                    Your subscription is set to cancel. You'll retain access until the end of your billing period.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setPortalLoading(true);
+                    try {
+                      const { portal_url } = await api.billing.createPortal();
+                      if (portal_url) window.location.href = portal_url;
+                    } catch {}
+                    setPortalLoading(false);
+                  }}
+                  disabled={portalLoading}
+                  className="chiron-btn chiron-btn-subtle px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2"
+                >
+                  {portalLoading ? 'Loading...' : 'Manage subscription'}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] text-xs font-bold uppercase tracking-wider">
+                    Free
+                  </span>
+                </div>
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  Upgrade to Pro for unlimited AI explanations, personalized exams, study plans, and more.
+                </p>
+                <Link
+                  to="/pricing"
+                  className="chiron-btn chiron-btn-primary px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2"
+                >
+                  Upgrade to Pro
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
           </div>
         </section>
       </div>

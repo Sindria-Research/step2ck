@@ -11,6 +11,7 @@ from app.db import get_db
 from app.models import User
 from app.models.bookmark import Bookmark
 from app.schemas.bookmark import BookmarkCreate, BookmarkResponse
+from app.services.plans import count_user_bookmarks, get_plan_limits
 
 router = APIRouter()
 
@@ -66,6 +67,15 @@ def create_bookmark(
     existing = db.query(Bookmark).filter(
         Bookmark.user_id == user.id, Bookmark.question_id == body.question_id
     ).first()
+    if not existing:
+        limits = get_plan_limits(user.plan)
+        current_count = count_user_bookmarks(user.id, db)
+        if current_count >= limits.max_bookmarks:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Bookmark limit reached ({limits.max_bookmarks}). Upgrade to Pro for unlimited bookmarks.",
+                headers={"X-Upgrade-Required": "true"},
+            )
     if existing:
         return BookmarkResponse(
             id=existing.id,

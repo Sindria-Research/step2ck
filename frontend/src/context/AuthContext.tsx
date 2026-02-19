@@ -15,6 +15,7 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
+  isPro: boolean;
   login: (email: string, password?: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => void;
@@ -131,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     loading,
     isAuthenticated: !!user,
+    isPro: user?.plan === 'pro',
     login,
     loginWithGoogle,
     logout,

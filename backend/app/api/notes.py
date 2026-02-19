@@ -9,6 +9,7 @@ from app.db import get_db
 from app.models import User
 from app.models.note import Note
 from app.schemas.note import NoteCreate, NoteResponse, NoteUpdate
+from app.services.plans import count_user_notes, get_plan_limits
 
 router = APIRouter()
 
@@ -36,6 +37,15 @@ def create_note(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    limits = get_plan_limits(user.plan)
+    current_count = count_user_notes(user.id, db)
+    if current_count >= limits.max_notes:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Note limit reached ({limits.max_notes}). Upgrade to Pro for unlimited notes.",
+            headers={"X-Upgrade-Required": "true"},
+        )
+
     note = Note(user_id=user.id, **body.model_dump())
     db.add(note)
     db.commit()

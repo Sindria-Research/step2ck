@@ -8,6 +8,7 @@ from app.api.deps import get_current_user
 from app.db import get_db
 from app.models import User
 from app.models.flashcard import Flashcard, FlashcardDeck
+from app.services.plans import count_deck_cards, count_user_decks, get_plan_limits
 from app.schemas.flashcard import (
     FlashcardCreate,
     FlashcardDeckCreate,
@@ -38,6 +39,15 @@ def create_deck(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    limits = get_plan_limits(user.plan)
+    current_count = count_user_decks(user.id, db)
+    if current_count >= limits.max_flashcard_decks:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Deck limit reached ({limits.max_flashcard_decks}). Upgrade to Pro for unlimited decks.",
+            headers={"X-Upgrade-Required": "true"},
+        )
+
     deck = FlashcardDeck(user_id=user.id, **body.model_dump())
     db.add(deck)
     db.commit()
@@ -133,6 +143,15 @@ def create_card(
     deck = db.query(FlashcardDeck).filter(FlashcardDeck.id == body.deck_id, FlashcardDeck.user_id == user.id).first()
     if not deck:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Deck not found")
+
+    limits = get_plan_limits(user.plan)
+    card_count = count_deck_cards(deck.id, user.id, db)
+    if card_count >= limits.max_cards_per_deck:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Card limit reached ({limits.max_cards_per_deck} per deck). Upgrade to Pro for unlimited cards.",
+            headers={"X-Upgrade-Required": "true"},
+        )
 
     card = Flashcard(user_id=user.id, **body.model_dump())
     db.add(card)

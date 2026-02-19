@@ -4,6 +4,7 @@ import Markdown from 'react-markdown';
 import { useExam } from '../../context/ExamContext';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../api/api';
+import { UpgradePrompt } from '../ProGate';
 
 export function ExplanationPanel() {
   const {
@@ -299,9 +300,14 @@ export function ExplanationPanel() {
                     </span>
                   </div>
                 ) : aiExplainError ? (
-                  <p className="text-sm text-[var(--color-error)] py-2">
-                    {aiExplainError}
-                  </p>
+                  <div className="py-2">
+                    <p className="text-sm text-[var(--color-error)] mb-2">
+                      {aiExplainError}
+                    </p>
+                    {(aiExplainError.toLowerCase().includes('limit') || aiExplainError.toLowerCase().includes('upgrade')) && (
+                      <UpgradePrompt message="Upgrade to Pro for unlimited AI explanations." />
+                    )}
+                  </div>
                 ) : (
                   <div className="ai-explanation-content text-sm text-[var(--color-text-secondary)] leading-relaxed">
                     <Markdown>{aiExplainText}</Markdown>
