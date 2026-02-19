@@ -20,6 +20,7 @@ interface ExamConfig {
   timeLimitTotal?: number | null;
   existingSessionId?: number | null;
   questionIds?: string[] | null;
+  reviewMode?: boolean;
 }
 
 export interface HighlightRange {
@@ -46,6 +47,7 @@ interface ExamContextValue {
   examEndTime: number | null;
   timeLimitPerQuestion: number | null;
   timeLimitTotal: number | null;
+  isReviewMode: boolean;
   selectAnswer: (choice: string) => void;
   toggleStrikethrough: (choice: string) => void;
   submit: () => Promise<void>;
@@ -84,6 +86,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
 
   const [examType, setExamType] = useState<ExamType>('practice');
   const [examFinished, setExamFinished] = useState(false);
+  const [isReviewMode, setIsReviewMode] = useState(false);
   const [questionTimeSpent, setQuestionTimeSpent] = useState<Map<string, number>>(new Map());
   const [examStartTime, setExamStartTime] = useState<number | null>(null);
   const [examEndTime, setExamEndTime] = useState<number | null>(null);
@@ -108,9 +111,24 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
   }, [currentQuestionIndex]);
 
   const finishExam = useCallback(async () => {
-    recordQuestionTime();
+    const finalTimeSpent = new Map(questionTimeSpent);
+    if (currentQuestion) {
+      const elapsed = Math.round((Date.now() - questionStartTimeRef.current) / 1000);
+      finalTimeSpent.set(currentQuestion.id, (finalTimeSpent.get(currentQuestion.id) ?? 0) + elapsed);
+    }
+    setQuestionTimeSpent(finalTimeSpent);
 
-    if (sessionId != null) {
+    if (sessionId != null && !isReviewMode) {
+      const timeUpdates = Array.from(finalTimeSpent.entries()).map(([qid, time]) => ({
+        question_id: qid,
+        time_spent_seconds: time,
+      }));
+      if (timeUpdates.length > 0) {
+        api.examSessions.batchUpdateAnswers(sessionId, timeUpdates).catch((e) =>
+          console.error('Failed to batch update answer times', e),
+        );
+      }
+
       const total = questions.length;
       let correctCount = 0;
       let incorrectCount = 0;
@@ -139,9 +157,11 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setSessionId(null);
+    if (!isReviewMode) {
+      setSessionId(null);
+    }
     finishHandlerRef.current?.();
-  }, [sessionId, questions.length, answeredQuestions, examType, recordQuestionTime]);
+  }, [sessionId, questions.length, answeredQuestions, examType, isReviewMode, questionTimeSpent, currentQuestion]);
 
   const registerFinishHandler = useCallback((fn: () => void) => {
     finishHandlerRef.current = fn;
@@ -161,6 +181,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     setSessionId(null);
     setExamType('practice');
     setExamFinished(false);
+    setIsReviewMode(false);
     setQuestionTimeSpent(new Map());
     setExamStartTime(null);
     setExamEndTime(null);
@@ -213,6 +234,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     setLoadError(null);
     setSessionId(null);
     setExamFinished(false);
+    setIsReviewMode(false);
     setQuestionTimeSpent(new Map());
 
     const type = config.examType ?? 'practice';
@@ -246,6 +268,59 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
 
       if (config.existingSessionId) {
         setSessionId(config.existingSessionId);
+
+        try {
+          const detail = await api.examSessions.get(config.existingSessionId);
+          const restoredAnswers = new Map<string, { selected: string; correct: boolean }>();
+          const restoredTime = new Map<string, number>();
+
+          for (const a of detail.answers) {
+            if (a.answer_selected != null) {
+              restoredAnswers.set(a.question_id, {
+                selected: a.answer_selected,
+                correct: a.correct ?? false,
+              });
+            }
+            if (a.time_spent_seconds != null) {
+              restoredTime.set(a.question_id, a.time_spent_seconds);
+            }
+          }
+
+          setAnsweredQuestions(restoredAnswers);
+          if (restoredTime.size > 0) setQuestionTimeSpent(restoredTime);
+
+          if (config.reviewMode) {
+            setIsReviewMode(true);
+
+            if (type === 'test') {
+              setExamFinished(true);
+              setExamEndTime(Date.now());
+            }
+
+            const firstQ = questionList[0];
+            if (firstQ) {
+              const saved = restoredAnswers.get(firstQ.id);
+              if (saved) {
+                setSelectedAnswer(saved.selected);
+                setIsSubmitted(true);
+              }
+            }
+          } else {
+            const firstUnanswered = questionList.findIndex((q) => !restoredAnswers.has(q.id));
+            if (firstUnanswered > 0) {
+              setCurrentQuestionIndex(firstUnanswered);
+            } else if (firstUnanswered === -1 && questionList.length > 0) {
+              const firstQ = questionList[0];
+              const saved = restoredAnswers.get(firstQ.id);
+              if (saved) {
+                setSelectedAnswer(saved.selected);
+                setIsSubmitted(true);
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Failed to load session answers', e);
+        }
       } else if (config.mode !== 'personalized' && questionList.length > 0) {
         try {
           const session = await api.examSessions.create({
@@ -268,8 +343,8 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const selectAnswer = useCallback((choice: string) => {
-    if (!isSubmitted) setSelectedAnswer(choice);
-  }, [isSubmitted]);
+    if (!isSubmitted && !isReviewMode) setSelectedAnswer(choice);
+  }, [isSubmitted, isReviewMode]);
 
   const toggleStrikethrough = useCallback((choice: string) => {
     if (!isSubmitted) {
@@ -283,7 +358,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
   }, [isSubmitted]);
 
   const submit = useCallback(async () => {
-    if (!selectedAnswer || !currentQuestion || isSubmitted) return;
+    if (!selectedAnswer || !currentQuestion || isSubmitted || isReviewMode) return;
     const correct = selectedAnswer === currentQuestion.correct_answer;
     setIsSubmitted(true);
     setAnsweredQuestions((prev) => {
@@ -301,10 +376,16 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.error('Failed to save progress', e);
     }
-  }, [selectedAnswer, currentQuestion, isSubmitted]);
+    if (sessionId != null) {
+      api.examSessions.updateAnswer(sessionId, currentQuestion.id, {
+        answer_selected: selectedAnswer,
+        correct,
+      }).catch((e) => console.error('Failed to persist session answer', e));
+    }
+  }, [selectedAnswer, currentQuestion, isSubmitted, isReviewMode, sessionId]);
 
   const lockAnswerAndAdvance = useCallback(async () => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || isReviewMode) return;
     recordQuestionTime();
 
     if (selectedAnswer) {
@@ -324,6 +405,12 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         console.error('Failed to save progress', e);
       }
+      if (sessionId != null) {
+        api.examSessions.updateAnswer(sessionId, currentQuestion.id, {
+          answer_selected: selectedAnswer,
+          correct,
+        }).catch((e) => console.error('Failed to persist session answer', e));
+      }
     }
 
     const hasNext = currentQuestionIndex < questions.length - 1;
@@ -342,7 +429,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     } else {
       finishExam();
     }
-  }, [currentQuestion, selectedAnswer, currentQuestionIndex, questions, answeredQuestions, recordQuestionTime, finishExam]);
+  }, [currentQuestion, selectedAnswer, currentQuestionIndex, questions, answeredQuestions, recordQuestionTime, finishExam, isReviewMode, sessionId]);
 
   const goToQuestion = useCallback((index: number) => {
     if (index < 0 || index >= questions.length) return;
@@ -420,6 +507,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     examEndTime,
     timeLimitPerQuestion,
     timeLimitTotal,
+    isReviewMode,
     selectAnswer,
     toggleStrikethrough,
     submit,

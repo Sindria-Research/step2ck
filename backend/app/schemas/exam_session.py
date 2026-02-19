@@ -52,3 +52,22 @@ class ExamSessionResponse(BaseModel):
 
 class ExamSessionDetailResponse(ExamSessionResponse):
     answers: list[ExamSessionAnswerResponse] = []
+
+
+class ExamSessionAnswerUpdate(BaseModel):
+    answer_selected: Optional[str] = None
+    correct: Optional[bool] = None
+    time_spent_seconds: Optional[int] = None
+    flagged: Optional[bool] = None
+
+
+class ExamSessionAnswerBatchItem(BaseModel):
+    question_id: str
+    answer_selected: Optional[str] = None
+    correct: Optional[bool] = None
+    time_spent_seconds: Optional[int] = None
+    flagged: Optional[bool] = None
+
+
+class ExamSessionAnswerBatchUpdate(BaseModel):
+    answers: list[ExamSessionAnswerBatchItem]

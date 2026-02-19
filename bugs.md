@@ -2,7 +2,6 @@
 
 ## Active
 
-- **Exam session answers not linked:** Exam sessions are created on start and updated on finish, but individual question answers are only recorded to the `progress` table. They are not persisted as `ExamSessionAnswer` rows on the session. Review mode from Previous Tests cannot replay exact answers.
 - **Personalized mode single-fetch:** Personalized mode fetches one question per request when clicking "Next"; consider batching or prefetching for smoother UX.
 - **Demo mode progress:** Stored in the database for the single demo user; clearing the DB or redeploying resets it.
 - **Focus management:** When opening modals or moving between question panels, focus is not always moved for screen readers.
@@ -21,3 +20,4 @@
 - ~~Goal card misalignment in dashboard stats row (fixed with consistent card heights)~~
 - ~~TypeScript build errors from unused imports (cleaned up across multiple passes)~~
 - ~~Retake button broken after finishing a test: `initialLoadDone` ref in ExamView stayed `true` when navigating to the same `/exam` route, preventing reload. Fixed by adding a reset-detection effect that clears the guard when exam state is emptied.~~
+- ~~Exam session answers not linked: Session is now created on exam start, per-answer data (answer_selected, correct, time_spent_seconds) is persisted on submit and batch-updated on finish, and session aggregate counts are PATCHed on completion.~~

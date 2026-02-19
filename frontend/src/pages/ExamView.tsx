@@ -47,6 +47,7 @@ export function ExamView() {
         timeLimitTotal: config.timeLimitTotal ?? null,
         existingSessionId: config.existingSessionId ?? null,
         questionIds: config.questionIds ?? null,
+        reviewMode: config.reviewMode ?? false,
       });
     } catch {
       navigate('/exam/config');

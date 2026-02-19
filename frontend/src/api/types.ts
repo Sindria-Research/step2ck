@@ -105,6 +105,13 @@ export interface ExamSessionCreateRequest {
   question_ids: string[];
 }
 
+export interface ExamSessionAnswerUpdateRequest {
+  answer_selected?: string;
+  correct?: boolean;
+  time_spent_seconds?: number;
+  flagged?: boolean;
+}
+
 // ── Notes ──
 
 export interface NoteResponse {

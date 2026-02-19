@@ -10,6 +10,9 @@ from app.db import get_db
 from app.models import User
 from app.models.exam_session import ExamSession, ExamSessionAnswer
 from app.schemas.exam_session import (
+    ExamSessionAnswerBatchUpdate,
+    ExamSessionAnswerResponse,
+    ExamSessionAnswerUpdate,
     ExamSessionCreate,
     ExamSessionDetailResponse,
     ExamSessionResponse,
@@ -99,6 +102,73 @@ def update_session(
     db.commit()
     db.refresh(session)
     return session
+
+
+@router.patch("/{session_id}/answers", response_model=list[ExamSessionAnswerResponse])
+def batch_update_answers(
+    session_id: int,
+    body: ExamSessionAnswerBatchUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    session = db.query(ExamSession).filter(
+        ExamSession.id == session_id, ExamSession.user_id == user.id
+    ).first()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+
+    qid_map: dict[str, ExamSessionAnswer] = {
+        a.question_id: a
+        for a in db.query(ExamSessionAnswer).filter(
+            ExamSessionAnswer.session_id == session_id
+        ).all()
+    }
+
+    updated: list[ExamSessionAnswer] = []
+    for item in body.answers:
+        answer = qid_map.get(item.question_id)
+        if not answer:
+            continue
+        for field, value in item.model_dump(exclude_unset=True, exclude={"question_id"}).items():
+            setattr(answer, field, value)
+        updated.append(answer)
+
+    db.commit()
+    for a in updated:
+        db.refresh(a)
+    return updated
+
+
+@router.patch(
+    "/{session_id}/answers/{question_id}",
+    response_model=ExamSessionAnswerResponse,
+)
+def update_answer(
+    session_id: int,
+    question_id: str,
+    body: ExamSessionAnswerUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    session = db.query(ExamSession).filter(
+        ExamSession.id == session_id, ExamSession.user_id == user.id
+    ).first()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+
+    answer = db.query(ExamSessionAnswer).filter(
+        ExamSessionAnswer.session_id == session_id,
+        ExamSessionAnswer.question_id == question_id,
+    ).first()
+    if not answer:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Answer not found")
+
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(answer, field, value)
+
+    db.commit()
+    db.refresh(answer)
+    return answer
 
 
 @router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
