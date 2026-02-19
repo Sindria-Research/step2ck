@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExam } from '../context/ExamContext';
+import { useExamKeyboard } from '../hooks/useExamKeyboard';
 import { QuestionPanel } from '../components/exam/QuestionPanel';
 import { AnswerPanel } from '../components/exam/AnswerPanel';
 import { ExplanationPanel } from '../components/exam/ExplanationPanel';
@@ -9,6 +10,7 @@ import { TestReviewPanel } from '../components/exam/TestReviewPanel';
 
 export function ExamView() {
   const { loadExam, loading, loadError, questions, examType, examFinished } = useExam();
+  useExamKeyboard();
   const navigate = useNavigate();
   const initialLoadDone = useRef(false);
   const [initialLoadStarted, setInitialLoadStarted] = useState(false);

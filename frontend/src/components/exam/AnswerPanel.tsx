@@ -43,11 +43,18 @@ export function AnswerPanel() {
     >
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="p-6">
-          <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-3">
-            {isTestMode && isLocked && !examFinished
-              ? 'Answer locked'
-              : 'Select your answer:'}
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+              {isTestMode && isLocked && !examFinished
+                ? 'Answer locked'
+                : 'Select your answer:'}
+            </p>
+            {canInteract && (
+              <span className="text-[0.65rem] text-[var(--color-text-muted)] hidden md:inline">
+                Press 1–{keys.length} or Enter
+              </span>
+            )}
+          </div>
           <div className="space-y-2">
             {keys.map((key) => {
               const label = choices[key];
