@@ -156,7 +156,7 @@ export function QuestionPanel() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-[var(--color-bg-primary)] relative">
-      <div className="p-8 max-w-2xl">
+      <div className="p-4 md:p-8 max-w-2xl">
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <span className="badge badge-primary">{currentQuestion.section}</span>
           {currentQuestion.subsection && (
@@ -239,7 +239,7 @@ export function QuestionPanel() {
       {/* Explain selection response */}
       {!isTestMode && explainSelectionActive && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-30 rounded-lg">
-          <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
+          <div className="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-xl max-w-[calc(100vw-2rem)] md:max-w-lg w-full mx-4 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />

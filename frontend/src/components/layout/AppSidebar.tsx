@@ -81,7 +81,7 @@ const navGroups: NavGroup[] = [
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { collapsed, toggle } = useSidebar();
+  const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebar();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -89,6 +89,10 @@ export function AppSidebar() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const isExamPage = location.pathname === '/exam';
   const logoUrl = getLogoUrl(theme);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname, location.search, setMobileOpen]);
 
   const refreshBookmarkCount = useCallback(() => {
     if (!user) {
@@ -169,11 +173,20 @@ export function AppSidebar() {
   };
 
   return (
+    <>
+    {mobileOpen && (
+      <div
+        className="fixed inset-0 z-40 bg-black/40 md:hidden"
+        onClick={() => setMobileOpen(false)}
+        aria-hidden
+      />
+    )}
     <aside
-      className={`shrink-0 flex flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-primary)] transition-[width] duration-200 ease-in-out overflow-hidden ${
+      className={`shrink-0 flex flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-primary)] transition-[width,transform] duration-200 ease-in-out overflow-hidden ${
         collapsed ? 'w-14' : 'w-56'
+      } fixed inset-y-0 left-0 z-50 md:relative md:z-auto ${
+        mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}
-      style={{ transitionDuration: '200ms' }}
       aria-label="Main navigation"
     >
       {/* Logo header */}
@@ -301,5 +314,6 @@ export function AppSidebar() {
         )}
       </div>
     </aside>
+    </>
   );
 }

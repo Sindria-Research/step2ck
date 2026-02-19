@@ -102,7 +102,7 @@ export function Bookmarks() {
                         <button
                           type="button"
                           onClick={() => handleRemove(bm.question_id)}
-                          className="p-1.5 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-hover)] transition-colors shrink-0"
+                          className="p-2.5 md:p-1.5 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-hover)] transition-colors shrink-0"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

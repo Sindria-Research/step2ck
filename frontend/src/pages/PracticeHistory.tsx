@@ -96,20 +96,20 @@ export function PracticeHistory() {
 
       <section className="py-14 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>
         <div className="container">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <p className="chiron-feature-label">Practice</p>
               <h1 className="chiron-feature-heading">Practice History</h1>
               <p className="chiron-feature-body mt-2">Review past practice sessions and track your progress.</p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {(['all', 'completed', 'in_progress'] as const).map((f) => (
                 <button
                   key={f}
                   type="button"
                   onClick={() => setFilter(f)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`px-3 py-2 md:py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     filter === f
                       ? 'btn-primary'
                       : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
@@ -149,7 +149,7 @@ export function PracticeHistory() {
                 const acc = session.accuracy != null ? Math.round(session.accuracy) : null;
                 return (
                   <div key={session.id} className="chiron-mockup hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-bold uppercase tracking-wider ${
@@ -188,7 +188,7 @@ export function PracticeHistory() {
                           type="button"
                           title={session.status === 'in_progress' ? 'Continue' : 'Review'}
                           onClick={() => handleContinueOrReview(session)}
-                          className="p-2 rounded-lg text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+                          className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
@@ -197,7 +197,7 @@ export function PracticeHistory() {
                             type="button"
                             title="Retake"
                             onClick={() => handleRetake(session)}
-                            className="p-2 rounded-lg text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-brand-blue)] transition-colors"
+                            className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-brand-blue)] transition-colors"
                           >
                             <RotateCcw className="w-4 h-4" />
                           </button>
@@ -206,7 +206,7 @@ export function PracticeHistory() {
                           type="button"
                           title="Delete"
                           onClick={() => handleDelete(session.id)}
-                          className="p-2 rounded-lg text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-error)] transition-colors"
+                          className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-error)] transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

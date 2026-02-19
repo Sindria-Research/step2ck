@@ -3,6 +3,8 @@ import { createContext, useCallback, useContext, useState } from 'react';
 interface SidebarContextValue {
   collapsed: boolean;
   toggle: () => void;
+  mobileOpen: boolean;
+  setMobileOpen: (open: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
@@ -15,6 +17,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored === 'true';
   });
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const toggle = useCallback(() => {
     setCollapsed((p) => {
@@ -25,7 +28,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <SidebarContext.Provider value={{ collapsed, toggle }}>
+    <SidebarContext.Provider value={{ collapsed, toggle, mobileOpen, setMobileOpen }}>
       {children}
     </SidebarContext.Provider>
   );

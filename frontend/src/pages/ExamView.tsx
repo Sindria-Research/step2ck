@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FileText, ListChecks } from 'lucide-react';
 import { useExam } from '../context/ExamContext';
 import { useExamKeyboard } from '../hooks/useExamKeyboard';
 import { QuestionPanel } from '../components/exam/QuestionPanel';
@@ -108,15 +109,44 @@ export function ExamView() {
   }
 
   const isTestMode = examType === 'test';
+  const [mobileTab, setMobileTab] = useState<'question' | 'answer'>('question');
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {isTestMode && <TimerBar />}
-      <div className="flex-1 flex overflow-hidden">
-        <div className="w-1/2 border-r border-[var(--color-border)] flex flex-col overflow-hidden">
+      {/* Mobile tab bar */}
+      <div className="md:hidden shrink-0 flex border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]">
+        <button
+          type="button"
+          onClick={() => setMobileTab('question')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-colors ${
+            mobileTab === 'question'
+              ? 'text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]'
+              : 'text-[var(--color-text-secondary)]'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          Question
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('answer')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-colors ${
+            mobileTab === 'answer'
+              ? 'text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]'
+              : 'text-[var(--color-text-secondary)]'
+          }`}
+        >
+          <ListChecks className="w-4 h-4" />
+          Answer
+        </button>
+      </div>
+      {/* Desktop: side-by-side; Mobile: tab-switched */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <div className={`w-full md:w-1/2 border-r border-[var(--color-border)] flex flex-col overflow-hidden ${mobileTab !== 'question' ? 'hidden md:flex' : 'flex'}`}>
           <QuestionPanel />
         </div>
-        <div className="w-1/2 flex flex-col overflow-hidden">
+        <div className={`w-full md:w-1/2 flex flex-col overflow-hidden ${mobileTab !== 'answer' ? 'hidden md:flex' : 'flex'}`}>
           <AnswerPanel />
           <ExplanationPanel />
         </div>

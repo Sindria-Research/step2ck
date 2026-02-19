@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, RotateCcw, LayoutDashboard, Sparkles } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, RotateCcw, LayoutDashboard, Sparkles, Bookmark } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { useExam } from '../../context/ExamContext';
+import { useToast } from '../../context/ToastContext';
 import { api } from '../../api/api';
 
 function formatTime(seconds: number): string {
@@ -22,9 +23,45 @@ export function TestReviewPanel() {
     examEndTime,
     resetExam,
   } = useExam();
+  const { addToast } = useToast();
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [aiStates, setAiStates] = useState<Map<string, { loading: boolean; text: string; error: string | null }>>(new Map());
+  const [bookmarkedSet, setBookmarkedSet] = useState<Set<string>>(new Set());
+  const [bookmarkLoading, setBookmarkLoading] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(
+      questions.map((q) =>
+        api.bookmarks.check(q.id).then((r) => (r.bookmarked ? q.id : null)).catch(() => null),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      const ids = new Set(results.filter((id): id is string => id !== null));
+      setBookmarkedSet(ids);
+    });
+    return () => { cancelled = true; };
+  }, [questions]);
+
+  const handleBookmarkToggle = useCallback(async (questionId: string) => {
+    if (bookmarkLoading.has(questionId)) return;
+    setBookmarkLoading((prev) => new Set(prev).add(questionId));
+    try {
+      if (bookmarkedSet.has(questionId)) {
+        await api.bookmarks.delete(questionId);
+        setBookmarkedSet((prev) => { const next = new Set(prev); next.delete(questionId); return next; });
+      } else {
+        await api.bookmarks.create(questionId);
+        setBookmarkedSet((prev) => new Set(prev).add(questionId));
+      }
+      window.dispatchEvent(new CustomEvent('bookmarks-changed'));
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Failed to update bookmark', 'error');
+    } finally {
+      setBookmarkLoading((prev) => { const next = new Set(prev); next.delete(questionId); return next; });
+    }
+  }, [bookmarkedSet, bookmarkLoading, addToast]);
 
   let correctCount = 0;
   let incorrectCount = 0;
@@ -141,10 +178,11 @@ export function TestReviewPanel() {
             return (
               <div key={q.id} className="chiron-mockup overflow-hidden">
                 {/* Row header */}
+                <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setExpandedId(isExpanded ? null : q.id)}
-                  className="w-full flex items-center gap-3 text-left"
+                  className="flex-1 min-w-0 flex items-center gap-3 text-left"
                 >
                   <span className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
                     answer == null
@@ -190,6 +228,21 @@ export function TestReviewPanel() {
                     {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </span>
                 </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleBookmarkToggle(q.id); }}
+                  disabled={bookmarkLoading.has(q.id)}
+                  className={`shrink-0 p-2.5 md:p-1.5 rounded-md transition-colors focus-ring ${
+                    bookmarkedSet.has(q.id)
+                      ? 'text-[var(--color-accent)] bg-[var(--color-bg-active)]'
+                      : 'text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'
+                  }`}
+                  title={bookmarkedSet.has(q.id) ? 'Remove bookmark' : 'Save to bookmarks'}
+                  aria-label={bookmarkedSet.has(q.id) ? 'Remove bookmark' : 'Save to bookmarks'}
+                >
+                  <Bookmark className={`w-4 h-4 ${bookmarkedSet.has(q.id) ? 'fill-current' : ''}`} />
+                </button>
+                </div>
 
                 {/* Expanded detail */}
                 {isExpanded && (

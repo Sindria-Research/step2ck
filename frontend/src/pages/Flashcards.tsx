@@ -450,7 +450,7 @@ export function Flashcards() {
                       <button
                         type="button"
                         onClick={() => openDeck(deck)}
-                        className="p-2 rounded-lg text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
+                        className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
                         title="Open deck"
                       >
                         <ChevronRight className="w-4 h-4" />
@@ -458,7 +458,7 @@ export function Flashcards() {
                       <button
                         type="button"
                         onClick={() => handleDeleteDeck(deck.id)}
-                        className="p-2 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
+                        className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
                         title="Delete deck"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -632,7 +632,7 @@ export function Flashcards() {
                               <button
                                 type="button"
                                 onClick={() => startEditCard(card)}
-                                className="p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
+                                className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
                                 title="Edit"
                               >
                                 <Pencil className="w-4 h-4" />
@@ -640,7 +640,7 @@ export function Flashcards() {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteCard(card.id)}
-                                className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
+                                className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
                                 title="Delete"
                               >
                                 <Trash2 className="w-4 h-4" />

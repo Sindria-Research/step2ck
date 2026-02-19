@@ -130,7 +130,7 @@ export function ExplanationPanel() {
   if (isTestMode && !examFinished) {
     if (!isLocked) return null;
     return (
-      <div className="shrink-0 px-6 py-4 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+      <div className="shrink-0 px-4 py-3 md:px-6 md:py-4 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
         <div className="flex items-center justify-between">
           <p className="text-sm text-[var(--color-text-secondary)]">
             Answer locked. {hasNext ? 'Move to next question.' : 'Finish to see results.'}
@@ -185,7 +185,7 @@ export function ExplanationPanel() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[var(--color-bg-secondary)]">
-      <div className="p-6 flex-1 flex flex-col gap-5">
+      <div className="p-4 md:p-6 flex-1 flex flex-col gap-5">
         {/* Result badge + correct answer + action buttons */}
         <div className="flex items-center gap-3 flex-wrap">
           <span className={`badge ${isCorrect ? 'badge-success' : 'badge-error'}`}>

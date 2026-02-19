@@ -61,18 +61,18 @@ export function TimerBar() {
   const answered = answeredQuestions.size;
 
   return (
-    <div className="shrink-0 flex items-center justify-between gap-4 px-5 py-2.5 bg-[var(--color-bg-primary)] border-b border-[var(--color-border)] text-sm">
-      <div className="flex items-center gap-4">
+    <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 md:gap-4 px-3 py-2 md:px-5 md:py-2.5 bg-[var(--color-bg-primary)] border-b border-[var(--color-border)] text-xs md:text-sm">
+      <div className="flex items-center gap-2 md:gap-4">
         <span className="font-semibold text-[var(--color-text-primary)] tabular-nums">
-          Q {currentQuestionIndex + 1} / {questions.length}
+          Q {currentQuestionIndex + 1}/{questions.length}
         </span>
-        <span className="text-[var(--color-text-muted)]">·</span>
-        <span className="text-[var(--color-text-secondary)] tabular-nums">
+        <span className="text-[var(--color-text-muted)] hidden md:inline">·</span>
+        <span className="text-[var(--color-text-secondary)] tabular-nums hidden md:inline">
           {answered} answered
         </span>
       </div>
 
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-3 md:gap-5">
         {/* Per-question timer */}
         <div className={`flex items-center gap-1.5 tabular-nums ${questionUrgent ? 'text-[var(--color-error)] font-semibold' : 'text-[var(--color-text-secondary)]'}`}>
           <Clock className="w-3.5 h-3.5" />

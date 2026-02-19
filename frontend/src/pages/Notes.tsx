@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, FileText, Trash2, X, Save, Search } from 'lucide-react';
+import { Plus, FileText, Trash2, X, Save, Search, ArrowLeft } from 'lucide-react';
 import { api } from '../api/api';
 import type { NoteResponse } from '../api/types';
 import { EmptyState } from '../components/common';
@@ -109,7 +109,7 @@ export function Notes() {
 
           <div className="grid md:grid-cols-[280px_1fr] gap-6">
             {/* Notes list sidebar */}
-            <div className="chiron-mockup overflow-y-auto flex flex-col" style={{ maxHeight: '70vh' }}>
+            <div className={`chiron-mockup overflow-y-auto flex flex-col ${editingId != null ? 'hidden md:flex' : 'flex'}`} style={{ maxHeight: '70vh' }}>
               <div className="relative mb-3">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" aria-hidden />
                 <input
@@ -163,10 +163,18 @@ export function Notes() {
             </div>
 
             {/* Editor panel */}
-            <div className="chiron-mockup min-h-[50vh] flex flex-col">
+            <div className={`chiron-mockup min-h-[50vh] flex flex-col ${editingId == null ? 'hidden md:flex' : 'flex'}`}>
               {editingId != null ? (
                 <>
                   <div className="flex items-center gap-3 mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="md:hidden p-2 -ml-1 rounded-md text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors"
+                      aria-label="Back to notes list"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </button>
                     <input
                       type="text"
                       value={editTitle}
@@ -185,14 +193,14 @@ export function Notes() {
                     <button
                       type="button"
                       onClick={() => handleDelete(editingId)}
-                      className="p-1.5 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-hover)] transition-colors"
+                      className="p-2.5 md:p-1.5 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-hover)] transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditingId(null)}
-                      className="p-1.5 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors"
+                      className="p-2.5 md:p-1.5 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>

@@ -42,7 +42,7 @@ export function AnswerPanel() {
       }`}
     >
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-medium text-[var(--color-text-secondary)]">
               {isTestMode && isLocked && !examFinished
@@ -104,7 +104,7 @@ export function AnswerPanel() {
       </div>
 
       {showSubmitBar && (
-        <div className="shrink-0 px-6 py-4 border-t border-[var(--color-border)] bg-[var(--color-bg-primary)]">
+        <div className="shrink-0 px-4 py-3 md:px-6 md:py-4 border-t border-[var(--color-border)] bg-[var(--color-bg-primary)]">
           <button
             type="button"
             onClick={isTestMode ? lockAnswerAndAdvance : submit}

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Menu } from 'lucide-react';
 import { AppSidebar } from './AppSidebar';
 import { ExamBar } from './ExamBar';
 import { Sidebar } from './Sidebar';
+import { useSidebar } from '../../context/SidebarContext';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -32,6 +33,7 @@ export function AppLayout({
   const location = useLocation();
   const isExamPage = location.pathname === '/exam';
   const [questionSidebarOpen, setQuestionSidebarOpen] = useState(true);
+  const { setMobileOpen } = useSidebar();
 
   const shouldShowQuestionSidebar = showSidebar && isExamPage && examContext;
 
@@ -39,6 +41,18 @@ export function AppLayout({
     <div className="h-screen flex bg-[var(--color-bg-secondary)] overflow-hidden">
       <AppSidebar />
       <div className="flex-1 flex flex-col min-w-0">
+        {!isExamPage && (
+          <div className="md:hidden shrink-0 flex items-center h-12 px-3 border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="p-2 -ml-1 rounded-md text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
+              aria-label="Open navigation"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
+        )}
         {isExamPage && examContext && (
           <ExamBar
             currentIndex={examContext.currentQuestionIndex}

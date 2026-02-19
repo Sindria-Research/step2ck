@@ -95,7 +95,7 @@ export function Search() {
 
           {/* Search bar */}
           <div className="chiron-mockup mb-6">
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-tertiary)]" />
                 <input
@@ -188,7 +188,7 @@ export function Search() {
                             type="button"
                             onClick={(e) => toggleBookmark(e, q.id)}
                             disabled={bookmarkTogglingId === q.id}
-                            className={`p-1.5 rounded-md transition-colors focus-ring shrink-0 ${
+                            className={`p-2.5 md:p-1.5 rounded-md transition-colors focus-ring shrink-0 ${
                               bookmarkedIds.has(q.id)
                                 ? 'text-[var(--color-accent)] bg-[var(--color-bg-active)]'
                                 : 'text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'

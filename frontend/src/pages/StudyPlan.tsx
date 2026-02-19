@@ -126,7 +126,7 @@ function StudyCalendar({ plan }: { plan: StudyPlanData }) {
           <button
             type="button"
             onClick={prevMonth}
-            className="p-1.5 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors"
+            className="p-2.5 md:p-1.5 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors"
           >
             <ChevronLeft className="w-4 h-4 text-[var(--color-text-tertiary)]" />
           </button>
@@ -136,7 +136,7 @@ function StudyCalendar({ plan }: { plan: StudyPlanData }) {
           <button
             type="button"
             onClick={nextMonth}
-            className="p-1.5 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors"
+            className="p-2.5 md:p-1.5 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors"
           >
             <ChevronRight className="w-4 h-4 text-[var(--color-text-tertiary)]" />
           </button>
