@@ -15,6 +15,8 @@ interface AppLayoutProps {
     currentQuestionIndex: number;
     goToQuestion: (index: number) => void;
     answeredQuestions: Map<string, { selected: string; correct: boolean }>;
+    flaggedQuestions: Set<string>;
+    toggleFlag: (questionId: string) => void;
     getProgress: (sectionQuestions: import('../../api/types').Question[]) => { completed: number; total: number };
     prevQuestion: () => void;
     nextQuestion: () => void;

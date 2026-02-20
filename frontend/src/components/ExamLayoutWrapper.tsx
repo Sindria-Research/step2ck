@@ -32,6 +32,8 @@ export function ExamLayoutWrapper() {
         currentQuestionIndex: examContext.currentQuestionIndex,
         goToQuestion: examContext.goToQuestion,
         answeredQuestions: examContext.answeredQuestions,
+        flaggedQuestions: examContext.flaggedQuestions,
+        toggleFlag: examContext.toggleFlag,
         getProgress: examContext.getProgress,
         prevQuestion: examContext.prevQuestion,
         nextQuestion: examContext.nextQuestion,

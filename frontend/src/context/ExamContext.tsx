@@ -62,6 +62,8 @@ interface ExamContextValue {
   addHighlight: (questionId: string, range: HighlightRange) => void;
   removeHighlight: (questionId: string, range: HighlightRange) => void;
   getHighlights: (questionId: string) => HighlightRange[];
+  flaggedQuestions: Set<string>;
+  toggleFlag: (questionId: string) => void;
   lockAnswerAndAdvance: () => Promise<void>;
   reviewQuestion: (index: number) => void;
 }
@@ -92,6 +94,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
   const [examEndTime, setExamEndTime] = useState<number | null>(null);
   const [timeLimitPerQuestion, setTimeLimitPerQuestion] = useState<number | null>(null);
   const [timeLimitTotal, setTimeLimitTotal] = useState<number | null>(null);
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
   const questionStartTimeRef = useRef<number>(Date.now());
 
   const currentQuestion = questions[currentQuestionIndex] ?? null;
@@ -187,6 +190,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     setExamEndTime(null);
     setTimeLimitPerQuestion(null);
     setTimeLimitTotal(null);
+    setFlaggedQuestions(new Set());
     try {
       sessionStorage.removeItem('examConfig');
     } catch {
@@ -488,6 +492,15 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     [answeredQuestions]
   );
 
+  const toggleFlag = useCallback((questionId: string) => {
+    setFlaggedQuestions((prev) => {
+      const next = new Set(prev);
+      if (next.has(questionId)) next.delete(questionId);
+      else next.add(questionId);
+      return next;
+    });
+  }, []);
+
   const value: ExamContextValue = {
     questions,
     currentQuestion,
@@ -522,6 +535,8 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
     addHighlight,
     removeHighlight,
     getHighlights,
+    flaggedQuestions,
+    toggleFlag,
     lockAnswerAndAdvance,
     reviewQuestion,
   };
