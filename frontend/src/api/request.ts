@@ -2,6 +2,8 @@ import { API_BASE } from '../config/env';
 import { supabase } from '../lib/supabase';
 
 const REQUEST_TIMEOUT_MS = 10_000;
+const COLD_START_TIMEOUT_MS = 45_000;
+const RETRY_DELAYS = [2_000, 4_000, 8_000];
 
 let _cachedToken: string | null = null;
 let _tokenResolving: Promise<string | null> | null = null;
@@ -58,6 +60,44 @@ export interface RequestOptions extends RequestInit {
   timeoutMs?: number;
   /** Serve from in-memory cache for this many milliseconds (GET-only). */
   cacheTtlMs?: number;
+  /** Retry on network/timeout errors (for cold-start resilience). */
+  retries?: number;
+}
+
+let _backendAwake = false;
+let _wakePromise: Promise<void> | null = null;
+
+function isNetworkError(err: unknown): boolean {
+  if (err instanceof TypeError) return true;
+  if (err instanceof Error && err.message.includes('timed out')) return true;
+  return false;
+}
+
+/**
+ * Fire a lightweight ping to wake the backend.
+ * Resolves when the backend responds (or after max wait).
+ */
+export function wakeBackend(): Promise<void> {
+  if (_backendAwake) return Promise.resolve();
+  if (_wakePromise) return _wakePromise;
+  _wakePromise = (async () => {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), COLD_START_TIMEOUT_MS);
+      await fetch(`${API_BASE}/health`, { signal: controller.signal });
+      clearTimeout(timer);
+      _backendAwake = true;
+    } catch {
+      // Backend may still be starting; callers will retry
+    } finally {
+      _wakePromise = null;
+    }
+  })();
+  return _wakePromise;
+}
+
+export function markBackendAwake() {
+  _backendAwake = true;
 }
 
 interface CacheEntry { data: unknown; expiresAt: number; pending?: Promise<unknown> }
@@ -80,7 +120,7 @@ export async function request<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { skipAuth, timeoutMs = REQUEST_TIMEOUT_MS, cacheTtlMs, ...fetchOptions } = options;
+  const { skipAuth, timeoutMs = REQUEST_TIMEOUT_MS, cacheTtlMs, retries = 0, ...fetchOptions } = options;
   const method = (fetchOptions.method ?? 'GET').toUpperCase();
   const cacheKey = method === 'GET' && cacheTtlMs ? path : null;
 
@@ -93,7 +133,7 @@ export async function request<T>(
     }
   }
 
-  const doFetch = async (): Promise<T> => {
+  const doFetch = async (attempt: number): Promise<T> => {
     const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -104,8 +144,9 @@ export async function request<T>(
       if (token) (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
     }
 
+    const effectiveTimeout = !_backendAwake && attempt === 0 ? COLD_START_TIMEOUT_MS : timeoutMs;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(() => controller.abort(), effectiveTimeout);
     let res: Response;
     try {
       res = await fetch(url, {
@@ -115,13 +156,21 @@ export async function request<T>(
       });
     } catch (err: unknown) {
       clearTimeout(timer);
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        throw new Error(`Request timed out: ${path}`);
+      const isAbort = err instanceof DOMException && err.name === 'AbortError';
+      const networkish = isAbort || isNetworkError(err);
+
+      if (networkish && attempt < retries) {
+        const delay = RETRY_DELAYS[Math.min(attempt, RETRY_DELAYS.length - 1)];
+        await new Promise((r) => setTimeout(r, delay));
+        return doFetch(attempt + 1);
       }
+      if (isAbort) throw new Error(`Request timed out: ${path}`);
       throw err;
     } finally {
       clearTimeout(timer);
     }
+
+    _backendAwake = true;
 
     if (res.status === 401) {
       setToken(null);
@@ -135,9 +184,9 @@ export async function request<T>(
     return res.json() as Promise<T>;
   };
 
-  if (!cacheKey || !cacheTtlMs) return doFetch();
+  if (!cacheKey || !cacheTtlMs) return doFetch(0);
 
-  const pending = doFetch();
+  const pending = doFetch(0);
   _responseCache.set(cacheKey, { data: null, expiresAt: 0, pending });
   try {
     const data = await pending;

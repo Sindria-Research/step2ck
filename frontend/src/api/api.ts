@@ -49,7 +49,7 @@ export const api = {
         body: JSON.stringify({ id_token: idToken }),
         skipAuth: true,
       }),
-    me: () => request<User>('/auth/me'),
+    me: (opts?: { retries?: number }) => request<User>('/auth/me', { retries: opts?.retries }),
   },
   questions: {
     list: (params?: { sections?: string[]; limit?: number; offset?: number }) => {

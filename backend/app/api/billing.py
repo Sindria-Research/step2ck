@@ -120,13 +120,18 @@ def get_subscription(
 
     try:
         sub = stripe.Subscription.retrieve(current_user.stripe_subscription_id)
+        items = sub.get("items", {}).get("data", [])
+        first_item = items[0] if items else {}
+        period_end = first_item.get("current_period_end") or sub.get("current_period_end")
+        cancel_at = sub.get("cancel_at")
+        trial_end = sub.get("trial_end")
         return {
             "plan": current_user.plan,
             "status": sub.status,
-            "interval": sub["items"]["data"][0]["price"]["recurring"]["interval"] if sub["items"]["data"] else None,
-            "current_period_end": datetime.fromtimestamp(sub.current_period_end, tz=timezone.utc).isoformat() if sub.current_period_end else None,
-            "cancel_at": datetime.fromtimestamp(sub.cancel_at, tz=timezone.utc).isoformat() if sub.cancel_at else None,
-            "trial_end": datetime.fromtimestamp(sub.trial_end, tz=timezone.utc).isoformat() if sub.trial_end else None,
+            "interval": first_item.get("price", {}).get("recurring", {}).get("interval") if first_item else None,
+            "current_period_end": datetime.fromtimestamp(period_end, tz=timezone.utc).isoformat() if period_end else None,
+            "cancel_at": datetime.fromtimestamp(cancel_at, tz=timezone.utc).isoformat() if cancel_at else None,
+            "trial_end": datetime.fromtimestamp(trial_end, tz=timezone.utc).isoformat() if trial_end else None,
         }
     except stripe.StripeError as e:
         logger.warning("Failed to retrieve subscription: %s", e)
@@ -161,7 +166,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
     if event_type == "checkout.session.completed":
         _handle_checkout_completed(data, db)
-    elif event_type == "customer.subscription.updated":
+    elif event_type in ("customer.subscription.created", "customer.subscription.updated"):
         _handle_subscription_updated(data, db)
     elif event_type == "customer.subscription.deleted":
         _handle_subscription_deleted(data, db)
@@ -198,10 +203,12 @@ def _handle_checkout_completed(data: dict, db: Session) -> None:
     if subscription_id:
         try:
             sub = stripe.Subscription.retrieve(subscription_id)
-            if sub["items"]["data"]:
-                user.plan_interval = sub["items"]["data"][0]["price"]["recurring"]["interval"]
-            if sub.current_period_end:
-                user.plan_expires_at = datetime.fromtimestamp(sub.current_period_end, tz=timezone.utc)
+            items = sub.get("items", {}).get("data", [])
+            if items:
+                user.plan_interval = items[0].get("price", {}).get("recurring", {}).get("interval")
+            period_end = (items[0].get("current_period_end") if items else None) or sub.get("current_period_end")
+            if period_end:
+                user.plan_expires_at = datetime.fromtimestamp(period_end, tz=timezone.utc)
         except stripe.StripeError:
             pass
 
@@ -259,10 +266,18 @@ def _handle_invoice_paid(data: dict, db: Session) -> None:
 
     subscription_id = data.get("subscription")
     if subscription_id:
+        if not user.stripe_subscription_id:
+            user.stripe_subscription_id = subscription_id
         try:
             sub = stripe.Subscription.retrieve(subscription_id)
-            if sub.current_period_end:
-                user.plan_expires_at = datetime.fromtimestamp(sub.current_period_end, tz=timezone.utc)
+            if sub.status in ("active", "trialing"):
+                user.plan = PLAN_PRO
+            items = sub.get("items", {}).get("data", [])
+            period_end = (items[0].get("current_period_end") if items else None) or sub.get("current_period_end")
+            if period_end:
+                user.plan_expires_at = datetime.fromtimestamp(period_end, tz=timezone.utc)
+            if items:
+                user.plan_interval = items[0].get("price", {}).get("recurring", {}).get("interval")
             db.commit()
         except stripe.StripeError:
             pass

@@ -8,7 +8,7 @@ import {
 } from 'react';
 import type { User } from '../api/types';
 import { api } from '../api/api';
-import { setToken } from '../api/request';
+import { setToken, wakeBackend } from '../api/request';
 import { supabase } from '../lib/supabase';
 
 interface AuthContextValue {
@@ -31,10 +31,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchBackendUser = useCallback(async () => {
     try {
-      const u = await api.auth.me();
+      const u = await api.auth.me({ retries: 3 });
       setUser(u);
-    } catch {
-      setToken(null);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg === 'Unauthorized') {
+        setToken(null);
+      }
       setUser(null);
     }
   }, []);
@@ -70,7 +73,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (initialised.current) return;
     initialised.current = true;
 
-    const AUTH_INIT_TIMEOUT_MS = 8_000;
+    wakeBackend();
+
+    const AUTH_INIT_TIMEOUT_MS = 50_000;
     const timeout = setTimeout(() => {
       setLoading(false);
     }, AUTH_INIT_TIMEOUT_MS);
