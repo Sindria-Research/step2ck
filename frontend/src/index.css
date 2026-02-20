@@ -1015,7 +1015,7 @@ select:focus-visible {
 
 /* ── Feature rows ── */
 .chiron-feature-row {
-  padding: 3rem 0;
+  padding: 2.5rem 0;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -1060,8 +1060,9 @@ select:focus-visible {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-brand-blue);
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 0.5rem;
+  opacity: 0.85;
 }
 
 .chiron-feature-heading {
@@ -1101,7 +1102,8 @@ select:focus-visible {
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
+  font-weight: 600;
 }
 
 .chiron-mockup-meta {
@@ -1139,23 +1141,24 @@ select:focus-visible {
   font-weight: 500;
   padding: 0.4rem 0.75rem;
   border-radius: 9999px;
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, var(--color-text-muted) 25%, var(--color-border));
   background: var(--color-bg-primary);
-  color: var(--color-text-tertiary);
+  color: var(--color-text-muted);
   cursor: pointer;
   transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .chiron-subject-tag:hover {
-  border-color: color-mix(in srgb, var(--color-brand-blue) 30%, var(--color-border));
+  border-color: color-mix(in srgb, var(--color-brand-blue) 40%, var(--color-border));
   color: var(--color-text-secondary);
 }
 
 .chiron-subject-tag.is-selected {
   border-color: var(--color-brand-blue);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-brand-blue) 15%, var(--color-bg-primary)) 0%, color-mix(in srgb, var(--color-brand-blue) 8%, var(--color-bg-primary)) 100%);
-  color: var(--color-text-primary);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-brand-blue) 12%, transparent);
+  background: var(--color-brand-blue);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--color-brand-blue) 25%, transparent);
 }
 
 /* ── Mode switcher mockup ── */

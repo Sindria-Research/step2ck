@@ -138,22 +138,25 @@ export function ExamConfig() {
 
       <div className="relative z-[1]">
         {/* ── Hero header ── */}
-        <section className="pt-10 pb-8 md:pt-14 md:pb-10">
+        <section
+          className="pt-8 pb-6 md:pt-10 md:pb-8"
+          style={{ backgroundColor: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)' }}
+        >
           <div className="container">
             <div className="chiron-reveal" data-reveal>
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] mb-5 transition-colors"
+                className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                 Back to dashboard
               </button>
-              <h1 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.08]">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.08]">
                 {examType === 'test' ? 'New test' : 'New practice'}
               </h1>
-              <p className="mt-4 text-base md:text-lg text-[var(--color-text-secondary)] max-w-lg leading-relaxed">
-                Pick your subjects, choose a mode, and start {examType === 'test' ? 'your exam' : 'studying'}.
+              <p className="mt-3 text-sm md:text-base text-[var(--color-text-secondary)] max-w-lg leading-relaxed">
+                Choose subjects, select a mode, and start.
               </p>
             </div>
           </div>
@@ -178,11 +181,6 @@ export function ExamConfig() {
                     Clear
                   </button>
                 </div>
-                {!sectionsLoading && (
-                  <p className="mt-4 text-xs text-[var(--color-text-muted)]">
-                    {availableCount} questions available
-                  </p>
-                )}
               </div>
 
               <div className="chiron-mockup chiron-reveal chiron-reveal-delay-1" data-reveal>
@@ -212,9 +210,9 @@ export function ExamConfig() {
                       ))}
                     </div>
                     <div className="mt-5 chiron-mockup-meta">
-                      <span>{selectedSubjects.size} subjects</span>
+                      <span>{selectedSubjects.size} subjects selected</span>
                       <span className="chiron-mockup-dot" />
-                      <span>{availableCount} questions</span>
+                      <span>{availableCount} available</span>
                     </div>
                   </>
                 )}
@@ -226,7 +224,7 @@ export function ExamConfig() {
         {/* ── Mode + Count + Timing ── */}
         <div className="chiron-feature-row chiron-feature-row-alt">
           <div className="container">
-            <div className="chiron-reveal mb-6" data-reveal>
+            <div className="chiron-reveal mb-5" data-reveal>
               <p className="chiron-feature-label">Settings</p>
               <h2 className="chiron-feature-heading">
                 {examType === 'test' ? 'Configure your test' : 'How to study'}
@@ -251,12 +249,12 @@ export function ExamConfig() {
                         type="button"
                         onClick={() => !locked && setMode(m.id)}
                         disabled={locked}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-all focus-ring ${
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all focus-ring ${
                           locked
-                            ? 'border-[var(--color-border)] bg-[var(--color-bg-tertiary)] opacity-60 cursor-not-allowed'
+                            ? 'border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] opacity-60 cursor-not-allowed'
                             : mode === m.id
-                              ? 'border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_8%,var(--color-bg-primary))]'
-                              : 'border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)]'
+                              ? 'border-[1.5px] border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_10%,var(--color-bg-primary))] shadow-sm'
+                              : 'border border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)] opacity-75'
                         }`}
                       >
                         <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
@@ -266,7 +264,7 @@ export function ExamConfig() {
                         </span>
                         <div className="min-w-0 flex-1">
                           <span className="flex items-center gap-1.5">
-                            <span className={`text-sm font-medium ${mode === m.id ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
+                            <span className={`text-sm ${mode === m.id ? 'font-semibold text-[var(--color-text-primary)]' : 'font-medium text-[var(--color-text-secondary)]'}`}>
                               {m.label}
                             </span>
                             {m.id === 'personalized' && <Sparkles className="w-3.5 h-3.5 text-[var(--color-brand-blue)]" />}
@@ -304,9 +302,9 @@ export function ExamConfig() {
                           type="button"
                           onClick={() => setCount(c)}
                           disabled={c > availableCount}
-                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all focus-ring border ${
+                          className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all focus-ring border ${
                             questionCount === c && !customCount
-                              ? 'chiron-btn-primary border-transparent text-white'
+                              ? 'chiron-btn-primary border-transparent text-white shadow-md'
                               : c > availableCount
                                 ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
                                 : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)]'
@@ -319,15 +317,15 @@ export function ExamConfig() {
                         type="button"
                         onClick={() => setCount(availableCount)}
                         disabled={availableCount === 0}
-                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all focus-ring border ${
+                        className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all focus-ring border ${
                           questionCount === availableCount && !customCount
-                            ? 'chiron-btn-primary border-transparent text-white'
+                            ? 'chiron-btn-primary border-transparent text-white shadow-md'
                             : availableCount === 0
                               ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
                               : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)]'
                         }`}
                       >
-                        Max
+                        All remaining
                       </button>
                     </div>
                     <input
@@ -348,8 +346,11 @@ export function ExamConfig() {
                   </>
                 )}
 
-                {/* Summary inside count panel */}
-                <div className="mt-5 pt-4 border-t border-[var(--color-border)] space-y-2 text-sm">
+                {/* Summary + CTA */}
+                <div
+                  className="mt-5 pt-4 border-t border-[var(--color-border)] space-y-2 text-sm sticky bottom-0 bg-[var(--color-bg-primary)] rounded-b-xl"
+                  style={{ boxShadow: '0 -4px 16px rgba(0,0,0,0.04)' }}
+                >
                   <div className="flex justify-between">
                     <span className="text-[var(--color-text-tertiary)]">Subjects</span>
                     <span className="font-medium text-[var(--color-text-primary)]">{selectedSubjects.size} selected</span>
@@ -360,12 +361,26 @@ export function ExamConfig() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[var(--color-text-tertiary)]">Questions</span>
-                    <span className="font-medium text-[var(--color-text-primary)]">{isPersonalized ? 'Adaptive' : finalCount}</span>
+                    <span className="font-semibold text-[var(--color-text-primary)]">{isPersonalized ? 'Adaptive' : finalCount}</span>
                   </div>
-                  <div className="flex justify-between pt-2 border-t border-[var(--color-border)]">
-                    <span className="text-[var(--color-text-tertiary)]">Available</span>
-                    <span className="font-medium tabular-nums text-[var(--color-text-primary)]">{availableCount}</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleStart}
+                    disabled={!canStart}
+                    className={`w-full mt-3 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-all focus-ring ${
+                      canStart
+                        ? 'chiron-btn chiron-btn-primary shadow-md'
+                        : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)] cursor-not-allowed'
+                    }`}
+                  >
+                    <Play className="w-4 h-4 fill-current" />
+                    {isPersonalized ? 'Start Session' : examType === 'test' ? 'Start Test' : 'Start Practice'}
+                  </button>
+                  {!canStart && selectedSubjects.size === 0 && (
+                    <p className="text-center text-xs text-[var(--color-text-muted)] pt-1">
+                      Select at least one subject to begin.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -434,27 +449,27 @@ export function ExamConfig() {
           </div>
         </div>
 
-        {/* ── Tip (optional) ── */}
+        {/* ── Tip (optional, secondary) ── */}
         {showTip && (
-          <div className="chiron-feature-row">
+          <div className="py-4">
             <div className="container">
               <div className="chiron-reveal" data-reveal>
-                <div className="chiron-cta-wrap" style={{ borderColor: 'color-mix(in srgb, var(--color-brand-blue) 20%, var(--color-border))' }}>
-                  <div className="flex items-start gap-3">
-                    <Info className="w-5 h-5 mt-0.5 text-[var(--color-brand-blue)] shrink-0" />
+                <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)]" style={{ opacity: 0.8 }}>
+                  <div className="flex items-start gap-2.5">
+                    <Info className="w-4 h-4 mt-0.5 text-[var(--color-brand-blue)] shrink-0" />
                     <div>
-                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">Try Personalized Mode</p>
-                      <p className="text-xs text-[var(--color-text-secondary)] mt-1 leading-relaxed max-w-md">
-                        Personalized mode prioritizes unseen questions and ones you got wrong — great for focused study.
+                      <p className="text-xs font-semibold text-[var(--color-text-secondary)]">Try Personalized Mode</p>
+                      <p className="text-xs text-[var(--color-text-muted)] mt-0.5 leading-relaxed max-w-md">
+                        Prioritizes unseen questions and ones you got wrong.
                       </p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={dismissTip}
-                    className="chiron-btn chiron-btn-subtle px-4 py-2 rounded-md text-sm focus-ring shrink-0"
+                    className="text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors shrink-0"
                   >
-                    Got it
+                    Dismiss
                   </button>
                 </div>
               </div>
@@ -462,42 +477,8 @@ export function ExamConfig() {
           </div>
         )}
 
-        {/* ── CTA ── */}
-        <section className="py-10 md:py-14">
-          <div className="container">
-            <div className="chiron-cta-wrap chiron-reveal" data-reveal>
-              <div>
-                <h2 className="text-xl md:text-2xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight">
-                  {isPersonalized ? 'Start your session.' : `Ready — ${finalCount} questions.`}
-                </h2>
-                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                  {selectedSubjects.size} subjects · {mode === 'all' ? 'All questions' : mode} mode · {examType === 'test' ? 'Test' : 'Practice'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleStart}
-                disabled={!canStart}
-                className={`inline-flex items-center gap-2 px-6 py-3 rounded-md text-base font-semibold transition-all focus-ring ${
-                  canStart
-                    ? 'chiron-btn chiron-btn-primary'
-                    : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)] cursor-not-allowed'
-                }`}
-              >
-                <Play className="w-5 h-5 fill-current" />
-                {isPersonalized ? 'Start Session' : examType === 'test' ? 'Start Test' : 'Start Practice'}
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {!canStart && selectedSubjects.size === 0 && (
-          <div className="container pb-10">
-            <p className="text-center text-sm text-[var(--color-text-muted)]">
-              Select at least one subject to begin.
-            </p>
-          </div>
-        )}
+        {/* bottom spacer */}
+        <div className="h-8" />
       </div>
     </div>
   );

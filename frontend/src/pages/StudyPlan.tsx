@@ -21,23 +21,26 @@ import { EmptyState, Skeleton, SkeletonCard, CircularProgress } from '../compone
 import { useAuth } from '../context/AuthContext';
 import { ProGate } from '../components/ProGate';
 
-const PHASE_STYLES: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+const PHASE_STYLES: Record<string, { label: string; color: string; bg: string; calBg: string; icon: React.ElementType }> = {
   foundation: {
     label: 'Foundation',
-    color: 'var(--color-error)',
-    bg: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
+    color: '#dc2626',
+    bg: 'color-mix(in srgb, #dc2626 12%, transparent)',
+    calBg: 'color-mix(in srgb, #dc2626 22%, transparent)',
     icon: BookOpen,
   },
   reinforcement: {
     label: 'Reinforcement',
-    color: 'var(--color-warning)',
-    bg: 'color-mix(in srgb, var(--color-warning) 10%, transparent)',
+    color: '#d97706',
+    bg: 'color-mix(in srgb, #d97706 12%, transparent)',
+    calBg: 'color-mix(in srgb, #d97706 22%, transparent)',
     icon: TrendingUp,
   },
   review: {
     label: 'Review',
-    color: 'var(--color-success)',
-    bg: 'color-mix(in srgb, var(--color-success) 10%, transparent)',
+    color: '#16a34a',
+    bg: 'color-mix(in srgb, #16a34a 12%, transparent)',
+    calBg: 'color-mix(in srgb, #16a34a 22%, transparent)',
     icon: CheckCircle2,
   },
 };
@@ -87,12 +90,16 @@ function StudyCalendar({ plan }: { plan: StudyPlanData }) {
   const todayISO = today.toISOString().split('T')[0];
 
   const planStart = plan.weeks.length > 0 ? new Date(plan.weeks[0].start + 'T00:00:00') : today;
+  const examDate = new Date(plan.exam_date + 'T00:00:00');
   const [viewYear, setViewYear] = useState(planStart.getFullYear());
   const [viewMonth, setViewMonth] = useState(planStart.getMonth());
 
   const monthName = new Date(viewYear, viewMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const daysInMonth = getMonthDays(viewYear, viewMonth);
   const firstDay = getFirstDayOfWeek(viewYear, viewMonth);
+
+  const isViewingExamMonth = viewYear === examDate.getFullYear() && viewMonth === examDate.getMonth();
+  const isViewingTodayMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth();
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewYear(viewYear - 1); setViewMonth(11); }
@@ -101,6 +108,14 @@ function StudyCalendar({ plan }: { plan: StudyPlanData }) {
   const nextMonth = () => {
     if (viewMonth === 11) { setViewYear(viewYear + 1); setViewMonth(0); }
     else setViewMonth(viewMonth + 1);
+  };
+  const jumpToExam = () => {
+    setViewYear(examDate.getFullYear());
+    setViewMonth(examDate.getMonth());
+  };
+  const jumpToToday = () => {
+    setViewYear(today.getFullYear());
+    setViewMonth(today.getMonth());
   };
 
   const calendarCells = useMemo(() => {
@@ -121,7 +136,7 @@ function StudyCalendar({ plan }: { plan: StudyPlanData }) {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="chiron-mockup">
+    <div className="chiron-mockup" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
       <div className="flex items-center justify-between mb-4">
         <p className="chiron-mockup-label">Calendar</p>
         <div className="flex items-center gap-1">
@@ -161,20 +176,20 @@ function StudyCalendar({ plan }: { plan: StudyPlanData }) {
           return (
             <div
               key={cell.day}
-              className={`relative flex items-center justify-center h-9 rounded-lg text-xs font-medium transition-colors
-                ${cell.isToday ? 'ring-2 ring-[var(--color-brand-blue)] ring-offset-1 ring-offset-[var(--color-bg-primary)]' : ''}
-                ${cell.isExam ? 'ring-2 ring-[var(--color-error)] ring-offset-1 ring-offset-[var(--color-bg-primary)]' : ''}
+              className={`relative flex items-center justify-center h-9 rounded-lg text-xs transition-colors cursor-default
+                ${cell.isToday ? 'ring-2 ring-[var(--color-brand-blue)] ring-offset-1 ring-offset-[var(--color-bg-secondary)] font-bold' : ''}
+                ${cell.isExam ? 'ring-2 ring-[var(--color-error)] ring-offset-1 ring-offset-[var(--color-bg-secondary)] font-bold' : ''}
+                ${!cell.isToday && !cell.isExam ? 'font-semibold' : ''}
               `}
               style={{
-                backgroundColor: phase ? phase.bg : undefined,
+                backgroundColor: phase ? phase.calBg : undefined,
                 color: cell.isToday
                   ? 'var(--color-brand-blue)'
                   : cell.isExam
                     ? 'var(--color-error)'
                     : phase
                       ? phase.color
-                      : 'var(--color-text-tertiary)',
-                fontWeight: cell.isToday || cell.isExam ? 700 : 500,
+                      : 'var(--color-text-muted)',
               }}
               title={
                 cell.isExam
@@ -195,7 +210,7 @@ function StudyCalendar({ plan }: { plan: StudyPlanData }) {
         })}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 mt-4 pt-3 border-t border-[var(--color-border)]">
+      <div className="flex flex-wrap items-center gap-3 mt-4 pt-3 border-t border-[color-mix(in_srgb,var(--color-border)_50%,transparent)]">
         {Object.entries(PHASE_STYLES).map(([key, style]) => (
           <span
             key={key}
@@ -214,6 +229,30 @@ function StudyCalendar({ plan }: { plan: StudyPlanData }) {
           <span className="w-2 h-2 rounded-full bg-[var(--color-error)]" />
           Exam
         </span>
+      </div>
+
+      <div className="flex items-center gap-2 mt-3">
+        {!isViewingTodayMonth && (
+          <button
+            type="button"
+            onClick={jumpToToday}
+            className="text-[0.65rem] font-medium text-[var(--color-brand-blue)] hover:underline"
+          >
+            Jump to today
+          </button>
+        )}
+        {!isViewingExamMonth && (
+          <>
+            {!isViewingTodayMonth && <span className="text-[var(--color-text-muted)] text-[0.6rem]">·</span>}
+            <button
+              type="button"
+              onClick={jumpToExam}
+              className="text-[0.65rem] font-medium text-[#dc2626] hover:underline"
+            >
+              Jump to exam
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -237,21 +276,28 @@ function TodayProgress({
   const last7 = dailySummary?.history.slice(-7) ?? [];
 
   return (
-    <div className="chiron-mockup flex flex-col">
+    <div
+      className="chiron-mockup flex flex-col"
+      style={{
+        boxShadow: '0 6px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05)',
+        backgroundColor: 'var(--color-bg-primary)',
+        padding: '1.5rem',
+      }}
+    >
       <p className="chiron-mockup-label mb-4">Today</p>
 
-      <div className="flex-1 flex items-center gap-4">
+      <div className="flex-1 flex items-center gap-5">
         <CircularProgress
           value={goalPct}
           label=""
           centerLabel={`${todayCount}/${dailyGoal}`}
           color={goalMet ? 'var(--color-success)' : 'var(--color-brand-blue)'}
-          size={76}
-          strokeWidth={6}
+          size={110}
+          strokeWidth={9}
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <p className="text-2xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
+            <p className="text-2xl font-bold font-display tabular-nums text-[var(--color-text-primary)]">
               {todayCount}
             </p>
             {streak > 0 && (
@@ -260,8 +306,11 @@ function TodayProgress({
               </span>
             )}
           </div>
-          <p className="text-sm text-[var(--color-text-secondary)]">
-            {goalMet ? 'Daily goal reached!' : `${remaining} more to hit your goal`}
+          <p className="text-sm font-medium text-[var(--color-text-primary)]">
+            {goalMet ? 'Daily goal reached!' : `${remaining} more to hit your goal.`}
+          </p>
+          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+            {goalMet ? 'Keep the momentum going.' : 'Complete today\'s set to stay on pace.'}
           </p>
 
           {last7.length > 0 && (
@@ -291,10 +340,10 @@ function TodayProgress({
         <button
           type="button"
           onClick={onPractice}
-          className="mt-4 chiron-btn chiron-btn-primary px-4 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-2 w-full"
+          className="mt-4 chiron-btn chiron-btn-primary px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 w-full shadow-sm"
         >
           Start Practice
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-4 h-4" />
         </button>
       )}
     </div>
@@ -307,11 +356,13 @@ function WeekCard({
   week,
   isCurrent,
   isPast,
+  totalWeeks,
   onPractice,
 }: {
   week: StudyPlanWeek;
   isCurrent: boolean;
   isPast: boolean;
+  totalWeeks: number;
   onPractice: () => void;
 }) {
   const [expanded, setExpanded] = useState(isCurrent);
@@ -320,10 +371,18 @@ function WeekCard({
   const completionPct = week.question_target > 0
     ? Math.min(100, Math.round((week.completed / week.question_target) * 100))
     : 0;
+  const hasProgress = completionPct > 0;
 
   return (
     <div
-      className={`chiron-mockup transition-all ${isCurrent ? 'ring-2 ring-[var(--color-brand-blue)]/40 shadow-md' : ''} ${isPast ? 'opacity-55' : ''}`}
+      className={`rounded-xl transition-all hover:shadow-sm ${isPast ? 'opacity-50' : ''}`}
+      style={{
+        backgroundColor: isCurrent ? 'var(--color-bg-primary)' : 'var(--color-bg-secondary)',
+        borderLeft: isCurrent ? '3px solid var(--color-brand-blue)' : '3px solid transparent',
+        boxShadow: isCurrent ? '0 4px 20px rgba(0,0,0,0.08)' : undefined,
+        border: isCurrent ? undefined : '1px solid color-mix(in srgb, var(--color-border) 60%, transparent)',
+        padding: '0.75rem 1rem',
+      }}
     >
       <button
         type="button"
@@ -331,10 +390,10 @@ function WeekCard({
         onClick={() => setExpanded(!expanded)}
       >
         <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+          className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
           style={{ backgroundColor: style.bg, color: style.color }}
         >
-          <PhaseIcon className="w-4 h-4" />
+          <PhaseIcon className="w-3.5 h-3.5" />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -348,21 +407,28 @@ function WeekCard({
               </span>
             )}
             <span
-              className="text-[0.6rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+              className="text-[0.6rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full"
               style={{ backgroundColor: style.bg, color: style.color }}
             >
               {style.label}
             </span>
           </div>
-          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+          <p className="text-[0.7rem] text-[var(--color-text-muted)] mt-0.5">
             {formatDate(week.start)} – {formatDate(week.end)}
+            {isCurrent && <span className="ml-2 text-[var(--color-brand-blue)] font-medium">· Week {week.week} of {totalWeeks}</span>}
           </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-semibold tabular-nums text-[var(--color-text-primary)]">{completionPct}%</p>
-            <p className="text-[0.6rem] text-[var(--color-text-muted)]">{week.completed}/{week.question_target}</p>
+            {hasProgress ? (
+              <>
+                <p className="text-sm font-bold tabular-nums text-[var(--color-text-primary)]">{completionPct}%</p>
+                <p className="text-[0.6rem] text-[var(--color-text-muted)]">{week.completed}/{week.question_target}</p>
+              </>
+            ) : (
+              <p className="text-xs text-[var(--color-text-muted)]">Not started</p>
+            )}
           </div>
           {isPast ? (
             <CheckCircle2 className="w-4 h-4 text-[var(--color-success)] shrink-0" />
@@ -375,9 +441,9 @@ function WeekCard({
       </button>
 
       {expanded && !isPast && (
-        <div className="mt-3 pt-3 border-t border-[var(--color-border)] space-y-3">
+        <div className="mt-2.5 pt-2.5 border-t border-[color-mix(in_srgb,var(--color-border)_50%,transparent)] space-y-2.5">
           <div className="flex items-center gap-3">
-            <div className="flex-1 chiron-meter-track" style={{ height: '6px' }}>
+            <div className="flex-1 chiron-meter-track" style={{ height: '5px' }}>
               <div
                 className="chiron-meter-fill"
                 style={{ width: `${completionPct}%`, backgroundColor: style.color }}
@@ -390,14 +456,14 @@ function WeekCard({
 
           {week.focus_sections.length > 0 && (
             <div>
-              <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+              <p className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
                 Focus Areas
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {week.focus_sections.map((section) => (
                   <span
                     key={section}
-                    className="text-xs px-2.5 py-1 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] font-medium"
+                    className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] font-medium"
                   >
                     {section}
                   </span>
@@ -410,13 +476,102 @@ function WeekCard({
             <button
               type="button"
               onClick={onPractice}
-              className="chiron-btn chiron-btn-primary px-4 py-2 rounded-lg text-xs font-medium flex items-center gap-2 w-full justify-center sm:w-auto"
+              className="chiron-btn chiron-btn-primary px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 w-full justify-center sm:w-auto"
             >
               Start Practice
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Week List (smart truncation for long plans) ───
+
+const VISIBLE_AROUND_CURRENT = 3;
+
+function WeekList({
+  weeks,
+  today,
+  totalWeeks,
+  onPractice,
+}: {
+  weeks: StudyPlanWeek[];
+  today: string;
+  totalWeeks: number;
+  onPractice: () => void;
+}) {
+  const [showAll, setShowAll] = useState(false);
+
+  const currentIdx = weeks.findIndex((w) => today >= w.start && today <= w.end);
+  const anchorIdx = currentIdx >= 0 ? currentIdx : 0;
+
+  const shouldTruncate = weeks.length > 10 && !showAll;
+
+  const visibleWeeks = shouldTruncate
+    ? weeks.filter((_, i) => {
+        if (i <= anchorIdx + VISIBLE_AROUND_CURRENT) return true;
+        if (i >= weeks.length - 2) return true;
+        return false;
+      })
+    : weeks;
+
+  const gapStart = anchorIdx + VISIBLE_AROUND_CURRENT + 1;
+  const gapEnd = weeks.length - 2;
+  const hiddenCount = shouldTruncate && gapEnd > gapStart ? gapEnd - gapStart : 0;
+
+  return (
+    <div className="space-y-2">
+      {visibleWeeks.map((week, vIdx) => {
+        const realIdx = weeks.indexOf(week);
+        const isCurrent = today >= week.start && today <= week.end;
+        const isPast = today > week.end;
+
+        const prevRealIdx = vIdx > 0 ? weeks.indexOf(visibleWeeks[vIdx - 1]) : realIdx - 1;
+        const showGap = shouldTruncate && realIdx - prevRealIdx > 1 && vIdx > 0;
+
+        return (
+          <div key={week.week}>
+            {showGap && (
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="w-full py-2 text-center text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-brand-blue)] transition-colors"
+              >
+                {hiddenCount} more weeks — show all
+              </button>
+            )}
+            <WeekCard
+              week={week}
+              isCurrent={isCurrent}
+              isPast={isPast}
+              totalWeeks={totalWeeks}
+              onPractice={onPractice}
+            />
+          </div>
+        );
+      })}
+
+      {shouldTruncate && weeks.length > 10 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="w-full py-3 text-center text-xs font-medium text-[var(--color-brand-blue)] hover:underline transition-colors"
+        >
+          Show all {weeks.length} weeks
+        </button>
+      )}
+
+      {showAll && weeks.length > 10 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(false)}
+          className="w-full py-3 text-center text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+        >
+          Show less
+        </button>
       )}
     </div>
   );
@@ -514,31 +669,45 @@ export function StudyPlan() {
 
       {/* ── Hero ── */}
       <section
-        className="relative z-[1] pt-14 pb-16 md:pt-24 md:pb-20 chiron-page-enter"
-        style={{ '--page-enter-order': 0 } as React.CSSProperties}
+        className="relative z-[1] pt-8 pb-8 md:pt-12 md:pb-10 chiron-page-enter"
+        style={{
+          '--page-enter-order': 0,
+          backgroundColor: 'var(--color-bg-secondary)',
+          borderBottom: '1px solid var(--color-border)',
+        } as React.CSSProperties}
       >
         <div className="container">
           <div className="max-w-4xl">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
-              <div>
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-[0.7rem] font-bold tracking-wider text-[var(--color-text-secondary)] uppercase mb-6 shadow-sm">
-                  Study Plan
-                </span>
-                <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.04]">
-                  {plan ? 'Your study plan.' : 'Plan your prep.'}
-                </h1>
-                <p className="mt-6 text-base md:text-lg text-[var(--color-text-secondary)] max-w-xl leading-relaxed">
-                  {plan
-                    ? `${daysLeft} days until your exam. Stay on track with ${plan.daily_goal} questions per day.`
-                    : 'Generate a personalized study plan based on your progress and exam date.'}
-                </p>
-              </div>
+            <h1 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.08]">
+              {plan ? 'Your study plan.' : 'Plan your prep.'}
+            </h1>
+            <p className="mt-3 text-base text-[var(--color-text-secondary)] max-w-xl leading-relaxed">
+              {plan
+                ? `${daysLeft} days until your exam. Complete ${plan.daily_goal} questions daily to stay on track.`
+                : 'Generate a personalized study plan based on your progress and exam date.'}
+            </p>
 
+            {/* CTAs */}
+            <div className="flex flex-wrap items-center gap-3 mt-6">
+              {plan && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/exam/config?type=practice')}
+                  className="chiron-btn chiron-btn-primary px-5 py-2.5 rounded-md focus-ring inline-flex items-center gap-2 whitespace-nowrap shrink-0"
+                >
+                  Start Today's Practice
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleGenerate}
                 disabled={generating}
-                className="chiron-btn chiron-btn-primary px-5 py-2.5 rounded-md focus-ring inline-flex items-center gap-2 whitespace-nowrap shrink-0"
+                className={`px-5 py-2.5 rounded-md focus-ring inline-flex items-center gap-2 whitespace-nowrap shrink-0 text-sm font-medium transition-colors ${
+                  plan
+                    ? 'border border-[var(--color-border)] text-[var(--color-text-secondary)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'
+                    : 'chiron-btn chiron-btn-primary'
+                }`}
               >
                 {generating ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -547,27 +716,20 @@ export function StudyPlan() {
                 ) : (
                   <Sparkles className="w-4 h-4" />
                 )}
-                {generating ? 'Generating...' : plan ? 'Regenerate' : 'Generate Plan'}
+                {generating ? 'Generating...' : plan ? 'Regenerate Plan' : 'Generate Plan'}
               </button>
             </div>
 
+            {/* Chips — only exam date + daily goal */}
             {plan && (
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
-                  <Calendar className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <div className="flex flex-wrap items-center gap-3 mt-5">
+                <div className="flex items-center gap-2 px-3.5 py-1.5 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
+                  <Calendar className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
                   <span>{formatDateLong(plan.exam_date)}</span>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
-                  <Clock className="w-4 h-4 text-[var(--color-text-muted)]" />
-                  <span>{plan.weeks_until_exam} weeks left</span>
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
-                  <Target className="w-4 h-4 text-[var(--color-text-muted)]" />
+                <div className="flex items-center gap-2 px-3.5 py-1.5 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
+                  <Target className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
                   <span>{plan.daily_goal} Q/day</span>
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
-                  <Flame className="w-4 h-4 text-[var(--color-text-muted)]" />
-                  <span>{overallPct}% complete</span>
                 </div>
               </div>
             )}
@@ -624,17 +786,17 @@ export function StudyPlan() {
         <>
           {/* ── Stats + Calendar ── */}
           <section
-            className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter"
+            className="py-11 chiron-page-enter"
             style={{ '--page-enter-order': 1 } as React.CSSProperties}
           >
             <div className="container">
-              <div className="mb-8">
+              <div className="mb-6">
                 <p className="chiron-feature-label">Overview</p>
               </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                 {/* Stats */}
-                <div className="chiron-mockup">
+                <div className="chiron-mockup" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
                   <p className="chiron-mockup-label mb-4">Progress</p>
                   <div className="grid grid-cols-2 gap-3">
                     <StatCard
@@ -686,7 +848,7 @@ export function StudyPlan() {
           {/* ── Phase Breakdown ── */}
           {phaseBreakdown.length > 0 && (
             <section
-              className="py-14 border-t border-[var(--color-border)] chiron-page-enter"
+              className="py-11 border-t border-[color-mix(in_srgb,var(--color-border)_60%,transparent)] chiron-page-enter"
               style={{ '--page-enter-order': 2 } as React.CSSProperties}
             >
               <div className="container">
@@ -698,13 +860,13 @@ export function StudyPlan() {
                       Your plan is divided into phases that progressively shift focus from building foundations to targeted review.
                     </p>
                     {currentWeek && (
-                      <div className="chiron-mockup mt-6">
+                      <div className="chiron-mockup mt-6" style={{ border: 'none', backgroundColor: 'var(--color-bg-secondary)' }}>
                         <div className="flex items-center gap-2 mb-2">
                           <div
-                            className="w-2 h-2 rounded-full"
+                            className="w-2.5 h-2.5 rounded-full"
                             style={{ backgroundColor: PHASE_STYLES[currentWeek.phase]?.color }}
                           />
-                          <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+                          <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
                             Current Phase
                           </p>
                         </div>
@@ -720,7 +882,7 @@ export function StudyPlan() {
 
                   <div className="chiron-mockup">
                     <p className="chiron-mockup-label mb-4">Phase Progress</p>
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                       {phaseBreakdown.map(({ phase, total, completed, weeks, pct }) => {
                         const ps = PHASE_STYLES[phase] || PHASE_STYLES.foundation;
                         return (
@@ -728,21 +890,21 @@ export function StudyPlan() {
                             <div className="flex items-center justify-between mb-1.5">
                               <div className="flex items-center gap-2">
                                 <span
-                                  className="w-2 h-2 rounded-full"
+                                  className="w-2.5 h-2.5 rounded-full"
                                   style={{ backgroundColor: ps.color }}
                                 />
-                                <span className="text-sm font-medium text-[var(--color-text-primary)]">
+                                <span className="text-sm font-semibold text-[var(--color-text-primary)]">
                                   {ps.label}
                                 </span>
                                 <span className="text-[0.65rem] text-[var(--color-text-muted)]">
                                   {weeks} {weeks === 1 ? 'week' : 'weeks'}
                                 </span>
                               </div>
-                              <span className="text-xs tabular-nums font-semibold" style={{ color: ps.color }}>
-                                {pct}%
+                              <span className="text-sm tabular-nums font-bold" style={{ color: ps.color }}>
+                                {pct > 0 ? `${pct}%` : 'Not started'}
                               </span>
                             </div>
-                            <div className="chiron-meter-track" style={{ height: '6px' }}>
+                            <div className="chiron-meter-track" style={{ height: '7px' }}>
                               <div
                                 className="chiron-meter-fill"
                                 style={{ width: `${pct}%`, backgroundColor: ps.color }}
@@ -763,11 +925,11 @@ export function StudyPlan() {
 
           {/* ── Weekly Timeline ── */}
           <section
-            className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter"
+            className="py-11 border-t border-[color-mix(in_srgb,var(--color-border)_60%,transparent)] chiron-page-enter"
             style={{ '--page-enter-order': 3 } as React.CSSProperties}
           >
             <div className="container max-w-3xl">
-              <div className="mb-8">
+              <div className="mb-6">
                 <p className="chiron-feature-label">Schedule</p>
                 <h2 className="chiron-feature-heading">Weekly breakdown</h2>
                 <p className="chiron-feature-body mt-2">
@@ -775,21 +937,12 @@ export function StudyPlan() {
                 </p>
               </div>
 
-              <div className="space-y-3">
-                {plan.weeks.map((week) => {
-                  const isCurrent = today >= week.start && today <= week.end;
-                  const isPast = today > week.end;
-                  return (
-                    <WeekCard
-                      key={week.week}
-                      week={week}
-                      isCurrent={isCurrent}
-                      isPast={isPast}
-                      onPractice={() => navigate('/exam/config?type=practice')}
-                    />
-                  );
-                })}
-              </div>
+              <WeekList
+                weeks={plan.weeks}
+                today={today}
+                totalWeeks={plan.weeks.length}
+                onPractice={() => navigate('/exam/config?type=practice')}
+              />
 
               {generatedAt && (
                 <p className="text-[0.6rem] text-[var(--color-text-muted)] mt-6 text-center">
@@ -801,7 +954,7 @@ export function StudyPlan() {
 
           {/* ── Quick Actions ── */}
           <section
-            className="py-14 border-t border-[var(--color-border)] chiron-page-enter"
+            className="py-11 border-t border-[color-mix(in_srgb,var(--color-border)_60%,transparent)] chiron-page-enter"
             style={{ '--page-enter-order': 4 } as React.CSSProperties}
           >
             <div className="container">

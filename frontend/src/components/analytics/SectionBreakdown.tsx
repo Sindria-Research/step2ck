@@ -37,17 +37,19 @@ export function SectionBreakdown({ sections, className }: { sections: SectionSta
 
     return (
         <div className={className}>
-            <div className="h-[300px] w-full">
+            <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data} layout="vertical" margin={{ left: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--color-border)" />
+                    <BarChart data={data} layout="vertical" margin={{ left: 12, right: 8, top: 4, bottom: 4 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--color-text-muted)" strokeOpacity={0.2} />
                         <XAxis type="number" hide />
                         <YAxis
                             dataKey="name"
                             type="category"
                             width={100}
-                            tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }}
+                            tick={{ fill: 'var(--color-text-secondary)', fontSize: 11, fontWeight: 500 }}
                             interval={0}
+                            tickLine={false}
+                            axisLine={false}
                         />
                         <Tooltip
                             cursor={{ fill: 'var(--color-bg-tertiary)', opacity: 0.4 }}
@@ -58,21 +60,21 @@ export function SectionBreakdown({ sections, className }: { sections: SectionSta
                                 fontSize: '12px'
                             }}
                         />
-                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        <Legend wrapperStyle={{ paddingTop: '12px' }} />
                         <Bar
                             dataKey="Correct"
                             stackId="a"
                             fill="var(--color-success)"
                             radius={[0, 4, 4, 0]}
-                            barSize={20}
+                            barSize={18}
                         />
                         <Bar
                             dataKey="Incorrect"
                             stackId="a"
-                            fill="var(--color-error)"
+                            fill="var(--color-text-muted)"
                             radius={[0, 4, 4, 0]}
-                            barSize={20}
-                            fillOpacity={0.8}
+                            barSize={18}
+                            fillOpacity={0.35}
                         />
                     </BarChart>
                 </ResponsiveContainer>

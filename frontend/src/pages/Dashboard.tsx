@@ -7,12 +7,9 @@ import {
   XCircle,
   BookOpen,
   ArrowRight,
-  FlaskConical,
   AlertTriangle,
-  Clock3,
   Activity,
   Filter,
-  Gauge,
 } from 'lucide-react';
 import { api } from '../api/api';
 import type { ProgressStats, ProgressRecord, DailySummary } from '../api/types';
@@ -65,9 +62,6 @@ export function Dashboard() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
   const dashRef = useRef<HTMLDivElement>(null);
-
-  const welcomeName =
-    user?.display_name?.trim() || user?.email?.split('@')[0] || 'there';
 
   useEffect(() => {
     if (!user) return;
@@ -198,145 +192,140 @@ export function Dashboard() {
       <div className="dash-glow dash-glow-two" aria-hidden />
 
       {/* ── Hero Stripe ── */}
-      <section className="relative z-[1] pt-14 pb-16 md:pt-24 md:pb-24 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>
+      <section
+        className="relative z-[1] pt-10 pb-8 md:pt-14 md:pb-10 chiron-page-enter"
+        style={{
+          '--page-enter-order': 0,
+          backgroundColor: 'var(--color-bg-secondary)',
+          borderBottom: '1px solid var(--color-border)',
+        } as React.CSSProperties}
+      >
         <div className="container">
           <div className="max-w-4xl">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
-              <div>
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-[0.7rem] font-bold tracking-wider text-[var(--color-text-secondary)] uppercase mb-6 shadow-sm">
-                  Dashboard
-                </span>
-                <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.04]">
-                  {user ? <>Hey, {welcomeName}</> : <>Your progress.</>}
-                </h1>
-                <p className="mt-6 text-base md:text-lg text-[var(--color-text-secondary)] max-w-xl leading-relaxed">
-                  {hasData
-                    ? 'Here is a breakdown of your preparation.'
-                    : 'Start a test to track your Step 2 CK preparation.'}
-                </p>
-              </div>
+            <span className="inline-flex items-center px-3 py-1 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-[0.7rem] font-bold tracking-wider text-[var(--color-text-secondary)] uppercase mb-4 shadow-sm">
+              Dashboard
+            </span>
+            <h1 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.08]">
+              Your Performance Dashboard
+            </h1>
+            <p className="mt-3 text-base text-[var(--color-text-secondary)] max-w-xl leading-relaxed">
+              {hasData
+                ? dailySummary
+                  ? dailySummary.today_count > 0
+                    ? `You're ${dailySummary.today_count} question${dailySummary.today_count === 1 ? '' : 's'} into today's plan.${dailySummary.streak > 1 ? ` ${dailySummary.streak}-day streak — keep going.` : ' Consistency builds mastery.'}`
+                    : 'Pick up where you left off. Consistency builds mastery.'
+                  : 'Here is a breakdown of your preparation.'
+                : 'Start a test to track your Step 2 CK preparation.'}
+            </p>
 
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => navigate('/exam/config')}
-                  className="chiron-btn chiron-btn-primary px-5 py-2.5 rounded-md focus-ring inline-flex items-center gap-2 whitespace-nowrap"
-                >
-                  New test
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/lab-values')}
-                  className="chiron-btn chiron-btn-subtle px-5 py-2.5 rounded-md focus-ring whitespace-nowrap"
-                >
-                  Lab values
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
-                <Clock3 className="w-4 h-4 text-[var(--color-text-muted)]" />
-                <span>{total} answered</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
-                <Target className="w-4 h-4 text-[var(--color-text-muted)]" />
-                <span>{accuracy}% accuracy</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-bg-primary)] rounded-full border border-[var(--color-border)] shadow-sm text-sm text-[var(--color-text-secondary)] font-medium">
-                <Activity className="w-4 h-4 text-[var(--color-text-muted)]" />
-                <span>{goalPct}% of goal</span>
-              </div>
+            <div className="flex flex-wrap items-center gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => navigate('/exam/config')}
+                className="chiron-btn chiron-btn-primary px-6 py-3 rounded-md focus-ring inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold"
+              >
+                New test
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/lab-values')}
+                className="px-5 py-2.5 rounded-md focus-ring whitespace-nowrap text-sm font-medium border border-[var(--color-border)] text-[var(--color-text-secondary)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+              >
+                Lab values
+              </button>
             </div>
           </div>
         </div>
       </section>
 
       {/* ── Stats Stripe ── */}
-      <section className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 1 } as React.CSSProperties}>
+      <section className="py-12 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 1 } as React.CSSProperties}>
         <div className="container">
           <div className="mb-8">
             <p className="chiron-feature-label">Overview</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            {/* Left mockup: key stats in a progress-grid style */}
-            <div className="chiron-mockup">
-              <p className="chiron-mockup-label mb-4">Performance</p>
-              <div className="grid grid-cols-2 gap-3">
-                <OverviewStat label="Questions" value={total} icon={BookOpen} color="var(--color-brand-blue)" animate={!loading} />
-                <OverviewStat label="Correct" value={correct} icon={CheckCircle2} color="var(--color-success)" animate={!loading} />
-                <OverviewStat label="Incorrect" value={incorrect} icon={XCircle} color="var(--color-error)" animate={!loading} />
-                <OverviewStat label="Accuracy" value={hasData ? `${accuracy}%` : '—'} icon={TrendingUp} color="var(--color-brand-blue)" animate={!loading} />
-              </div>
-            </div>
-
-            {/* Right mockup: today's progress */}
-            <div className="chiron-mockup flex flex-col">
+          <div className="grid md:grid-cols-2 gap-5">
+            {/* Today's Progress — dominant card */}
+            <div
+              className="chiron-mockup flex flex-col"
+              style={{
+                boxShadow: '0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
+                backgroundColor: 'var(--color-bg-primary)',
+                padding: '1.5rem',
+              }}
+            >
               <p className="chiron-mockup-label mb-4">Today&apos;s Progress</p>
-              {dailySummary ? (
-                <>
-                  <div className="flex-1 flex items-center gap-5">
-                    <CircularProgress
-                      value={dailySummary.daily_goal > 0 ? Math.min(100, Math.round((dailySummary.today_count / dailySummary.daily_goal) * 100)) : 0}
-                      label=""
-                      centerLabel={`${dailySummary.today_count}/${dailySummary.daily_goal}`}
-                      color="var(--color-success)"
-                      size={80}
-                      strokeWidth={6}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-2xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
-                          {dailySummary.today_count}
+              {dailySummary ? (() => {
+                const todayGoalPct = dailySummary.daily_goal > 0 ? Math.min(100, Math.round((dailySummary.today_count / dailySummary.daily_goal) * 100)) : 0;
+                const goalMet = dailySummary.today_count >= dailySummary.daily_goal && dailySummary.daily_goal > 0;
+                const remaining = Math.max(0, dailySummary.daily_goal - dailySummary.today_count);
+                return (
+                  <>
+                    <div className="flex-1 flex items-center gap-5">
+                      <CircularProgress
+                        value={todayGoalPct}
+                        label=""
+                        centerLabel={`${dailySummary.today_count}/${dailySummary.daily_goal}`}
+                        color={goalMet ? 'var(--color-success)' : 'var(--color-brand-blue)'}
+                        size={96}
+                        strokeWidth={8}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-2xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
+                            {dailySummary.today_count}
+                          </p>
+                          {dailySummary.streak > 0 && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-[color-mix(in_srgb,var(--color-warning)_12%,transparent)] text-[var(--color-warning)]">
+                              🔥 {dailySummary.streak}d streak
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+                          {goalMet
+                            ? 'Daily goal reached!'
+                            : `You're ${remaining} question${remaining === 1 ? '' : 's'} from your goal.`}
                         </p>
-                        {dailySummary.streak > 0 && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-[color-mix(in_srgb,var(--color-warning)_12%,transparent)] text-[var(--color-warning)]">
-                            🔥 {dailySummary.streak}d streak
-                          </span>
-                        )}
+                        <div className="flex gap-1 mt-3">
+                          {dailySummary.history.slice(-7).map((day) => (
+                            <div
+                              key={day.date}
+                              title={`${day.date}: ${day.count} questions`}
+                              className={`w-5 h-5 rounded-sm transition-colors ${
+                                day.count === 0
+                                  ? 'bg-[var(--color-bg-tertiary)]'
+                                  : day.met_goal
+                                    ? 'bg-[var(--color-success)]'
+                                    : 'bg-[color-mix(in_srgb,var(--color-success)_40%,var(--color-bg-tertiary))]'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-[0.6rem] text-[var(--color-text-muted)] mt-1">Last 7 days</p>
                       </div>
-                      <p className="text-sm text-[var(--color-text-secondary)]">
-                        {dailySummary.today_count >= dailySummary.daily_goal ? 'Daily goal reached!' : `${dailySummary.daily_goal - dailySummary.today_count} more to hit your goal`}
-                      </p>
-                      <div className="flex gap-1 mt-3">
-                        {dailySummary.history.slice(-7).map((day) => (
-                          <div
-                            key={day.date}
-                            title={`${day.date}: ${day.count} questions`}
-                            className={`w-5 h-5 rounded-sm transition-colors ${
-                              day.count === 0
-                                ? 'bg-[var(--color-bg-tertiary)]'
-                                : day.met_goal
-                                  ? 'bg-[var(--color-success)]'
-                                  : 'bg-[color-mix(in_srgb,var(--color-success)_40%,var(--color-bg-tertiary))]'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-[0.6rem] text-[var(--color-text-muted)] mt-1">Last 7 days</p>
                     </div>
-                  </div>
-                  <div className="mt-4 chiron-mockup-meta">
-                    <button
-                      type="button"
-                      onClick={() => setGoalModalOpen(true)}
-                      className="text-xs font-medium text-[var(--color-brand-blue)] hover:underline transition-colors"
-                    >
-                      Change goal
-                    </button>
-                  </div>
-                </>
-              ) : (
+                    <div className="mt-4 chiron-mockup-meta">
+                      <button
+                        type="button"
+                        onClick={() => setGoalModalOpen(true)}
+                        className="text-xs font-medium text-[var(--color-brand-blue)] hover:underline transition-colors"
+                      >
+                        Change goal
+                      </button>
+                    </div>
+                  </>
+                );
+              })() : (
                 <div className="flex-1 flex items-center gap-5">
                   <CircularProgress
                     value={goalPct}
                     label=""
                     centerLabel={`${total}/${goal}`}
-                    color="var(--color-success)"
-                    size={80}
-                    strokeWidth={6}
+                    color="var(--color-brand-blue)"
+                    size={96}
+                    strokeWidth={8}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-2xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
@@ -352,45 +341,71 @@ export function Dashboard() {
                 </div>
               )}
             </div>
+
+            {/* Performance — compact, secondary card */}
+            <div className="chiron-mockup" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+              <p className="chiron-mockup-label mb-4">Performance</p>
+              <div className="grid grid-cols-2 gap-3">
+                <OverviewStat label="Questions" value={total} icon={BookOpen} color="var(--color-brand-blue)" animate={!loading} />
+                <OverviewStat label="Correct" value={correct} icon={CheckCircle2} color="var(--color-success)" animate={!loading} />
+                <OverviewStat label="Incorrect" value={incorrect} icon={XCircle} color="var(--color-error)" animate={!loading} />
+                <OverviewStat label="Accuracy" value={hasData ? `${accuracy}%` : '—'} icon={TrendingUp} color="var(--color-brand-blue)" animate={!loading} />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
+
       {/* ── Analytics Stripe ── */}
-      <section className="py-12 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 2 } as React.CSSProperties}>
+      <section className="py-12 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 3 } as React.CSSProperties}>
         <div className="container">
           <div className="flex items-center justify-between mb-8">
             <div>
               <p className="chiron-feature-label">Analytics</p>
             </div>
 
-            <div className="relative group z-10">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Filter className="w-4 h-4 text-[var(--color-text-tertiary)]" />
+            {filteredHistory.length > 0 && (
+              <div className="relative group z-10">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Filter className="w-4 h-4 text-[var(--color-text-tertiary)]" />
+                </div>
+                <select
+                  value={sectionFilter}
+                  onChange={(e) => setSectionFilter(e.target.value)}
+                  className="pl-9 pr-8 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm font-medium text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] appearance-none cursor-pointer hover:border-[var(--color-border-hover)] min-w-[180px]"
+                >
+                  <option value="all">All Sections</option>
+                  {availableSections.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-[var(--color-text-tertiary)]">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                </div>
               </div>
-              <select
-                value={sectionFilter}
-                onChange={(e) => setSectionFilter(e.target.value)}
-                className="pl-9 pr-8 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm font-medium text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] appearance-none cursor-pointer hover:border-[var(--color-border-hover)] min-w-[180px]"
-              >
-                <option value="all">All Sections</option>
-                {availableSections.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-[var(--color-text-tertiary)]">
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            <div className="chiron-mockup">
-              <p className="chiron-mockup-label mb-4">Performance Trend</p>
-              <ProgressChart history={filteredHistory} className="h-full" />
+            <div className="chiron-mockup" style={{ padding: filteredHistory.length < 10 ? undefined : '1rem 1rem 0.75rem' }}>
+              <p className="chiron-mockup-label mb-3">Performance Trend</p>
+              {filteredHistory.length < 10 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <Activity className="w-8 h-8 text-[var(--color-text-muted)] mb-3 opacity-40" />
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+                    Answer 10+ questions to unlock trend analytics.
+                  </p>
+                  <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                    {filteredHistory.length > 0 ? `${filteredHistory.length} of 10 answered` : 'Start a test to begin tracking'}
+                  </p>
+                </div>
+              ) : (
+                <ProgressChart history={filteredHistory} className="h-full" />
+              )}
             </div>
-            <div className="chiron-mockup">
-              <p className="chiron-mockup-label mb-4">Section Performance</p>
+            <div className="chiron-mockup" style={{ padding: bySection.length > 0 ? '1rem 1rem 0.75rem' : undefined }}>
+              <p className="chiron-mockup-label mb-3">Section Performance</p>
               <SectionBreakdown sections={bySection} className="h-full" />
             </div>
           </div>
@@ -399,14 +414,19 @@ export function Dashboard() {
 
       {/* ── Readiness Score Stripe ── */}
       {hasData && stats && (
-        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 3 } as React.CSSProperties}>
+        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 4 } as React.CSSProperties}>
           <div className="container">
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="chiron-mockup flex flex-col items-center text-center py-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Gauge className="w-4 h-4 text-[var(--color-brand-blue)]" />
-                  <p className="chiron-mockup-label">Readiness Score</p>
-                </div>
+              <div
+                className="chiron-mockup flex flex-col items-center text-center py-8"
+                style={{
+                  boxShadow: '0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
+                  backgroundColor: 'var(--color-bg-primary)',
+                }}
+              >
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-brand-blue)] mb-5">
+                  Readiness Score
+                </p>
                 <CircularProgress
                   value={stats.readiness_score}
                   label=""
@@ -418,10 +438,10 @@ export function Dashboard() {
                         ? 'var(--color-warning)'
                         : 'var(--color-error)'
                   }
-                  size={100}
-                  strokeWidth={8}
+                  size={130}
+                  strokeWidth={10}
                 />
-                <p className="text-sm text-[var(--color-text-secondary)] mt-4 max-w-xs">
+                <p className="text-sm font-medium text-[var(--color-text-secondary)] mt-5 max-w-xs">
                   {stats.readiness_score >= 70
                     ? 'You\'re making strong progress. Keep it up!'
                     : stats.readiness_score >= 40
@@ -430,21 +450,26 @@ export function Dashboard() {
                 </p>
               </div>
 
-              <div className="chiron-mockup">
+              <div className="chiron-mockup" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
                 <div className="flex items-center gap-2 mb-4">
                   <AlertTriangle className="w-4 h-4 text-[var(--color-warning)]" />
                   <p className="chiron-mockup-label">Weak Areas</p>
                 </div>
                 {stats.weak_areas.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {stats.weak_areas.slice(0, 5).map((area) => (
                       <div key={area.name}>
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-medium text-[var(--color-text-primary)]">{area.name}</span>
-                          <span className="text-xs tabular-nums text-[var(--color-error)]">{area.accuracy}%</span>
+                          <span className="text-xs tabular-nums font-semibold" style={{
+                            color: area.accuracy < 40 ? 'var(--color-error)' : area.accuracy < 70 ? 'var(--color-warning)' : 'var(--color-text-secondary)'
+                          }}>{area.accuracy}%</span>
                         </div>
                         <div className="chiron-meter-track">
-                          <div className="chiron-meter-fill bg-[var(--color-error)]" style={{ width: `${area.accuracy}%` }} />
+                          <div className="chiron-meter-fill" style={{
+                            width: `${area.accuracy}%`,
+                            backgroundColor: area.accuracy < 40 ? 'var(--color-error)' : area.accuracy < 70 ? 'var(--color-warning)' : 'var(--color-brand-blue)',
+                          }} />
                         </div>
                         <p className="mt-1 text-[0.6rem] text-[var(--color-text-muted)]">
                           Practice {Math.max(10, 20 - Math.floor(area.total / 5))} more questions to improve
@@ -453,11 +478,19 @@ export function Dashboard() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-[var(--color-text-tertiary)]">
-                    {total >= 50
-                      ? 'No weak areas detected. Great job!'
-                      : 'Answer more questions to identify weak areas (10+ per section).'}
-                  </p>
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <AlertTriangle className="w-8 h-8 text-[var(--color-text-muted)] mb-3 opacity-30" />
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+                      {total >= 50
+                        ? 'No weak areas detected. Great job!'
+                        : 'No weak areas identified yet'}
+                    </p>
+                    {total < 50 && (
+                      <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                        Answer 10+ per section to unlock diagnostics
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -467,7 +500,7 @@ export function Dashboard() {
 
       {/* ── Section Performance Stripe ── */}
       {hasData && bySection.length > 0 && (
-        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 4 } as React.CSSProperties}>
+        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 5 } as React.CSSProperties}>
           <div className="container">
             <div className="grid md:grid-cols-[0.35fr_0.65fr] gap-12 items-start">
               <div>
@@ -488,10 +521,15 @@ export function Dashboard() {
                         <div key={s.name}>
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-xs font-medium text-[var(--color-text-primary)]">{s.name}</span>
-                            <span className="text-xs tabular-nums text-[var(--color-text-tertiary)]">{s.accuracy}%</span>
+                            <span className="text-xs tabular-nums font-semibold" style={{
+                              color: s.accuracy < 40 ? 'var(--color-error)' : s.accuracy < 70 ? 'var(--color-warning)' : 'var(--color-success)'
+                            }}>{s.accuracy}%</span>
                           </div>
                           <div className="chiron-meter-track">
-                            <div className="chiron-meter-fill" style={{ width: `${s.accuracy}%` }} />
+                            <div className="chiron-meter-fill" style={{
+                              width: `${s.accuracy}%`,
+                              backgroundColor: s.accuracy < 40 ? 'var(--color-error)' : s.accuracy < 70 ? 'var(--color-warning)' : 'var(--color-brand-blue)',
+                            }} />
                           </div>
                         </div>
                       ))}
@@ -505,22 +543,23 @@ export function Dashboard() {
                 )}
               </div>
 
-              <div className="chiron-mockup">
-                <p className="chiron-mockup-label mb-4">All Sections</p>
-                <div className="chiron-progress-grid">
+              <div className="chiron-mockup" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+                <p className="chiron-mockup-label mb-5">All Sections</p>
+                <div className="space-y-5">
                   {bySection.map((s) => {
                     const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+                    const barColor = acc === 0 ? 'var(--color-text-muted)' : acc < 40 ? 'var(--color-error)' : acc < 70 ? 'var(--color-warning)' : 'var(--color-success)';
                     return (
-                      <div key={s.name} className="chiron-progress-row">
+                      <div key={s.name}>
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-xs font-medium text-[var(--color-text-primary)]">{s.name}</span>
-                          <span className="text-xs tabular-nums text-[var(--color-text-tertiary)]">{acc}%</span>
+                          <span className="text-xs tabular-nums font-semibold" style={{ color: barColor }}>{acc}%</span>
                         </div>
-                        <div className="chiron-meter-track">
-                          <div className="chiron-meter-fill" style={{ width: `${acc}%` }} />
+                        <div className="chiron-meter-track" style={{ opacity: 0.85 }}>
+                          <div className="chiron-meter-fill" style={{ width: `${Math.max(acc, 2)}%`, backgroundColor: barColor }} />
                         </div>
                         <p className="mt-1 text-[0.68rem] text-[var(--color-text-muted)]">
-                          {s.correct}/{s.total} answered
+                          {s.correct}/{s.total} correct
                         </p>
                       </div>
                     );
@@ -531,29 +570,6 @@ export function Dashboard() {
           </div>
         </section>
       )}
-
-      {/* ── Actions / Utilities Stripe ── */}
-      <section className="py-14 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 5 } as React.CSSProperties}>
-        <div className="container">
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <p className="chiron-feature-label">Utilities</p>
-              <h2 className="chiron-feature-heading">Quick actions</h2>
-              <p className="chiron-feature-body mt-2">
-                Jump straight to key tools.
-              </p>
-            </div>
-
-            <div className="chiron-mockup space-y-2">
-              <ActionRow label="Configure new test" onClick={() => navigate('/exam/config')} />
-              <ActionRow label="Reference lab values" onClick={() => navigate('/lab-values')} icon={FlaskConical} />
-              {hasData && focusAreas.length > 0 && (
-                <ActionRow label="Practice weak sections" onClick={() => navigate('/exam/config')} icon={Target} />
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ── Empty State Stripe (only if no data) ── */}
       {!hasData && (
@@ -625,23 +641,5 @@ function OverviewStat({
         </p>
       </div>
     </div>
-  );
-}
-
-
-function ActionRow({
-  label,
-  onClick,
-  icon: Icon = ArrowRight,
-}: {
-  label: string;
-  onClick: () => void;
-  icon?: React.ElementType;
-}) {
-  return (
-    <button type="button" onClick={onClick} className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors group text-left">
-      <span className="text-sm font-medium text-[var(--color-text-primary)]">{label}</span>
-      <Icon className="w-4 h-4 text-[var(--color-text-muted)] group-hover:text-[var(--color-brand-blue)] transition-colors" />
-    </button>
   );
 }

@@ -15,6 +15,18 @@ from app.models.study_profile import UserStudyProfile
 router = APIRouter()
 
 
+ALL_SECTIONS = [
+    "Internal Medicine",
+    "Surgery",
+    "OB/GYN",
+    "Pediatrics",
+    "Neurology",
+    "Psychiatry",
+    "Family Medicine",
+    "Emergency Medicine",
+]
+
+
 def _generate_plan_data(
     db: Session,
     user: User,
@@ -39,9 +51,15 @@ def _generate_plan_data(
     )
 
     sections: list[dict] = []
+    seen_names: set[str] = set()
     for row in section_rows:
         acc = round((int(row.correct or 0) / row.total) * 100) if row.total else 0
         sections.append({"name": row.section, "total": row.total, "accuracy": acc})
+        seen_names.add(row.section)
+
+    for name in ALL_SECTIONS:
+        if name not in seen_names:
+            sections.append({"name": name, "total": 0, "accuracy": 0})
 
     weak = sorted([s for s in sections if s["accuracy"] < 70], key=lambda s: s["accuracy"])
     medium = sorted([s for s in sections if 70 <= s["accuracy"] < 85], key=lambda s: s["accuracy"])
@@ -50,22 +68,33 @@ def _generate_plan_data(
     daily_goal = profile.daily_question_goal or 40
     weekly_target = daily_goal * 5
 
+    plan_weeks = weeks_left
+
+    foundation_end = math.ceil(plan_weeks * 0.4)
+    reinforcement_end = math.ceil(plan_weeks * 0.75)
+
     weeks = []
-    for i in range(min(weeks_left, 12)):
+    for i in range(plan_weeks):
         week_start = today + timedelta(weeks=i)
         week_end = week_start + timedelta(days=6)
-        phase = "foundation" if i < weeks_left * 0.4 else ("reinforcement" if i < weeks_left * 0.75 else "review")
 
-        focus_sections = []
+        if i < foundation_end:
+            phase = "foundation"
+        elif i < reinforcement_end:
+            phase = "reinforcement"
+        else:
+            phase = "review"
+
         if phase == "foundation":
             pool = weak + medium
         elif phase == "reinforcement":
-            pool = medium + weak[:2]
+            pool = medium + weak[:2] + strong[:1]
         else:
             pool = weak[:3] + medium[:2] + strong[:2]
 
-        for s in pool[:4]:
-            focus_sections.append(s["name"])
+        offset = i % max(len(pool), 1)
+        rotated = pool[offset:] + pool[:offset]
+        focus_sections = [s["name"] for s in rotated[:4]]
 
         weeks.append({
             "week": i + 1,

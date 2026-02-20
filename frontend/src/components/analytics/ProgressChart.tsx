@@ -45,16 +45,16 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
 
     return (
         <div className={className}>
-            <div className="h-[250px] w-full">
+            <div className="h-[240px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data}>
+                    <AreaChart data={data} margin={{ top: 4, right: 8, left: -8, bottom: 4 }}>
                         <defs>
                             <linearGradient id="colorAccuracy" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="var(--color-brand-blue)" stopOpacity={0.2} />
-                                <stop offset="95%" stopColor="var(--color-brand-blue)" stopOpacity={0} />
+                                <stop offset="5%" stopColor="var(--color-brand-blue)" stopOpacity={0.25} />
+                                <stop offset="95%" stopColor="var(--color-brand-blue)" stopOpacity={0.02} />
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-text-muted)" strokeOpacity={0.2} />
                         <XAxis
                             dataKey="attempt"
                             hide
@@ -63,8 +63,9 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                             domain={[0, 100]}
                             tickLine={false}
                             axisLine={false}
-                            tick={{ fill: 'var(--color-text-tertiary)', fontSize: 12 }}
+                            tick={{ fill: 'var(--color-text-secondary)', fontSize: 11, fontWeight: 500 }}
                             tickFormatter={(value) => `${value}%`}
+                            width={40}
                         />
                         <Tooltip
                             contentStyle={{
@@ -80,7 +81,7 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                             type="monotone"
                             dataKey="accuracy"
                             stroke="var(--color-brand-blue)"
-                            strokeWidth={2}
+                            strokeWidth={2.5}
                             fillOpacity={1}
                             fill="url(#colorAccuracy)"
                             animationDuration={1500}
