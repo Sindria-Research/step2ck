@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ChevronRight, Sparkles, Layers, StickyNote, Wand2 } from 'lucide-react';
+import { ChevronRight, Sparkles, StickyNote, Wand2 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { useExam } from '../../context/ExamContext';
 import { useAuth } from '../../context/AuthContext';

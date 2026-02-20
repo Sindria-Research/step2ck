@@ -18,7 +18,6 @@ import {
   Undo2,
   Keyboard,
   BarChart3,
-  RotateCcw,
   Settings,
 } from 'lucide-react';
 import { api } from '../api/api';
@@ -106,7 +105,7 @@ export function Flashcards() {
 
   // Queue-based session state (Anki-style)
   const [queue, setQueue] = useState<QueueEntry[]>([]);
-  const [queueSource, setQueueSource] = useState<'due' | 'deck'>('due');
+  const [, setQueueSource] = useState<'due' | 'deck'>('due');
   const [creating, setCreating] = useState(false);
   const [newDeckModalOpen, setNewDeckModalOpen] = useState(false);
   const [newDeckName, setNewDeckName] = useState('');
@@ -1672,9 +1671,9 @@ export function Flashcards() {
                         >
                           {fcCapturingKey === hk.key
                             ? 'Press…'
-                            : ((s as Record<string, unknown>)[hk.key] as string) === 'Space'
+                            : (s as unknown as Record<string, string>)[hk.key] === 'Space'
                               ? '␣'
-                              : ((s as Record<string, unknown>)[hk.key] as string)}
+                              : (s as unknown as Record<string, string>)[hk.key]}
                         </button>
                       </div>
                     ))}
