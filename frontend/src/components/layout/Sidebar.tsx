@@ -17,7 +17,7 @@ interface ExamContextSidebar {
 export function Sidebar({ examContext }: { examContext: ExamContextSidebar }) {
   const { questions, currentQuestion, goToQuestion, answeredQuestions, flaggedQuestions, toggleFlag } = examContext;
   const [filter, setFilter] = useState<FilterMode>('all');
-  const activeRef = useRef<HTMLButtonElement>(null);
+  const activeRef = useRef<HTMLButtonElement | null>(null);
 
   const totalProgress = examContext.getProgress(questions);
   const unansweredCount = questions.length - answeredQuestions.size;
@@ -80,7 +80,7 @@ export function Sidebar({ examContext }: { examContext: ExamContextSidebar }) {
       </div>
 
       {/* Vertical question list */}
-      <nav className="flex-1 overflow-y-auto">
+      <nav className="flex-1 overflow-y-auto" aria-label="Question list">
         {filtered.length === 0 ? (
           <div className="text-center py-8 px-3">
             <p className="text-xs text-[var(--color-text-muted)]">
@@ -88,60 +88,60 @@ export function Sidebar({ examContext }: { examContext: ExamContextSidebar }) {
             </p>
           </div>
         ) : (
-          filtered.map(({ question: q, examIndex }) => {
-            const answerData = answeredQuestions.get(q.id);
-            const isCurrent = currentQuestion?.id === q.id;
-            const isFlagged = flaggedQuestions.has(q.id);
-            const isAnswered = !!answerData;
+          <ul className="list-none m-0 p-0">
+            {filtered.map(({ question: q, examIndex }) => {
+              const answerData = answeredQuestions.get(q.id);
+              const isCurrent = currentQuestion?.id === q.id;
+              const isFlagged = flaggedQuestions.has(q.id);
+              const isAnswered = !!answerData;
 
-            let statusDot = 'bg-[var(--color-border)]';
-            if (isAnswered && answerData.correct) statusDot = 'bg-[var(--color-success)]';
-            else if (isAnswered) statusDot = 'bg-[var(--color-error)]';
+              let statusDot = 'bg-[var(--color-border)]';
+              if (isAnswered && answerData.correct) statusDot = 'bg-[var(--color-success)]';
+              else if (isAnswered) statusDot = 'bg-[var(--color-error)]';
 
-            return (
-              <button
-                key={q.id}
-                ref={isCurrent ? activeRef : undefined}
-                type="button"
-                onClick={() => goToQuestion(examIndex)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors duration-75 border-l-2 ${
-                  isCurrent
-                    ? 'bg-[var(--color-accent)]/8 border-l-[var(--color-accent)] text-[var(--color-text-primary)]'
-                    : 'border-l-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
-                }`}
-              >
-                {/* Status dot */}
-                <span className={`w-2 h-2 rounded-full shrink-0 ${statusDot}`} />
-
-                {/* Number */}
-                <span className={`w-5 text-xs font-semibold tabular-nums ${isCurrent ? 'text-[var(--color-accent)]' : ''}`}>
-                  {examIndex + 1}
-                </span>
-
-                {/* Section label */}
-                <span className="flex-1 text-xs truncate text-[var(--color-text-muted)]">
-                  {q.section || 'General'}
-                </span>
-
-                {/* Flag button */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFlag(q.id);
-                  }}
-                  className={`p-0.5 rounded transition-colors shrink-0 ${
-                    isFlagged
-                      ? 'text-[var(--color-warning)]'
-                      : 'text-transparent hover:text-[var(--color-text-muted)]'
+              return (
+                <li
+                  key={q.id}
+                  className={`flex items-center border-l-2 transition-colors duration-75 ${
+                    isCurrent
+                      ? 'bg-[var(--color-accent)]/8 border-l-[var(--color-accent)]'
+                      : 'border-l-transparent hover:bg-[var(--color-bg-hover)]'
                   }`}
-                  aria-label={isFlagged ? 'Unflag question' : 'Flag question'}
                 >
-                  <Flag className={`w-3 h-3 ${isFlagged ? 'fill-[var(--color-warning)]' : ''}`} />
-                </button>
-              </button>
-            );
-          })
+                  <button
+                    ref={isCurrent ? activeRef : undefined}
+                    type="button"
+                    onClick={() => goToQuestion(examIndex)}
+                    className={`flex-1 flex items-center gap-2.5 px-3 py-2 text-left text-sm focus-ring ${
+                      isCurrent ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'
+                    }`}
+                    aria-current={isCurrent ? 'true' : undefined}
+                  >
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${statusDot}`} aria-hidden="true" />
+                    <span className={`w-5 text-xs font-semibold tabular-nums ${isCurrent ? 'text-[var(--color-accent)]' : ''}`}>
+                      {examIndex + 1}
+                    </span>
+                    <span className="flex-1 text-xs truncate text-[var(--color-text-muted)]">
+                      {q.section || 'General'}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleFlag(q.id)}
+                    className={`p-1.5 mr-1 rounded shrink-0 focus-ring transition-colors ${
+                      isFlagged
+                        ? 'text-[var(--color-warning)]'
+                        : 'text-transparent hover:text-[var(--color-text-muted)]'
+                    }`}
+                    aria-label={isFlagged ? `Unflag question ${examIndex + 1}` : `Flag question ${examIndex + 1}`}
+                    aria-pressed={isFlagged}
+                  >
+                    <Flag className={`w-3 h-3 ${isFlagged ? 'fill-[var(--color-warning)]' : ''}`} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </nav>
     </aside>

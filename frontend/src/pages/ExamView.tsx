@@ -60,10 +60,22 @@ export function ExamView() {
 
   if (showLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[var(--color-bg-secondary)]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
-          <p className="text-[var(--color-text-secondary)]">Loading exam...</p>
+      <div className="flex-1 flex flex-col overflow-hidden bg-[var(--color-bg-secondary)]">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          <div className="w-full md:w-1/2 border-r border-[var(--color-border)] p-6 space-y-4 bg-[var(--color-bg-primary)]">
+            <div className="skeleton h-4 w-24 rounded" />
+            <div className="skeleton h-3 w-16 rounded" />
+            <div className="space-y-2 mt-4">
+              <div className="skeleton h-4 w-full rounded" />
+              <div className="skeleton h-4 w-full rounded" />
+              <div className="skeleton h-4 w-3/4 rounded" />
+            </div>
+          </div>
+          <div className="w-full md:w-1/2 p-6 space-y-3 bg-[var(--color-bg-primary)]">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="skeleton h-12 w-full rounded-lg" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -115,9 +127,13 @@ export function ExamView() {
     <div className="flex-1 flex flex-col overflow-hidden">
       {isTestMode && <TimerBar />}
       {/* Mobile tab bar */}
-      <div className="md:hidden shrink-0 flex border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]">
+      <div className="md:hidden shrink-0 flex border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]" role="tablist" aria-label="Exam panels">
         <button
           type="button"
+          role="tab"
+          id="tab-question"
+          aria-selected={mobileTab === 'question'}
+          aria-controls="panel-question"
           onClick={() => setMobileTab('question')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-colors ${
             mobileTab === 'question'
@@ -130,6 +146,10 @@ export function ExamView() {
         </button>
         <button
           type="button"
+          role="tab"
+          id="tab-answer"
+          aria-selected={mobileTab === 'answer'}
+          aria-controls="panel-answer"
           onClick={() => setMobileTab('answer')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-colors ${
             mobileTab === 'answer'
@@ -143,10 +163,20 @@ export function ExamView() {
       </div>
       {/* Desktop: side-by-side; Mobile: tab-switched */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        <div className={`w-full md:w-1/2 border-r border-[var(--color-border)] flex flex-col overflow-hidden ${mobileTab !== 'question' ? 'hidden md:flex' : 'flex'}`}>
+        <div
+          id="panel-question"
+          role="tabpanel"
+          aria-labelledby="tab-question"
+          className={`w-full md:w-1/2 border-r border-[var(--color-border)] flex-col overflow-hidden md:!flex ${mobileTab === 'question' ? 'flex' : 'hidden'}`}
+        >
           <QuestionPanel />
         </div>
-        <div className={`w-full md:w-1/2 flex flex-col overflow-hidden ${mobileTab !== 'answer' ? 'hidden md:flex' : 'flex'}`}>
+        <div
+          id="panel-answer"
+          role="tabpanel"
+          aria-labelledby="tab-answer"
+          className={`w-full md:w-1/2 flex-col overflow-hidden md:!flex ${mobileTab === 'answer' ? 'flex' : 'hidden'}`}
+        >
           <AnswerPanel />
           <ExplanationPanel />
         </div>

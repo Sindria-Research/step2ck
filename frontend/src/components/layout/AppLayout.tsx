@@ -35,14 +35,20 @@ export function AppLayout({
   const location = useLocation();
   const isExamPage = location.pathname === '/exam';
   const [questionSidebarOpen, setQuestionSidebarOpen] = useState(true);
-  const { setMobileOpen } = useSidebar();
+  const { mobileOpen, setMobileOpen } = useSidebar();
 
   const shouldShowQuestionSidebar = showSidebar && isExamPage && examContext;
 
   return (
     <div className="h-screen flex bg-[var(--color-bg-secondary)] overflow-hidden">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:rounded-md focus:bg-[var(--color-accent)] focus:text-white focus:text-sm focus:font-medium"
+      >
+        Skip to main content
+      </a>
       <AppSidebar />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0" {...(mobileOpen ? { inert: true, 'aria-hidden': true } : {})}>
         {!isExamPage && (
           <div className="md:hidden shrink-0 flex items-center h-12 px-3 border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]">
             <button
@@ -95,7 +101,7 @@ export function AppLayout({
               )}
             </>
           )}
-          <main className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto" role="main">
+          <main id="main-content" className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto" role="main">
             {children}
           </main>
         </div>

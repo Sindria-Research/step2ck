@@ -232,15 +232,19 @@ export function Landing() {
             <p className="text-sm text-[var(--color-text-primary)] leading-relaxed mb-5">
               A 62-year-old woman presents with a holosystolic murmur best heard at the apex, radiating to the axilla. Which of the following is the most likely diagnosis?
             </p>
-            <div className="grid gap-2">
+            <div className="grid gap-2" role="radiogroup" aria-label="Answer choices">
               {HERO_CHOICES.map((c) => {
                 let cls = 'chiron-hero-choice';
+                const isSelected = heroSelected === c.letter;
                 if (heroAnswered && c.correct) cls += ' is-correct';
-                if (heroAnswered && c.letter === heroSelected && !c.correct) cls += ' is-selected-wrong';
+                if (heroAnswered && isSelected && !c.correct) cls += ' is-selected-wrong';
                 return (
                   <button
                     key={c.letter}
                     type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    aria-disabled={heroAnswered}
                     className={cls}
                     onClick={() => {
                       if (!heroAnswered) {
@@ -252,7 +256,7 @@ export function Landing() {
                     <span className="chiron-hero-choice-letter">{c.letter}</span>
                     <span>{c.text}</span>
                     {heroAnswered && c.correct && <CheckCircle2 className="w-3.5 h-3.5 ml-auto text-[var(--color-success)]" />}
-                    {heroAnswered && c.letter === heroSelected && !c.correct && <XCircle className="w-3.5 h-3.5 ml-auto text-[var(--color-error)]" />}
+                    {heroAnswered && isSelected && !c.correct && <XCircle className="w-3.5 h-3.5 ml-auto text-[var(--color-error)]" />}
                   </button>
                 );
               })}

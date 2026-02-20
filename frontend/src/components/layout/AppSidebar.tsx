@@ -89,8 +89,38 @@ export function AppSidebar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState<number | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
   const isExamPage = location.pathname === '/exam';
   const logoUrl = getLogoUrl(theme);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+
+    const focusables = drawer.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusables.length) focusables[0].focus();
+
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') { setMobileOpen(false); return; }
+      if (e.key !== 'Tab') return;
+      const current = drawer.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (current.length === 0) return;
+      const first = current[0];
+      const last = current[current.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [mobileOpen, setMobileOpen]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -184,16 +214,18 @@ export function AppSidebar() {
       <div
         className="fixed inset-0 z-40 bg-black/40 md:hidden"
         onClick={() => setMobileOpen(false)}
-        aria-hidden
+        aria-hidden="true"
       />
     )}
     <aside
+      ref={drawerRef}
       className={`shrink-0 flex flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-primary)] transition-[width,transform] duration-200 ease-in-out overflow-hidden ${
         collapsed ? 'w-14' : 'w-56'
       } fixed inset-y-0 left-0 z-50 md:relative md:z-auto ${
         mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}
       aria-label="Main navigation"
+      {...(mobileOpen ? { role: 'dialog' as const, 'aria-modal': true } : {})}
     >
       {/* Logo header */}
       <div

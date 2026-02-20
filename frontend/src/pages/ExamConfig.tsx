@@ -197,17 +197,22 @@ export function ExamConfig() {
                         {sectionsError} — using defaults.
                       </p>
                     )}
-                    <div className="flex flex-wrap gap-2">
-                      {displaySubjects.map((subject) => (
-                        <button
-                          key={subject}
-                          type="button"
-                          onClick={() => toggleSubject(subject)}
-                          className={`chiron-subject-tag ${selectedSubjects.has(subject) ? 'is-selected' : ''}`}
-                        >
-                          {subject}
-                        </button>
-                      ))}
+                    <div className="flex flex-wrap gap-2" role="group" aria-label="Subject selection">
+                      {displaySubjects.map((subject) => {
+                        const isSelected = selectedSubjects.has(subject);
+                        return (
+                          <button
+                            key={subject}
+                            type="button"
+                            onClick={() => toggleSubject(subject)}
+                            aria-pressed={isSelected}
+                            className={`chiron-subject-tag ${isSelected ? 'is-selected' : ''}`}
+                          >
+                            {isSelected && <span aria-hidden="true" className="mr-1">✓</span>}
+                            {subject}
+                          </button>
+                        );
+                      })}
                     </div>
                     <div className="mt-5 chiron-mockup-meta">
                       <span>{selectedSubjects.size} subjects selected</span>
@@ -239,32 +244,35 @@ export function ExamConfig() {
             <div className={`grid ${examType === 'test' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4 chiron-reveal chiron-reveal-delay-1`} data-reveal>
               {/* Mode panel */}
               <div className="chiron-mockup">
-                <p className="chiron-mockup-label mb-3">Mode</p>
-                <div className="space-y-1.5">
+                <p className="chiron-mockup-label mb-3" id="mode-group-label">Mode</p>
+                <div className="space-y-1.5" role="radiogroup" aria-labelledby="mode-group-label">
                   {MODES.map((m) => {
                     const locked = !isPro && m.id === 'personalized';
+                    const isSelected = mode === m.id;
                     return (
                       <button
                         key={m.id}
                         type="button"
+                        role="radio"
+                        aria-checked={isSelected}
                         onClick={() => !locked && setMode(m.id)}
                         disabled={locked}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all focus-ring ${
                           locked
                             ? 'border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] opacity-60 cursor-not-allowed'
-                            : mode === m.id
+                            : isSelected
                               ? 'border-[1.5px] border-[var(--color-brand-blue)] bg-[color-mix(in_srgb,var(--color-brand-blue)_10%,var(--color-bg-primary))] shadow-sm'
                               : 'border border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:border-[var(--color-border-hover)] opacity-75'
                         }`}
                       >
                         <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                          mode === m.id ? 'border-[var(--color-brand-blue)]' : 'border-[var(--color-border)]'
-                        }`}>
-                          {mode === m.id && <span className="w-2 h-2 rounded-full bg-[var(--color-brand-blue)]" />}
+                          isSelected ? 'border-[var(--color-brand-blue)]' : 'border-[var(--color-border)]'
+                        }`} aria-hidden="true">
+                          {isSelected && <span className="w-2 h-2 rounded-full bg-[var(--color-brand-blue)]" />}
                         </span>
                         <div className="min-w-0 flex-1">
                           <span className="flex items-center gap-1.5">
-                            <span className={`text-sm ${mode === m.id ? 'font-semibold text-[var(--color-text-primary)]' : 'font-medium text-[var(--color-text-secondary)]'}`}>
+                            <span className={`text-sm ${isSelected ? 'font-semibold text-[var(--color-text-primary)]' : 'font-medium text-[var(--color-text-secondary)]'}`}>
                               {m.label}
                             </span>
                             {m.id === 'personalized' && <Sparkles className="w-3.5 h-3.5 text-[var(--color-brand-blue)]" />}
@@ -295,26 +303,31 @@ export function ExamConfig() {
                   </div>
                 ) : (
                   <>
-                    <div className="flex gap-2 mb-4">
-                      {QUICK_COUNTS.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => setCount(c)}
-                          disabled={c > availableCount}
-                          className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all focus-ring border ${
-                            questionCount === c && !customCount
-                              ? 'chiron-btn-primary border-transparent text-white shadow-md'
-                              : c > availableCount
-                                ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
-                                : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)]'
-                          }`}
-                        >
-                          {c}
-                        </button>
-                      ))}
+                    <div className="flex gap-2 mb-4" role="group" aria-label="Question count">
+                      {QUICK_COUNTS.map((c) => {
+                        const isActive = questionCount === c && !customCount;
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            aria-pressed={isActive}
+                            onClick={() => setCount(c)}
+                            disabled={c > availableCount}
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all focus-ring border ${
+                              isActive
+                                ? 'chiron-btn-primary border-transparent text-white shadow-md'
+                                : c > availableCount
+                                  ? 'bg-[var(--color-bg-tertiary)] border-transparent text-[var(--color-text-muted)] cursor-not-allowed'
+                                  : 'bg-[var(--color-bg-primary)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)]'
+                            }`}
+                          >
+                            {c}
+                          </button>
+                        );
+                      })}
                       <button
                         type="button"
+                        aria-pressed={questionCount === availableCount && !customCount}
                         onClick={() => setCount(availableCount)}
                         disabled={availableCount === 0}
                         className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all focus-ring border ${
