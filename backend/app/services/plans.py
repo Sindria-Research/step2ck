@@ -29,6 +29,7 @@ class PlanLimits:
     timed_mode: bool
     study_plan: bool
     full_analytics: bool
+    ai_flashcards: bool
 
 
 FREE_LIMITS = PlanLimits(
@@ -42,6 +43,7 @@ FREE_LIMITS = PlanLimits(
     timed_mode=False,
     study_plan=False,
     full_analytics=False,
+    ai_flashcards=False,
 )
 
 PRO_LIMITS = PlanLimits(
@@ -55,6 +57,7 @@ PRO_LIMITS = PlanLimits(
     timed_mode=True,
     study_plan=True,
     full_analytics=True,
+    ai_flashcards=True,
 )
 
 _PLAN_LIMITS = {

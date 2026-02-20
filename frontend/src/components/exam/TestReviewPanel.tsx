@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, RotateCcw, LayoutDashboard, Sparkles, Bookmark } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, RotateCcw, LayoutDashboard, Sparkles, Bookmark, Wand2 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { useExam } from '../../context/ExamContext';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../api/api';
+import { ProBadge } from '../ProGate';
 
 function formatTime(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -14,6 +16,7 @@ function formatTime(seconds: number): string {
 }
 
 export function TestReviewPanel() {
+  const { isPro } = useAuth();
   const navigate = useNavigate();
   const {
     questions,
@@ -29,6 +32,8 @@ export function TestReviewPanel() {
   const [aiStates, setAiStates] = useState<Map<string, { loading: boolean; text: string; error: string | null }>>(new Map());
   const [bookmarkedSet, setBookmarkedSet] = useState<Set<string>>(new Set());
   const [bookmarkLoading, setBookmarkLoading] = useState<Set<string>>(new Set());
+  const [flashcardCreated, setFlashcardCreated] = useState<Set<string>>(new Set());
+  const [flashcardLoading, setFlashcardLoading] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -62,6 +67,39 @@ export function TestReviewPanel() {
       setBookmarkLoading((prev) => { const next = new Set(prev); next.delete(questionId); return next; });
     }
   }, [bookmarkedSet, bookmarkLoading, addToast]);
+
+  const handleCreateFlashcard = useCallback(async (questionId: string, selectedAnswer: string | undefined) => {
+    if (flashcardLoading.has(questionId) || flashcardCreated.has(questionId)) return;
+    setFlashcardLoading((prev) => new Set(prev).add(questionId));
+    try {
+      const [decks, aiResult] = await Promise.all([
+        api.flashcards.listDecks(),
+        api.ai.generateFlashcard({ question_id: questionId, selected_answer: selectedAnswer }),
+      ]);
+      let deck = decks.find((d) => d.name === 'Missed Questions');
+      if (!deck) {
+        deck = await api.flashcards.createDeck({
+          name: 'Missed Questions',
+          description: 'AI-generated from incorrect exam answers',
+        });
+      }
+      for (const card of aiResult.cards) {
+        await api.flashcards.createCard({
+          deck_id: deck.id,
+          front: card.front,
+          back: card.back,
+          question_id: questionId,
+        });
+      }
+      setFlashcardCreated((prev) => new Set(prev).add(questionId));
+      const count = aiResult.cards.length;
+      addToast(`${count} AI flashcard${count !== 1 ? 's' : ''} created`, 'success');
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Failed to create flashcards', 'error');
+    } finally {
+      setFlashcardLoading((prev) => { const next = new Set(prev); next.delete(questionId); return next; });
+    }
+  }, [flashcardLoading, flashcardCreated, addToast]);
 
   let correctCount = 0;
   let incorrectCount = 0;
@@ -164,6 +202,50 @@ export function TestReviewPanel() {
           <p className="text-sm text-[var(--color-text-muted)] text-center mb-6">
             {unanswered} question{unanswered > 1 ? 's' : ''} left unanswered.
           </p>
+        )}
+
+        {incorrectCount > 0 && (
+          <div className="chiron-mockup mb-6 flex items-center justify-between gap-4 py-4">
+            <div>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                {incorrectCount - flashcardCreated.size > 0
+                  ? `${incorrectCount - flashcardCreated.size} missed question${incorrectCount - flashcardCreated.size !== 1 ? 's' : ''} without flashcards`
+                  : 'All missed questions have flashcards'}
+              </p>
+              <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">
+                Generate AI-distilled flashcards for spaced repetition review.
+              </p>
+            </div>
+            {isPro ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  const missed = questions.filter((q) => {
+                    const a = answeredQuestions.get(q.id);
+                    return a && !a.correct && !flashcardCreated.has(q.id) && !flashcardLoading.has(q.id);
+                  });
+                  for (const q of missed) {
+                    const a = answeredQuestions.get(q.id);
+                    await handleCreateFlashcard(q.id, a?.selected);
+                  }
+                }}
+                disabled={flashcardCreated.size >= incorrectCount || flashcardLoading.size > 0}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg btn-primary text-sm font-medium transition-all focus-ring shrink-0 disabled:opacity-50"
+              >
+                <Wand2 className="w-4 h-4" />
+                {flashcardLoading.size > 0 ? 'Generating…' : flashcardCreated.size >= incorrectCount ? 'All Created' : 'Generate All'}
+              </button>
+            ) : (
+              <a
+                href="/pricing"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[var(--color-brand-blue)]/30 bg-[var(--color-brand-blue)]/5 text-sm font-medium text-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue)]/10 transition-colors focus-ring shrink-0"
+              >
+                <Wand2 className="w-4 h-4" />
+                Generate All
+                <ProBadge />
+              </a>
+            )}
+          </div>
         )}
 
         {/* Question list */}
@@ -295,25 +377,56 @@ export function TestReviewPanel() {
                       </div>
                     )}
 
-                    {/* Ask Chiron */}
-                    <div className="pt-3 border-t border-[var(--color-border)]">
-                      {!ai || (!ai.loading && !ai.text && !ai.error) ? (
-                        <button
-                          type="button"
-                          onClick={() => handleAskChiron(q.id, answer?.selected)}
-                          className="group flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all border border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-primary)]"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-[var(--color-accent)]" />
-                          Ask Chiron
-                        </button>
-                      ) : ai.loading ? (
+                    {/* Ask Chiron + AI Flashcard */}
+                    <div className="pt-3 border-t border-[var(--color-border)] space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {(!ai || (!ai.loading && !ai.text && !ai.error)) && (
+                          <button
+                            type="button"
+                            onClick={() => handleAskChiron(q.id, answer?.selected)}
+                            className="group flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all border border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-primary)]"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+                            Ask Chiron
+                          </button>
+                        )}
+                        {answer && !isCorrect && (isPro ? (
+                          <button
+                            type="button"
+                            onClick={() => handleCreateFlashcard(q.id, answer.selected)}
+                            disabled={flashcardCreated.has(q.id) || flashcardLoading.has(q.id)}
+                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all focus-ring border ${
+                              flashcardCreated.has(q.id)
+                                ? 'border-[var(--color-success)] text-[var(--color-success)] bg-[color-mix(in_srgb,var(--color-success)_8%,transparent)] cursor-default'
+                                : 'border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)]'
+                            }`}
+                            title={flashcardCreated.has(q.id) ? 'Flashcard saved' : 'Generate AI flashcard from this question'}
+                          >
+                            <Wand2 className="w-3.5 h-3.5" />
+                            {flashcardLoading.has(q.id) ? 'Generating…' : flashcardCreated.has(q.id) ? 'Saved' : 'AI Flashcard'}
+                          </button>
+                        ) : (
+                          <a
+                            href="/pricing"
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border border-[var(--color-brand-blue)]/30 bg-[var(--color-brand-blue)]/5 text-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue)]/10 transition-colors focus-ring"
+                          >
+                            <Wand2 className="w-3.5 h-3.5" />
+                            AI Flashcard
+                            <ProBadge />
+                          </a>
+                        )
+                        )}
+                      </div>
+                      {ai?.loading && (
                         <div className="flex items-center gap-2 py-2">
                           <div className="w-4 h-4 border-2 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
                           <span className="text-xs text-[var(--color-text-secondary)]">Chiron is thinking...</span>
                         </div>
-                      ) : ai.error ? (
+                      )}
+                      {ai?.error && (
                         <p className="text-xs text-[var(--color-error)]">{ai.error}</p>
-                      ) : (
+                      )}
+                      {ai?.text && !ai.loading && !ai.error && (
                         <div className="ai-explanation-content text-sm text-[var(--color-text-secondary)] leading-relaxed">
                           <Markdown>{ai.text}</Markdown>
                         </div>

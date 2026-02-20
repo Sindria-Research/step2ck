@@ -1,12 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ChevronRight, Sparkles, Layers, StickyNote } from 'lucide-react';
+import { ChevronRight, Sparkles, Layers, StickyNote, Wand2 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { useExam } from '../../context/ExamContext';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../api/api';
-import { UpgradePrompt } from '../ProGate';
+import { UpgradePrompt, ProBadge } from '../ProGate';
 
 export function ExplanationPanel() {
+  const { isPro } = useAuth();
   const {
     currentQuestion,
     selectedAnswer,
@@ -44,40 +46,39 @@ export function ExplanationPanel() {
     if (!currentQuestion || flashcardLoading || flashcardCreated) return;
     setFlashcardLoading(true);
     try {
-      const decks = await api.flashcards.listDecks();
+      const [decks, aiResult] = await Promise.all([
+        api.flashcards.listDecks(),
+        api.ai.generateFlashcard({
+          question_id: currentQuestion.id,
+          selected_answer: selectedAnswer ?? undefined,
+        }),
+      ]);
+
       let deck = decks.find((d) => d.name === 'Missed Questions');
       if (!deck) {
         deck = await api.flashcards.createDeck({
           name: 'Missed Questions',
-          description: 'Auto-generated from incorrect exam answers',
+          description: 'AI-generated from incorrect exam answers',
         });
       }
 
-      const stem = currentQuestion.question_stem.length > 300
-        ? currentQuestion.question_stem.slice(0, 300) + '…'
-        : currentQuestion.question_stem;
-
-      const correctKey = currentQuestion.correct_answer;
-      const correctText = currentQuestion.choices[correctKey] ?? '';
-      let back = `**${correctKey}. ${correctText}**`;
-      if (currentQuestion.correct_explanation) {
-        back += `\n\n${currentQuestion.correct_explanation}`;
+      for (const card of aiResult.cards) {
+        await api.flashcards.createCard({
+          deck_id: deck.id,
+          front: card.front,
+          back: card.back,
+          question_id: currentQuestion.id,
+        });
       }
-
-      await api.flashcards.createCard({
-        deck_id: deck.id,
-        front: stem,
-        back,
-        question_id: currentQuestion.id,
-      });
       setFlashcardCreated(true);
-      addToast('Flashcard created in "Missed Questions" deck', 'success');
+      const count = aiResult.cards.length;
+      addToast(`${count} AI flashcard${count !== 1 ? 's' : ''} created in "Missed Questions" deck`, 'success');
     } catch (e) {
-      addToast(e instanceof Error ? e.message : 'Failed to create flashcard', 'error');
+      addToast(e instanceof Error ? e.message : 'Failed to create flashcards', 'error');
     } finally {
       setFlashcardLoading(false);
     }
-  }, [currentQuestion, flashcardLoading, flashcardCreated, addToast]);
+  }, [currentQuestion, selectedAnswer, flashcardLoading, flashcardCreated, addToast]);
 
   const handleCreateNote = useCallback(async () => {
     if (!currentQuestion || noteLoading || noteCreated) return;
@@ -212,7 +213,7 @@ export function ExplanationPanel() {
               <StickyNote className="w-3.5 h-3.5" />
               {noteLoading ? 'Saving…' : noteCreated ? 'Saved' : 'Save Note'}
             </button>
-            {!isCorrect && (
+            {!isCorrect && (isPro ? (
               <button
                 type="button"
                 onClick={handleCreateFlashcard}
@@ -222,12 +223,21 @@ export function ExplanationPanel() {
                     ? 'border-[var(--color-success)] text-[var(--color-success)] bg-[color-mix(in_srgb,var(--color-success)_8%,transparent)] cursor-default'
                     : 'border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)]'
                 }`}
-                title={flashcardCreated ? 'Flashcard saved' : 'Save as flashcard'}
+                title={flashcardCreated ? 'Flashcard saved' : 'Generate AI flashcard from this question'}
               >
-                <Layers className="w-3.5 h-3.5" />
-                {flashcardLoading ? 'Saving…' : flashcardCreated ? 'Saved' : 'Save as Flashcard'}
+                <Wand2 className="w-3.5 h-3.5" />
+                {flashcardLoading ? 'Generating…' : flashcardCreated ? 'Saved' : 'AI Flashcard'}
               </button>
-            )}
+            ) : (
+              <a
+                href="/pricing"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--color-brand-blue)]/30 bg-[var(--color-brand-blue)]/5 text-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue)]/10 transition-colors focus-ring"
+              >
+                <Wand2 className="w-3.5 h-3.5" />
+                AI Flashcard
+                <ProBadge />
+              </a>
+            ))}
           </div>
         </div>
 

@@ -83,6 +83,151 @@ def _build_user_prompt(
     )
 
 
+class AIFlashcardError(Exception):
+    """Raised when AI flashcard generation fails."""
+
+
+def generate_ai_flashcards(
+    question: Question,
+    selected_answer: Optional[str] = None,
+) -> tuple[list[tuple[str, str]], str]:
+    """
+    Return (cards, model) where cards is a list of (front, back) tuples.
+    Raises AIFlashcardError if the AI call fails or is not configured.
+    """
+    settings = get_settings()
+
+    if not settings.AI_API_KEY:
+        raise AIFlashcardError("AI is not configured. Please set an API key.")
+
+    correct_key = question.correct_answer
+    correct_text = question.choices.get(correct_key, "")
+
+    payload = {
+        "model": settings.AI_MODEL,
+        "temperature": 0.4,
+        "max_tokens": 1000,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "You are a USMLE Step 2 CK flashcard author.\n\n"
+                    "Your job: given a clinical vignette, extract the FUNDAMENTAL CONCEPTS "
+                    "it tests and turn each into a standalone flashcard.\n\n"
+                    "STRICT RULES:\n"
+                    "1. Create 3-5 cards. Each tests ONE discrete concept (a diagnosis, "
+                    "mechanism, pathophysiology, risk factor, lab finding, treatment, "
+                    "next step, or distinguishing feature).\n"
+                    "2. FRONT — a short, direct question about the concept. "
+                    "Max 1-2 sentences. NEVER copy the vignette. Ask about the "
+                    "underlying medical fact, not \"what would you do for this patient.\"\n"
+                    "   Good: \"What enzyme is deficient in 21-hydroxylase CAH?\"\n"
+                    "   Bad: \"A 32-year-old woman presents with hirsutism...\"\n"
+                    "3. BACK — a concise factual answer. Max 1-2 sentences. "
+                    "State the key fact clearly. Use **bold** for the most important term.\n"
+                    "   Good: \"**21-hydroxylase** deficiency → ↑ 17-OH progesterone, "
+                    "↓ cortisol, ± ↓ aldosterone.\"\n"
+                    "   Bad: (entire paragraph of explanation)\n"
+                    "4. Cards must be useful INDEPENDENTLY. A student should learn a "
+                    "discrete fact from each card without seeing the original question.\n"
+                    "5. Cover DIFFERENT concepts — do not repeat.\n\n"
+                    "OUTPUT FORMAT (exactly):\n"
+                    "FRONT: <question>\n"
+                    "BACK: <answer>\n\n"
+                    "FRONT: <question>\n"
+                    "BACK: <answer>\n"
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Section: {question.section}\n"
+                    f"System: {question.system or 'General'}\n\n"
+                    f"Stem:\n{question.question_stem}\n\n"
+                    f"Choices:\n{_format_choices(question.choices)}\n\n"
+                    f"Correct answer: {correct_key}. {correct_text}\n"
+                    f"User selected: {selected_answer or 'N/A'}\n\n"
+                    f"Explanation: {question.correct_explanation or 'N/A'}\n"
+                    f"Why others are wrong: {question.incorrect_explanation or 'N/A'}"
+                ),
+            },
+        ],
+    }
+    headers = {
+        "Authorization": f"Bearer {settings.AI_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    url = f"{settings.AI_BASE_URL.rstrip('/')}/chat/completions"
+
+    try:
+        with httpx.Client(timeout=settings.AI_TIMEOUT_SECONDS) as client:
+            res = client.post(url, headers=headers, json=payload)
+            res.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        logger.warning("AI flashcard API error %s: %s", exc.response.status_code, exc)
+        raise AIFlashcardError(
+            "AI service returned an error. Please check your API key and try again."
+        ) from exc
+    except Exception as exc:
+        logger.warning("AI flashcard request failed: %s", exc)
+        raise AIFlashcardError(
+            "Could not reach the AI service. Please try again later."
+        ) from exc
+
+    data = res.json()
+    content = (
+        data.get("choices", [{}])[0]
+        .get("message", {})
+        .get("content", "")
+        .strip()
+    )
+    if not content:
+        raise AIFlashcardError("AI returned an empty response. Please try again.")
+
+    cards = _parse_multi_flashcard_response(content)
+    if not cards:
+        raise AIFlashcardError("Could not parse AI response into flashcards. Please try again.")
+
+    return cards, settings.AI_MODEL
+
+
+def _parse_multi_flashcard_response(raw: str) -> list[tuple[str, str]]:
+    """Parse multiple FRONT:/BACK: pairs from the AI response."""
+    cards: list[tuple[str, str]] = []
+    lines = raw.strip().split("\n")
+    front_lines: list[str] = []
+    back_lines: list[str] = []
+    current: list[str] | None = None
+
+    def _flush() -> None:
+        f = "\n".join(front_lines).strip()
+        b = "\n".join(back_lines).strip()
+        if f and b:
+            cards.append((f, b))
+        front_lines.clear()
+        back_lines.clear()
+
+    for line in lines:
+        upper = line.strip().upper()
+        if upper.startswith("FRONT:"):
+            if front_lines or back_lines:
+                _flush()
+            current = front_lines
+            remainder = line.strip()[6:].strip()
+            if remainder:
+                current.append(remainder)
+        elif upper.startswith("BACK:"):
+            current = back_lines
+            remainder = line.strip()[5:].strip()
+            if remainder:
+                current.append(remainder)
+        elif current is not None:
+            current.append(line)
+
+    _flush()
+    return cards
+
+
 def generate_ai_explanation(
     question: Question,
     selected_answer: Optional[str] = None,

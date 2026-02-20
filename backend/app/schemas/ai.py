@@ -14,3 +14,18 @@ class AIExplainResponse(BaseModel):
     explanation: str
     model: str
     fallback_used: bool = False
+
+
+class AIFlashcardRequest(BaseModel):
+    question_id: str
+    selected_answer: Optional[str] = None
+
+
+class AIFlashcardCard(BaseModel):
+    front: str
+    back: str
+
+
+class AIFlashcardResponse(BaseModel):
+    cards: list[AIFlashcardCard]
+    model: str

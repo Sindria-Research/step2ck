@@ -1,13 +1,18 @@
 """API routes for flashcards and decks."""
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from sqlalchemy import distinct, func as sa_func
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.db import get_db
 from app.models import User
 from app.models.flashcard import Flashcard, FlashcardDeck
+from app.models.flashcard_settings import FlashcardSettings
+from app.models.exam_session import ExamSession, ExamSessionAnswer
+from app.models.question import Question
+from app.models.user_progress import UserProgress
 from app.services.plans import count_deck_cards, count_user_decks, get_plan_limits
 from app.schemas.flashcard import (
     FlashcardCreate,
@@ -16,9 +21,20 @@ from app.schemas.flashcard import (
     FlashcardDeckUpdate,
     FlashcardResponse,
     FlashcardReview,
+    FlashcardReviewResponse,
     FlashcardUpdate,
+    GenerationQuestionItem,
+    GenerationQuestionsRequest,
+    GenerationQuestionsResponse,
+    GenerationSessionSource,
+    GenerationSourcesResponse,
+    IntervalPreview,
+    ScheduleInfo,
 )
+from app.schemas.flashcard_settings import FlashcardSettingsResponse, FlashcardSettingsUpdate
 from app.services.apkg_parser import parse_apkg
+from app.services.fsrs import CardState, preview_intervals
+from app.services.fsrs import review as fsrs_review
 
 router = APIRouter()
 
@@ -178,38 +194,103 @@ def update_card(
     return card
 
 
-@router.post("/cards/{card_id}/review", response_model=FlashcardResponse)
+def _card_to_state(card: Flashcard) -> CardState:
+    return CardState(
+        stability=card.stability,
+        difficulty=card.difficulty,
+        interval_days=card.interval_days,
+        repetitions=card.repetitions,
+        lapses=card.lapses,
+        state=card.state,
+        next_review=card.next_review,
+        last_review=card.last_review,
+        learning_step=card.learning_step,
+    )
+
+
+def _parse_steps(s: str) -> list[int]:
+    """Parse comma-separated step minutes like '1,10' -> [1, 10]."""
+    parts = [p.strip() for p in s.split(",") if p.strip()]
+    return [int(p) for p in parts if p.isdigit()]
+
+
+def _load_fsrs_overrides(user_id: str, db: Session) -> dict:
+    """Load user FSRS settings overrides for passing to review/preview_intervals."""
+    try:
+        settings = db.query(FlashcardSettings).filter(FlashcardSettings.user_id == user_id).first()
+    except Exception:
+        return {}
+    if not settings:
+        return {}
+    return {
+        "learning_steps": _parse_steps(settings.learning_steps),
+        "relearning_steps": _parse_steps(settings.relearning_steps),
+        "desired_retention": settings.desired_retention,
+        "max_interval": settings.max_interval_days,
+    }
+
+
+@router.post("/cards/{card_id}/review", response_model=FlashcardReviewResponse)
 def review_card(
     card_id: int,
     body: FlashcardReview,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """SM-2 spaced repetition algorithm."""
+    """FSRS v4.5 spaced repetition review."""
     card = db.query(Flashcard).filter(Flashcard.id == card_id, Flashcard.user_id == user.id).first()
     if not card:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Card not found")
 
-    q = max(0, min(5, body.quality))
+    now = datetime.now(timezone.utc)
+    cs = _card_to_state(card)
+    overrides = _load_fsrs_overrides(user.id, db)
+    result = fsrs_review(cs, body.rating, now, **overrides)
 
-    if q < 3:
-        card.repetitions = 0
-        card.interval_days = 1
-    else:
-        if card.repetitions == 0:
-            card.interval_days = 1
-        elif card.repetitions == 1:
-            card.interval_days = 6
-        else:
-            card.interval_days = max(1, round(card.interval_days * card.ease_factor))
-        card.repetitions += 1
-
-    card.ease_factor = max(1.3, card.ease_factor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)))
-    card.next_review = datetime.now(timezone.utc) + timedelta(days=card.interval_days)
+    card.stability = result.stability
+    card.difficulty = result.difficulty
+    card.interval_days = result.interval_days
+    card.repetitions = result.repetitions
+    card.lapses = result.lapses
+    card.state = result.state
+    card.learning_step = result.learning_step
+    card.next_review = result.next_review
+    card.last_review = result.last_review
 
     db.commit()
     db.refresh(card)
-    return card
+
+    new_cs = _card_to_state(card)
+    raw_intervals = preview_intervals(new_cs, now, **overrides)
+
+    return FlashcardReviewResponse(
+        card=FlashcardResponse.model_validate(card),
+        intervals={str(k): ScheduleInfo(**v) for k, v in raw_intervals.items()},
+        again_in_minutes=result.again_in_minutes,
+        graduated=result.graduated,
+    )
+
+
+@router.get("/cards/{card_id}/intervals", response_model=IntervalPreview)
+def get_card_intervals(
+    card_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Preview the next interval for each rating without committing a review."""
+    card = db.query(Flashcard).filter(Flashcard.id == card_id, Flashcard.user_id == user.id).first()
+    if not card:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Card not found")
+
+    cs = _card_to_state(card)
+    overrides = _load_fsrs_overrides(user.id, db)
+    raw = preview_intervals(cs, **overrides)
+    return IntervalPreview(
+        again=ScheduleInfo(**raw[1]),
+        hard=ScheduleInfo(**raw[2]),
+        good=ScheduleInfo(**raw[3]),
+        easy=ScheduleInfo(**raw[4]),
+    )
 
 
 @router.delete("/cards/{card_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -228,6 +309,219 @@ def delete_card(
 
     db.delete(card)
     db.commit()
+
+
+# ── Settings ──
+
+@router.get("/settings", response_model=FlashcardSettingsResponse)
+def get_settings(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Return flashcard settings for the current user, or defaults if none exist."""
+    try:
+        row = db.query(FlashcardSettings).filter(FlashcardSettings.user_id == user.id).first()
+        if row:
+            return row
+    except Exception:
+        pass
+    return FlashcardSettingsResponse()
+
+
+@router.patch("/settings", response_model=FlashcardSettingsResponse)
+def update_settings(
+    body: FlashcardSettingsUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Update flashcard settings (upsert)."""
+    try:
+        row = db.query(FlashcardSettings).filter(FlashcardSettings.user_id == user.id).first()
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Settings table not available. Please run database migrations.",
+        )
+    if not row:
+        row = FlashcardSettings(user_id=user.id)
+        db.add(row)
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(row, field, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+# ── AI Generation Sources ──
+
+def _existing_flashcard_qids(user_id: str, db: Session) -> set[str]:
+    """Return the set of question_ids that already have flashcards for this user."""
+    rows = (
+        db.query(Flashcard.question_id)
+        .filter(Flashcard.user_id == user_id, Flashcard.question_id.isnot(None))
+        .distinct()
+        .all()
+    )
+    return {r[0] for r in rows}
+
+
+@router.get("/generation-sources", response_model=GenerationSourcesResponse)
+def get_generation_sources(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Return available sources for AI flashcard generation."""
+    existing_qids = _existing_flashcard_qids(user.id, db)
+
+    # Completed sessions with at least one incorrect answer
+    sessions_raw = (
+        db.query(ExamSession)
+        .filter(
+            ExamSession.user_id == user.id,
+            ExamSession.status == "completed",
+            ExamSession.incorrect_count > 0,
+        )
+        .order_by(ExamSession.completed_at.desc())
+        .all()
+    )
+    sessions = []
+    for s in sessions_raw:
+        incorrect_qids = [
+            a.question_id
+            for a in db.query(ExamSessionAnswer.question_id)
+            .filter(ExamSessionAnswer.session_id == s.id, ExamSessionAnswer.correct == False)  # noqa: E712
+            .all()
+        ]
+        remaining = [qid for qid in incorrect_qids if qid not in existing_qids]
+        if remaining:
+            sessions.append(GenerationSessionSource(
+                id=s.id,
+                mode=s.mode,
+                date=s.completed_at.isoformat() if s.completed_at else s.started_at.isoformat(),
+                subjects=s.subjects,
+                accuracy=s.accuracy,
+                incorrect_count=len(remaining),
+            ))
+
+    # Sections and systems from missed questions that don't already have flashcards
+    missed_qids_rows = (
+        db.query(distinct(UserProgress.question_id))
+        .filter(UserProgress.user_id == user.id, UserProgress.correct == False)  # noqa: E712
+        .all()
+    )
+    missed_qids = {r[0] for r in missed_qids_rows} - existing_qids
+
+    sections: list[str] = []
+    systems: list[str] = []
+    if missed_qids:
+        sec_rows = (
+            db.query(distinct(Question.section))
+            .filter(Question.id.in_(missed_qids))
+            .all()
+        )
+        sections = sorted([r[0] for r in sec_rows if r[0]])
+
+        sys_rows = (
+            db.query(distinct(Question.system))
+            .filter(Question.id.in_(missed_qids), Question.system.isnot(None))
+            .all()
+        )
+        systems = sorted([r[0] for r in sys_rows if r[0]])
+
+    return GenerationSourcesResponse(sessions=sessions, sections=sections, systems=systems)
+
+
+@router.post("/generation-questions", response_model=GenerationQuestionsResponse)
+def get_generation_questions(
+    body: GenerationQuestionsRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Return questions matching a generation source filter, excluding those with existing flashcards."""
+    existing_qids = _existing_flashcard_qids(user.id, db)
+
+    if body.source == "session":
+        if body.session_id is None:
+            raise HTTPException(status_code=400, detail="session_id is required for source=session")
+        session = (
+            db.query(ExamSession)
+            .filter(ExamSession.id == body.session_id, ExamSession.user_id == user.id)
+            .first()
+        )
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        qid_rows = (
+            db.query(ExamSessionAnswer.question_id)
+            .filter(ExamSessionAnswer.session_id == session.id, ExamSessionAnswer.correct == False)  # noqa: E712
+            .all()
+        )
+        target_qids = {r[0] for r in qid_rows} - existing_qids
+
+    elif body.source == "section":
+        if not body.section:
+            raise HTTPException(status_code=400, detail="section is required for source=section")
+        missed_qids = {
+            r[0]
+            for r in db.query(distinct(UserProgress.question_id))
+            .filter(UserProgress.user_id == user.id, UserProgress.correct == False)  # noqa: E712
+            .all()
+        } - existing_qids
+        q_in_section = {
+            r[0]
+            for r in db.query(Question.id)
+            .filter(Question.id.in_(missed_qids), Question.section == body.section)
+            .all()
+        } if missed_qids else set()
+        target_qids = q_in_section
+
+    elif body.source == "system":
+        if not body.system:
+            raise HTTPException(status_code=400, detail="system is required for source=system")
+        missed_qids = {
+            r[0]
+            for r in db.query(distinct(UserProgress.question_id))
+            .filter(UserProgress.user_id == user.id, UserProgress.correct == False)  # noqa: E712
+            .all()
+        } - existing_qids
+        q_in_system = {
+            r[0]
+            for r in db.query(Question.id)
+            .filter(Question.id.in_(missed_qids), Question.system == body.system)
+            .all()
+        } if missed_qids else set()
+        target_qids = q_in_system
+
+    else:
+        # Default: "missed" — all incorrect questions without flashcards
+        target_qids = {
+            r[0]
+            for r in db.query(distinct(UserProgress.question_id))
+            .filter(UserProgress.user_id == user.id, UserProgress.correct == False)  # noqa: E712
+            .all()
+        } - existing_qids
+
+    if not target_qids:
+        return GenerationQuestionsResponse(questions=[])
+
+    questions = (
+        db.query(Question)
+        .filter(Question.id.in_(target_qids))
+        .order_by(Question.section, Question.id)
+        .limit(50)
+        .all()
+    )
+
+    return GenerationQuestionsResponse(
+        questions=[
+            GenerationQuestionItem(
+                id=q.id,
+                section=q.section,
+                system=q.system,
+                question_stem=q.question_stem,
+            )
+            for q in questions
+        ]
+    )
 
 
 # ── Import .apkg ──

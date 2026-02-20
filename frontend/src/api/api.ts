@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase';
 import type {
   AIExplainRequest,
   AIExplainResponse,
+  AIFlashcardRequest,
+  AIFlashcardResponse,
   BookmarkResponse,
   CheckoutResponse,
   DailySummary,
@@ -17,6 +19,13 @@ import type {
   FlashcardDeckCreateRequest,
   FlashcardDeckResponse,
   FlashcardResponse,
+  FlashcardReviewResponse,
+  FlashcardSettingsResponse,
+  FlashcardSettingsUpdate,
+  GenerationQuestionsRequest,
+  GenerationQuestionsResponse,
+  GenerationSourcesResponse,
+  IntervalPreview,
   NoteCreateRequest,
   NoteResponse,
   NoteUpdateRequest,
@@ -105,6 +114,11 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+    generateFlashcard: (body: AIFlashcardRequest) =>
+      request<AIFlashcardResponse>('/ai/flashcard', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
   },
   examSessions: {
     list: (status?: string) => {
@@ -182,18 +196,34 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    updateCard: (id: number, body: { front?: string; back?: string }) =>
+    updateCard: (id: number, body: { front?: string; back?: string; flagged?: boolean }) =>
       request<FlashcardResponse>(`/flashcards/cards/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(body),
       }),
-    reviewCard: (id: number, quality: number) =>
-      request<FlashcardResponse>(`/flashcards/cards/${id}/review`, {
+    reviewCard: (id: number, rating: number) =>
+      request<FlashcardReviewResponse>(`/flashcards/cards/${id}/review`, {
         method: 'POST',
-        body: JSON.stringify({ quality }),
+        body: JSON.stringify({ rating }),
       }),
+    getIntervals: (id: number) =>
+      request<IntervalPreview>(`/flashcards/cards/${id}/intervals`),
     deleteCard: (id: number) =>
       request<void>(`/flashcards/cards/${id}`, { method: 'DELETE' }),
+    getGenerationSources: () =>
+      request<GenerationSourcesResponse>('/flashcards/generation-sources'),
+    getGenerationQuestions: (body: GenerationQuestionsRequest) =>
+      request<GenerationQuestionsResponse>('/flashcards/generation-questions', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    getSettings: () =>
+      request<FlashcardSettingsResponse>('/flashcards/settings'),
+    updateSettings: (body: FlashcardSettingsUpdate) =>
+      request<FlashcardSettingsResponse>('/flashcards/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
     importApkg: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);

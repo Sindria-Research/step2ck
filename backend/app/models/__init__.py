@@ -5,6 +5,7 @@ from app.models.user_progress import UserProgress
 from app.models.exam_session import ExamSession, ExamSessionAnswer
 from app.models.note import Note
 from app.models.flashcard import FlashcardDeck, Flashcard
+from app.models.flashcard_settings import FlashcardSettings
 from app.models.bookmark import Bookmark
 from app.models.study_profile import UserStudyProfile
 from app.models.study_plan import StudyPlan
@@ -19,6 +20,7 @@ __all__ = [
     "Note",
     "FlashcardDeck",
     "Flashcard",
+    "FlashcardSettings",
     "Bookmark",
     "UserStudyProfile",
     "StudyPlan",

@@ -70,6 +70,21 @@ export interface AIExplainResponse {
   fallback_used: boolean;
 }
 
+export interface AIFlashcardRequest {
+  question_id: string;
+  selected_answer?: string;
+}
+
+export interface AIFlashcardCard {
+  front: string;
+  back: string;
+}
+
+export interface AIFlashcardResponse {
+  cards: AIFlashcardCard[];
+  model: string;
+}
+
 // ── Exam Sessions ──
 
 export interface ExamSessionAnswer {
@@ -163,12 +178,39 @@ export interface FlashcardResponse {
   front: string;
   back: string;
   question_id: string | null;
+  stability: number;
+  difficulty: number;
   ease_factor: number;
   interval_days: number;
   repetitions: number;
+  lapses: number;
+  state: string;
+  learning_step: number;
+  flagged: boolean;
   next_review: string | null;
+  last_review: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ScheduleInfo {
+  days: number;
+  minutes: number;
+  graduated: boolean;
+}
+
+export interface FlashcardReviewResponse {
+  card: FlashcardResponse;
+  intervals: Record<string, ScheduleInfo>;
+  again_in_minutes: number;
+  graduated: boolean;
+}
+
+export interface IntervalPreview {
+  again: ScheduleInfo;
+  hard: ScheduleInfo;
+  good: ScheduleInfo;
+  easy: ScheduleInfo;
 }
 
 export interface FlashcardDeckCreateRequest {
@@ -288,6 +330,87 @@ export interface SubscriptionStatus {
   current_period_end: string | null;
   cancel_at: string | null;
   trial_end: string | null;
+}
+
+// ── Flashcard Generation Sources ──
+
+export interface GenerationSessionSource {
+  id: number;
+  mode: string;
+  date: string;
+  subjects: string | null;
+  accuracy: number | null;
+  incorrect_count: number;
+}
+
+export interface GenerationSourcesResponse {
+  sessions: GenerationSessionSource[];
+  sections: string[];
+  systems: string[];
+}
+
+export interface GenerationQuestionsRequest {
+  source: 'missed' | 'session' | 'section' | 'system';
+  session_id?: number;
+  section?: string;
+  system?: string;
+}
+
+export interface GenerationQuestionItem {
+  id: string;
+  section: string;
+  system: string | null;
+  question_stem: string;
+}
+
+export interface GenerationQuestionsResponse {
+  questions: GenerationQuestionItem[];
+}
+
+// ── Flashcard Settings ──
+
+export interface FlashcardSettingsResponse {
+  daily_new_cards: number;
+  daily_review_limit: number;
+  learning_steps: string;
+  relearning_steps: string;
+  desired_retention: number;
+  max_interval_days: number;
+  new_card_order: string;
+
+  hotkey_show_answer: string;
+  hotkey_again: string;
+  hotkey_hard: string;
+  hotkey_good: string;
+  hotkey_easy: string;
+  hotkey_flag: string;
+  hotkey_undo: string;
+
+  auto_advance: boolean;
+  show_remaining_count: boolean;
+  show_timer: boolean;
+}
+
+export interface FlashcardSettingsUpdate {
+  daily_new_cards?: number;
+  daily_review_limit?: number;
+  learning_steps?: string;
+  relearning_steps?: string;
+  desired_retention?: number;
+  max_interval_days?: number;
+  new_card_order?: string;
+
+  hotkey_show_answer?: string;
+  hotkey_again?: string;
+  hotkey_hard?: string;
+  hotkey_good?: string;
+  hotkey_easy?: string;
+  hotkey_flag?: string;
+  hotkey_undo?: string;
+
+  auto_advance?: boolean;
+  show_remaining_count?: boolean;
+  show_timer?: boolean;
 }
 
 // ── Bookmarks ──

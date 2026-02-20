@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, CreditCard, User, Moon, Sun, Monitor, Target, ArrowRight, Crown, Zap, CheckCircle2, Activity, Sparkles, BookOpen, Search, Infinity, Receipt, ExternalLink, Bug } from 'lucide-react';
+import { ChevronLeft, CreditCard, User, Moon, Sun, Monitor, Target, ArrowRight, Crown, Zap, CheckCircle2, Activity, Sparkles, BookOpen, Search, Infinity, Receipt, ExternalLink, Bug, Layers } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../api/api';
@@ -33,6 +33,8 @@ export function Settings() {
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const pollingRef = useRef(false);
   const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
+
+
 
   useEffect(() => {
     if (searchParams.get('checkout') !== 'success' || pollingRef.current) return;
@@ -506,6 +508,30 @@ export function Settings() {
               </div>
             )}
           </div>
+        </section>
+
+        {/* Flashcard Settings – link to Flashcards tab */}
+        <section className="card rounded-lg mb-6">
+          <Link
+            to="/flashcards"
+            className="flex items-center gap-3 group"
+            onClick={() => {
+              sessionStorage.setItem('fc_open_settings', '1');
+            }}
+          >
+            <div className="w-10 h-10 rounded-lg bg-[var(--color-bg-tertiary)] flex items-center justify-center">
+              <Layers className="w-5 h-5 text-[var(--color-text-tertiary)]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+                Flashcards
+              </h2>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Spaced repetition scheduling, display, and hotkeys.
+              </p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-text-primary)] transition-colors shrink-0" />
+          </Link>
         </section>
 
         {/* Dev tools */}
