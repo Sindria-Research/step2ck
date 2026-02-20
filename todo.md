@@ -33,6 +33,9 @@
 - [x] Wire individual question answers to ExamSessionAnswer records (per-answer PATCH + batch update on finish)
 - [x] Enable review mode from Previous Tests (hydrates saved answers, supports both test and practice review)
 - [x] Quick-note button on exam explanation panel (creates pre-filled note from question context)
+- [x] AI-generated flashcards from incorrect questions (one-click AI-distilled flashcard in "Missed Questions" deck)
+- [x] Security headers middleware (X-Content-Type-Options, X-Frame-Options, HSTS, Referrer-Policy, Permissions-Policy)
+- [x] Dedicated 404 page (replaces silent redirect to /dashboard)
 
 ---
 
@@ -93,12 +96,12 @@
 
 ### Error Handling & Monitoring
 - [ ] Sentry integration (frontend + backend)
-- [ ] Dedicated 404 page
+- [x] Dedicated 404 page
 - [ ] User-friendly error pages for 500, network failures
 - [ ] Uptime monitoring (e.g. BetterUptime, UptimeRobot)
 
 ### Security Hardening
-- [ ] Security headers middleware (CSP, X-Frame-Options, HSTS, X-Content-Type-Options)
+- [x] Security headers middleware (X-Content-Type-Options, X-Frame-Options, HSTS, Referrer-Policy, Permissions-Policy)
 - [ ] Rate limiting on all sensitive endpoints (AI, exam generation, study plan)
 - [ ] Input sanitization on all user-facing text fields
 - [ ] CSRF protection for state-changing requests
@@ -154,7 +157,7 @@
 
 ### Product Features
 - [ ] Score prediction engine (estimate Step 2 CK score from performance data)
-- [ ] AI-generated flashcards from incorrect questions
+- [x] AI-generated flashcards from incorrect questions
 - [ ] Study reminders (daily email or push notification)
 - [ ] Social features (leaderboard, study groups)
 - [ ] Medical reference library organized by organ system
