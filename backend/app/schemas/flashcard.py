@@ -23,6 +23,9 @@ class FlashcardDeckResponse(BaseModel):
     description: Optional[str] = None
     section: Optional[str] = None
     card_count: int
+    new_count: int = 0
+    learning_count: int = 0
+    due_count: int = 0
     created_at: datetime
     updated_at: datetime
 
@@ -115,13 +118,16 @@ class GenerationSourcesResponse(BaseModel):
     sessions: list[GenerationSessionSource]
     sections: list[str]
     systems: list[str]
+    all_sections: list[str]
+    all_systems: list[str]
 
 
 class GenerationQuestionsRequest(BaseModel):
-    source: str  # "missed" | "session" | "section" | "system"
+    source: str  # "missed" | "session" | "section" | "system" | "all_section" | "all_system"
     session_id: Optional[int] = None
     section: Optional[str] = None
     system: Optional[str] = None
+    limit: int = 50
 
 
 class GenerationQuestionItem(BaseModel):

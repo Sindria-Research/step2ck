@@ -73,6 +73,7 @@ export interface AIExplainResponse {
 export interface AIFlashcardRequest {
   question_id: string;
   selected_answer?: string;
+  num_cards?: number;
 }
 
 export interface AIFlashcardCard {
@@ -167,6 +168,9 @@ export interface FlashcardDeckResponse {
   description: string | null;
   section: string | null;
   card_count: number;
+  new_count: number;
+  learning_count: number;
+  due_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -351,13 +355,16 @@ export interface GenerationSourcesResponse {
   sessions: GenerationSessionSource[];
   sections: string[];
   systems: string[];
+  all_sections: string[];
+  all_systems: string[];
 }
 
 export interface GenerationQuestionsRequest {
-  source: 'missed' | 'session' | 'section' | 'system';
+  source: 'missed' | 'session' | 'section' | 'system' | 'all_section' | 'all_system';
   session_id?: number;
   section?: string;
   system?: string;
+  limit?: number;
 }
 
 export interface GenerationQuestionItem {

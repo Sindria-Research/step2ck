@@ -90,6 +90,7 @@ class AIFlashcardError(Exception):
 def generate_ai_flashcards(
     question: Question,
     selected_answer: Optional[str] = None,
+    num_cards: int = 4,
 ) -> tuple[list[tuple[str, str]], str]:
     """
     Return (cards, model) where cards is a list of (front, back) tuples.
@@ -115,7 +116,7 @@ def generate_ai_flashcards(
                     "Your job: given a clinical vignette, extract the FUNDAMENTAL CONCEPTS "
                     "it tests and turn each into a standalone flashcard.\n\n"
                     "STRICT RULES:\n"
-                    "1. Create 3-5 cards. Each tests ONE discrete concept (a diagnosis, "
+                    f"1. Create {num_cards} cards. Each tests ONE discrete concept (a diagnosis, "
                     "mechanism, pathophysiology, risk factor, lab finding, treatment, "
                     "next step, or distinguishing feature).\n"
                     "2. FRONT — a short, direct question about the concept. "

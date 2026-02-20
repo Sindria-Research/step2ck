@@ -96,6 +96,7 @@ def generate_flashcard(
         cards, model = generate_ai_flashcards(
             question=question,
             selected_answer=body.selected_answer,
+            num_cards=body.num_cards,
         )
     except AIFlashcardError as exc:
         raise HTTPException(

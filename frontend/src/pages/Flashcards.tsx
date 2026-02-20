@@ -7,7 +7,6 @@ import {
   ChevronRight,
   ChevronLeft,
   Pencil,
-  X,
   Check,
   Search,
   Upload,
@@ -122,10 +121,10 @@ export function Flashcards() {
 
   // Generation modal state
   const [genModalOpen, setGenModalOpen] = useState(false);
-  const [genStep, setGenStep] = useState<'source' | 'questions'>('source');
-  const [genSources, setGenSources] = useState<{ sessions: GenerationSessionSource[]; sections: string[]; systems: string[] } | null>(null);
+  const [genStep, setGenStep] = useState<'source' | 'deck' | 'questions'>('source');
+  const [genSources, setGenSources] = useState<{ sessions: GenerationSessionSource[]; sections: string[]; systems: string[]; all_sections: string[]; all_systems: string[] } | null>(null);
   const [genSourcesLoading, setGenSourcesLoading] = useState(false);
-  const [genSourceType, setGenSourceType] = useState<'missed' | 'session' | 'section' | 'system'>('missed');
+  const [genSourceType, setGenSourceType] = useState<'missed' | 'session' | 'section' | 'system' | 'all_section' | 'all_system'>('missed');
   const [genSelectedSession, setGenSelectedSession] = useState<number | null>(null);
   const [genSelectedSection, setGenSelectedSection] = useState<string | null>(null);
   const [genSelectedSystem, setGenSelectedSystem] = useState<string | null>(null);
@@ -133,6 +132,14 @@ export function Flashcards() {
   const [genQuestionsLoading, setGenQuestionsLoading] = useState(false);
   const [genCreated, setGenCreated] = useState<Set<string>>(new Set());
   const [genLoading, setGenLoading] = useState<Set<string>>(new Set());
+  const [genTargetDeckId, setGenTargetDeckId] = useState<number | 'new'>('new');
+  const [genNewDeckName, setGenNewDeckName] = useState('AI Generated');
+  const [genNumCards, setGenNumCards] = useState(4);
+  const [genQuestionLimit, setGenQuestionLimit] = useState(50);
+
+  // Inline deck rename
+  const [renamingDeckId, setRenamingDeckId] = useState<number | null>(null);
+  const [renameDeckValue, setRenameDeckValue] = useState('');
 
   // User flashcard settings
   const [fcSettings, setFcSettings] = useState<FlashcardSettingsResponse | null>(null);
@@ -159,15 +166,15 @@ export function Flashcards() {
   const [addBack, setAddBack] = useState('');
   const [addingCard, setAddingCard] = useState(false);
 
-  const [editingCardId, setEditingCardId] = useState<number | null>(null);
-  const [editFront, setEditFront] = useState('');
-  const [editBack, setEditBack] = useState('');
-
   // Card detail modal
   const [detailCard, setDetailCard] = useState<FlashcardResponse | null>(null);
   const [detailNotes, setDetailNotes] = useState('');
   const [detailTags, setDetailTags] = useState('');
   const [detailSaving, setDetailSaving] = useState(false);
+  const [detailEditingContent, setDetailEditingContent] = useState(false);
+  const [detailFront, setDetailFront] = useState('');
+  const [detailBack, setDetailBack] = useState('');
+  const [detailFromReview, setDetailFromReview] = useState(false);
 
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
@@ -205,7 +212,6 @@ export function Flashcards() {
     setCards(c);
     setAddFront('');
     setAddBack('');
-    setEditingCardId(null);
     setImportOpen(false);
   };
 
@@ -291,6 +297,22 @@ export function Flashcards() {
     }
   };
 
+  const handleRenameDeck = useCallback(async (deckId: number, newName: string) => {
+    const trimmed = newName.trim();
+    if (!trimmed) {
+      setRenamingDeckId(null);
+      return;
+    }
+    try {
+      const updated = await api.flashcards.updateDeck(deckId, { name: trimmed });
+      setDecks((prev) => prev.map((d) => d.id === deckId ? { ...d, name: updated.name } : d));
+      if (selectedDeck?.id === deckId) setSelectedDeck((prev) => prev ? { ...prev, name: updated.name } : prev);
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Failed to rename deck', 'error');
+    }
+    setRenamingDeckId(null);
+  }, [selectedDeck, addToast]);
+
   const handleAddCard = async () => {
     if (!selectedDeck || !addFront.trim() || !addBack.trim()) return;
     setAddingCard(true);
@@ -309,27 +331,10 @@ export function Flashcards() {
     }
   };
 
-  const startEditCard = (card: FlashcardResponse) => {
-    setEditingCardId(card.id);
-    setEditFront(card.front);
-    setEditBack(card.back);
-  };
-
-  const handleUpdateCard = async () => {
-    if (editingCardId == null) return;
-    const updated = await api.flashcards.updateCard(editingCardId, {
-      front: editFront.trim(),
-      back: editBack.trim(),
-    });
-    setCards((prev) => prev.map((c) => (c.id === editingCardId ? updated : c)));
-    setEditingCardId(null);
-  };
-
   const handleDeleteCard = async (cardId: number) => {
     await api.flashcards.deleteCard(cardId);
     setCards((prev) => prev.filter((c) => c.id !== cardId));
     setSelectedDeck((d) => (d ? { ...d, card_count: Math.max(0, d.card_count - 1) } : null));
-    if (editingCardId === cardId) setEditingCardId(null);
   };
 
   const handleImport = async () => {
@@ -371,27 +376,35 @@ export function Flashcards() {
     URL.revokeObjectURL(url);
   };
 
-  const openCardDetail = (card: FlashcardResponse) => {
+  const openCardDetail = useCallback((card: FlashcardResponse, fromReview = false) => {
     setDetailCard(card);
     setDetailNotes(card.notes ?? '');
     setDetailTags(card.tags ?? '');
-  };
+    setDetailFront(card.front);
+    setDetailBack(card.back);
+    setDetailEditingContent(false);
+    setDetailFromReview(fromReview);
+  }, []);
 
   const handleDetailSave = useCallback(async () => {
     if (!detailCard) return;
     setDetailSaving(true);
     try {
-      const updated = await api.flashcards.updateCard(detailCard.id, {
-        notes: detailNotes,
-        tags: detailTags,
-      });
+      const body: Record<string, string> = { notes: detailNotes, tags: detailTags };
+      if (detailFront !== detailCard.front) body.front = detailFront;
+      if (detailBack !== detailCard.back) body.back = detailBack;
+      const updated = await api.flashcards.updateCard(detailCard.id, body);
       setDetailCard(updated);
+      setDetailEditingContent(false);
       setCards((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+      if (detailFromReview) {
+        setQueue((prev) => prev.map((qe) => qe.card.id === updated.id ? { ...qe, card: updated } : qe));
+      }
     } catch {
       addToast('Failed to save card', 'error');
     }
     setDetailSaving(false);
-  }, [detailCard, detailNotes, detailTags, addToast]);
+  }, [detailCard, detailNotes, detailTags, detailFront, detailBack, detailFromReview, addToast]);
 
   const handleCardAction = useCallback(async (cardId: number, action: 'suspend' | 'unsuspend' | 'bury' | 'flag' | 'unflag') => {
     const body: Record<string, boolean> = {};
@@ -405,6 +418,14 @@ export function Flashcards() {
       setCards((prev) => prev.map((c) => c.id === updated.id ? updated : c));
       setDetailCard((prev) => prev?.id === updated.id ? updated : prev);
       setDueCards((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+      // Remove suspended/buried cards from queue during review
+      if (action === 'suspend' || action === 'bury') {
+        setQueue((prev) => prev.filter((qe) => qe.card.id !== cardId));
+      }
+      // Update flagged state in queue
+      if (action === 'flag' || action === 'unflag') {
+        setQueue((prev) => prev.map((qe) => qe.card.id === updated.id ? { ...qe, card: updated } : qe));
+      }
     } catch {
       addToast('Action failed', 'error');
     }
@@ -598,10 +619,16 @@ export function Flashcards() {
       if (matchKey(e, hk.hotkey_easy)) { e.preventDefault(); handleReviewAnswer(4); return; }
       if (matchKey(e, hk.hotkey_flag)) { e.preventDefault(); handleToggleFlag(); return; }
       if (matchKey(e, hk.hotkey_undo)) { e.preventDefault(); handleUndo(); return; }
+      if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        const cur = queue[0]?.card;
+        if (cur) openCardDetail(cur, true);
+        return;
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [view, queue.length, showBack, showShortcutHelp, handleReviewAnswer, handleToggleFlag, handleUndo, fcSettings]);
+  }, [view, queue.length, showBack, showShortcutHelp, handleReviewAnswer, handleToggleFlag, handleUndo, openCardDetail, queue, fcSettings]);
 
   const handleApkgChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -629,12 +656,16 @@ export function Flashcards() {
     setGenSelectedSession(null);
     setGenSelectedSection(null);
     setGenSelectedSystem(null);
+    setGenTargetDeckId('new');
+    setGenNewDeckName('AI Generated');
+    setGenNumCards(4);
+    setGenQuestionLimit(50);
     setGenSourcesLoading(true);
     try {
       const sources = await api.flashcards.getGenerationSources();
       setGenSources(sources);
     } catch {
-      setGenSources({ sessions: [], sections: [], systems: [] });
+      setGenSources({ sessions: [], sections: [], systems: [], all_sections: [], all_systems: [] });
     } finally {
       setGenSourcesLoading(false);
     }
@@ -645,10 +676,10 @@ export function Flashcards() {
     setGenCreated(new Set());
     setGenLoading(new Set());
     try {
-      const body: { source: string; session_id?: number; section?: string; system?: string } = { source: genSourceType };
+      const body: { source: string; session_id?: number; section?: string; system?: string; limit?: number } = { source: genSourceType, limit: genQuestionLimit };
       if (genSourceType === 'session' && genSelectedSession != null) body.session_id = genSelectedSession;
-      if (genSourceType === 'section' && genSelectedSection) body.section = genSelectedSection;
-      if (genSourceType === 'system' && genSelectedSystem) body.system = genSelectedSystem;
+      if ((genSourceType === 'section' || genSourceType === 'all_section') && genSelectedSection) body.section = genSelectedSection;
+      if ((genSourceType === 'system' || genSourceType === 'all_system') && genSelectedSystem) body.system = genSelectedSystem;
       const res = await api.flashcards.getGenerationQuestions(body as Parameters<typeof api.flashcards.getGenerationQuestions>[0]);
       setGenQuestions(res.questions);
       setGenStep('questions');
@@ -658,22 +689,37 @@ export function Flashcards() {
     } finally {
       setGenQuestionsLoading(false);
     }
-  }, [genSourceType, genSelectedSession, genSelectedSection, genSelectedSystem]);
+  }, [genSourceType, genSelectedSession, genSelectedSection, genSelectedSystem, genQuestionLimit]);
+
+  const genTargetDeckRef = useRef<{ id: number } | null>(null);
+
+  const resolveTargetDeck = useCallback(async (): Promise<{ id: number }> => {
+    if (genTargetDeckRef.current) return genTargetDeckRef.current;
+
+    let deck: FlashcardDeckResponse;
+    if (genTargetDeckId !== 'new') {
+      const existing = decks.find((d) => d.id === genTargetDeckId);
+      if (existing) {
+        genTargetDeckRef.current = existing;
+        return existing;
+      }
+    }
+    const name = genNewDeckName.trim() || 'AI Generated';
+    deck = await api.flashcards.createDeck({
+      name,
+      description: 'AI-generated flashcards',
+    });
+    setDecks((prev) => [deck, ...prev]);
+    genTargetDeckRef.current = deck;
+    return deck;
+  }, [genTargetDeckId, genNewDeckName, decks]);
 
   const handleGenerate = useCallback(async (question: GenerationQuestionItem) => {
     if (genLoading.has(question.id) || genCreated.has(question.id)) return;
     setGenLoading((prev) => new Set(prev).add(question.id));
     try {
-      const allDecks = await api.flashcards.listDecks();
-      let deck = allDecks.find((d) => d.name === 'AI Generated');
-      if (!deck) {
-        deck = await api.flashcards.createDeck({
-          name: 'AI Generated',
-          description: 'AI-generated flashcards from missed questions',
-        });
-        setDecks((prev) => [deck!, ...prev]);
-      }
-      const aiResult = await api.ai.generateFlashcard({ question_id: question.id });
+      const deck = await resolveTargetDeck();
+      const aiResult = await api.ai.generateFlashcard({ question_id: question.id, num_cards: genNumCards });
       for (const card of aiResult.cards) {
         await api.flashcards.createCard({
           deck_id: deck.id,
@@ -684,7 +730,7 @@ export function Flashcards() {
       }
       setDecks((prev) =>
         prev.map((d) =>
-          d.id === deck!.id ? { ...d, card_count: d.card_count + aiResult.cards.length } : d,
+          d.id === deck.id ? { ...d, card_count: d.card_count + aiResult.cards.length, new_count: d.new_count + aiResult.cards.length } : d,
         ),
       );
       setGenCreated((prev) => new Set(prev).add(question.id));
@@ -697,9 +743,10 @@ export function Flashcards() {
         return next;
       });
     }
-  }, [genLoading, genCreated, addToast]);
+  }, [genLoading, genCreated, addToast, resolveTargetDeck, genNumCards]);
 
   const handleGenerateAll = useCallback(async () => {
+    genTargetDeckRef.current = null;
     for (const q of genQuestions) {
       if (!genCreated.has(q.id) && !genLoading.has(q.id)) {
         await handleGenerate(q);
@@ -830,7 +877,6 @@ export function Flashcards() {
                     <p className="text-sm text-[var(--color-text-secondary)]">Choose a source for AI flashcard generation.</p>
 
                     <div className="space-y-2">
-                      {/* Missed Questions (all) */}
                       <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${genSourceType === 'missed' ? 'border-[var(--color-brand-blue)] bg-[var(--color-brand-blue)]/5' : 'border-[var(--color-border)] hover:border-[var(--color-border-hover)]'}`}>
                         <input type="radio" name="genSource" checked={genSourceType === 'missed'} onChange={() => setGenSourceType('missed')} className="accent-[var(--color-brand-blue)]" />
                         <div>
@@ -839,23 +885,16 @@ export function Flashcards() {
                         </div>
                       </label>
 
-                      {/* From Session */}
                       <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${genSourceType === 'session' ? 'border-[var(--color-brand-blue)] bg-[var(--color-brand-blue)]/5' : 'border-[var(--color-border)] hover:border-[var(--color-border-hover)]'}`}>
                         <input type="radio" name="genSource" checked={genSourceType === 'session'} onChange={() => setGenSourceType('session')} className="accent-[var(--color-brand-blue)] mt-1" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-[var(--color-text-primary)]">From Session</p>
                           <p className="text-xs text-[var(--color-text-muted)] mb-2">Incorrect questions from a specific practice/test session</p>
                           {genSourceType === 'session' && genSources && genSources.sessions.length > 0 && (
-                            <select
-                              value={genSelectedSession ?? ''}
-                              onChange={(e) => setGenSelectedSession(e.target.value ? Number(e.target.value) : null)}
-                              className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)]"
-                            >
+                            <select value={genSelectedSession ?? ''} onChange={(e) => setGenSelectedSession(e.target.value ? Number(e.target.value) : null)} className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)]">
                               <option value="">Select a session…</option>
                               {genSources.sessions.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                  {new Date(s.date).toLocaleDateString()} — {s.mode} ({s.incorrect_count} missed{s.accuracy != null ? `, ${Math.round(s.accuracy)}%` : ''})
-                                </option>
+                                <option key={s.id} value={s.id}>{new Date(s.date).toLocaleDateString()} — {s.mode} ({s.incorrect_count} missed{s.accuracy != null ? `, ${Math.round(s.accuracy)}%` : ''})</option>
                               ))}
                             </select>
                           )}
@@ -865,22 +904,15 @@ export function Flashcards() {
                         </div>
                       </label>
 
-                      {/* By Section */}
                       <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${genSourceType === 'section' ? 'border-[var(--color-brand-blue)] bg-[var(--color-brand-blue)]/5' : 'border-[var(--color-border)] hover:border-[var(--color-border-hover)]'}`}>
                         <input type="radio" name="genSource" checked={genSourceType === 'section'} onChange={() => setGenSourceType('section')} className="accent-[var(--color-brand-blue)] mt-1" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[var(--color-text-primary)]">By Section</p>
-                          <p className="text-xs text-[var(--color-text-muted)] mb-2">Missed questions in a specific section (e.g. Cardiology)</p>
+                          <p className="text-sm font-medium text-[var(--color-text-primary)]">Missed by Section</p>
+                          <p className="text-xs text-[var(--color-text-muted)] mb-2">Missed questions in a specific section</p>
                           {genSourceType === 'section' && genSources && genSources.sections.length > 0 && (
-                            <select
-                              value={genSelectedSection ?? ''}
-                              onChange={(e) => setGenSelectedSection(e.target.value || null)}
-                              className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)]"
-                            >
+                            <select value={genSelectedSection ?? ''} onChange={(e) => setGenSelectedSection(e.target.value || null)} className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)]">
                               <option value="">Select a section…</option>
-                              {genSources.sections.map((s) => (
-                                <option key={s} value={s}>{s}</option>
-                              ))}
+                              {genSources.sections.map((s) => (<option key={s} value={s}>{s}</option>))}
                             </select>
                           )}
                           {genSourceType === 'section' && genSources && genSources.sections.length === 0 && (
@@ -889,26 +921,50 @@ export function Flashcards() {
                         </div>
                       </label>
 
-                      {/* By System */}
                       <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${genSourceType === 'system' ? 'border-[var(--color-brand-blue)] bg-[var(--color-brand-blue)]/5' : 'border-[var(--color-border)] hover:border-[var(--color-border-hover)]'}`}>
                         <input type="radio" name="genSource" checked={genSourceType === 'system'} onChange={() => setGenSourceType('system')} className="accent-[var(--color-brand-blue)] mt-1" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[var(--color-text-primary)]">By System</p>
-                          <p className="text-xs text-[var(--color-text-muted)] mb-2">Missed questions by organ system (e.g. Cardiovascular)</p>
+                          <p className="text-sm font-medium text-[var(--color-text-primary)]">Missed by System</p>
+                          <p className="text-xs text-[var(--color-text-muted)] mb-2">Missed questions by organ system</p>
                           {genSourceType === 'system' && genSources && genSources.systems.length > 0 && (
-                            <select
-                              value={genSelectedSystem ?? ''}
-                              onChange={(e) => setGenSelectedSystem(e.target.value || null)}
-                              className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)]"
-                            >
+                            <select value={genSelectedSystem ?? ''} onChange={(e) => setGenSelectedSystem(e.target.value || null)} className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)]">
                               <option value="">Select a system…</option>
-                              {genSources.systems.map((s) => (
-                                <option key={s} value={s}>{s}</option>
-                              ))}
+                              {genSources.systems.map((s) => (<option key={s} value={s}>{s}</option>))}
                             </select>
                           )}
                           {genSourceType === 'system' && genSources && genSources.systems.length === 0 && (
                             <p className="text-xs text-[var(--color-text-muted)] italic">No systems with missed questions.</p>
+                          )}
+                        </div>
+                      </label>
+
+                      <div className="border-t border-[var(--color-border)] my-1" />
+                      <p className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider px-1">All Questions</p>
+
+                      <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${genSourceType === 'all_section' ? 'border-[var(--color-brand-blue)] bg-[var(--color-brand-blue)]/5' : 'border-[var(--color-border)] hover:border-[var(--color-border-hover)]'}`}>
+                        <input type="radio" name="genSource" checked={genSourceType === 'all_section'} onChange={() => setGenSourceType('all_section')} className="accent-[var(--color-brand-blue)] mt-1" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[var(--color-text-primary)]">All Questions by Section</p>
+                          <p className="text-xs text-[var(--color-text-muted)] mb-2">Generate from any question in a section (not just missed)</p>
+                          {genSourceType === 'all_section' && genSources && genSources.all_sections.length > 0 && (
+                            <select value={genSelectedSection ?? ''} onChange={(e) => setGenSelectedSection(e.target.value || null)} className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)]">
+                              <option value="">Select a section…</option>
+                              {genSources.all_sections.map((s) => (<option key={s} value={s}>{s}</option>))}
+                            </select>
+                          )}
+                        </div>
+                      </label>
+
+                      <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${genSourceType === 'all_system' ? 'border-[var(--color-brand-blue)] bg-[var(--color-brand-blue)]/5' : 'border-[var(--color-border)] hover:border-[var(--color-border-hover)]'}`}>
+                        <input type="radio" name="genSource" checked={genSourceType === 'all_system'} onChange={() => setGenSourceType('all_system')} className="accent-[var(--color-brand-blue)] mt-1" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[var(--color-text-primary)]">All Questions by System</p>
+                          <p className="text-xs text-[var(--color-text-muted)] mb-2">Generate from any question in an organ system (not just missed)</p>
+                          {genSourceType === 'all_system' && genSources && genSources.all_systems.length > 0 && (
+                            <select value={genSelectedSystem ?? ''} onChange={(e) => setGenSelectedSystem(e.target.value || null)} className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)]">
+                              <option value="">Select a system…</option>
+                              {genSources.all_systems.map((s) => (<option key={s} value={s}>{s}</option>))}
+                            </select>
                           )}
                         </div>
                       </label>
@@ -917,25 +973,95 @@ export function Flashcards() {
                     <div className="flex justify-end">
                       <button
                         type="button"
-                        onClick={loadGenQuestions}
+                        onClick={() => setGenStep('deck')}
                         disabled={
-                          genQuestionsLoading ||
                           (genSourceType === 'session' && genSelectedSession == null) ||
-                          (genSourceType === 'section' && !genSelectedSection) ||
-                          (genSourceType === 'system' && !genSelectedSystem)
+                          ((genSourceType === 'section' || genSourceType === 'all_section') && !genSelectedSection) ||
+                          ((genSourceType === 'system' || genSourceType === 'all_system') && !genSelectedSystem)
                         }
                         className="flex items-center gap-2 px-4 py-2.5 rounded-lg btn-primary text-sm font-medium transition-all focus-ring disabled:opacity-50"
                       >
+                        Next <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : genStep === 'deck' ? (
+                  <div className="space-y-4">
+                    <button type="button" onClick={() => setGenStep('source')} className="flex items-center gap-1 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
+                      <ChevronLeft className="w-4 h-4" /> Back
+                    </button>
+                    <p className="text-sm text-[var(--color-text-secondary)]">Choose a deck for the generated cards and adjust settings.</p>
+
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Destination deck</label>
+                      <select
+                        value={genTargetDeckId}
+                        onChange={(e) => setGenTargetDeckId(e.target.value === 'new' ? 'new' : Number(e.target.value))}
+                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)]"
+                      >
+                        <option value="new">+ Create new deck</option>
+                        {decks.map((d) => (
+                          <option key={d.id} value={d.id}>{d.name} ({d.card_count} cards)</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {genTargetDeckId === 'new' && (
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">New deck name</label>
+                        <input
+                          type="text"
+                          value={genNewDeckName}
+                          onChange={(e) => setGenNewDeckName(e.target.value)}
+                          placeholder="e.g. Cardiology Review"
+                          className="w-full px-3 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] focus:border-transparent"
+                        />
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Cards per question: {genNumCards}</label>
+                        <input
+                          type="range"
+                          min={1}
+                          max={10}
+                          value={genNumCards}
+                          onChange={(e) => setGenNumCards(Number(e.target.value))}
+                          className="w-full accent-[var(--color-brand-blue)]"
+                        />
+                        <div className="flex justify-between text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                          <span>1</span><span>5</span><span>10</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Max questions: {genQuestionLimit}</label>
+                        <input
+                          type="range"
+                          min={5}
+                          max={100}
+                          step={5}
+                          value={genQuestionLimit}
+                          onChange={(e) => setGenQuestionLimit(Number(e.target.value))}
+                          className="w-full accent-[var(--color-brand-blue)]"
+                        />
+                        <div className="flex justify-between text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                          <span>5</span><span>50</span><span>100</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => { genTargetDeckRef.current = null; loadGenQuestions(); }}
+                        disabled={genQuestionsLoading || (genTargetDeckId === 'new' && !genNewDeckName.trim())}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-lg btn-primary text-sm font-medium transition-all focus-ring disabled:opacity-50"
+                      >
                         {genQuestionsLoading ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            Loading…
-                          </>
+                          <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Loading…</>
                         ) : (
-                          <>
-                            Next
-                            <ChevronRight className="w-4 h-4" />
-                          </>
+                          <>Find Questions <ChevronRight className="w-4 h-4" /></>
                         )}
                       </button>
                     </div>
@@ -946,7 +1072,7 @@ export function Flashcards() {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => setGenStep('source')}
+                          onClick={() => setGenStep('deck')}
                           className="flex items-center gap-1 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
                         >
                           <ChevronLeft className="w-4 h-4" />
@@ -970,10 +1096,16 @@ export function Flashcards() {
                         </button>
                       )}
                     </div>
+                    {genQuestions.length > 0 && (
+                      <p className="text-xs text-[var(--color-text-muted)] mb-3">
+                        Adding to: <span className="font-medium text-[var(--color-text-secondary)]">{genTargetDeckId === 'new' ? genNewDeckName.trim() || 'AI Generated' : decks.find((d) => d.id === genTargetDeckId)?.name ?? 'Selected deck'}</span>
+                        {' · '}{genNumCards} card{genNumCards !== 1 ? 's' : ''}/question
+                      </p>
+                    )}
                     {genQuestions.length === 0 ? (
                       <div className="py-10 text-center">
                         <p className="text-sm text-[var(--color-text-secondary)]">
-                          No missed questions without flashcards for this source.
+                          No questions without flashcards for this source.
                         </p>
                       </div>
                     ) : (
@@ -1139,12 +1271,42 @@ export function Flashcards() {
                         onClick={() => openDeck(deck)}
                         className="flex-1 min-w-0 text-left"
                       >
-                        <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{deck.name}</p>
-                        <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
-                          {deck.card_count} card{deck.card_count !== 1 ? 's' : ''}
-                          {deck.description && <> · {deck.description}</>}
-                          {deck.section && <> · {deck.section}</>}
-                        </p>
+                        {renamingDeckId === deck.id ? (
+                          <input
+                            autoFocus
+                            type="text"
+                            value={renameDeckValue}
+                            onChange={(e) => setRenameDeckValue(e.target.value)}
+                            onBlur={() => handleRenameDeck(deck.id, renameDeckValue)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleRenameDeck(deck.id, renameDeckValue);
+                              if (e.key === 'Escape') setRenamingDeckId(null);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full text-sm font-medium text-[var(--color-text-primary)] bg-transparent border-b border-[var(--color-brand-blue)] outline-none py-0.5"
+                          />
+                        ) : (
+                          <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{deck.name}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-[var(--color-text-muted)]">{deck.card_count} card{deck.card_count !== 1 ? 's' : ''}</span>
+                          {(deck.new_count > 0 || deck.learning_count > 0 || deck.due_count > 0) && (
+                            <span className="flex items-center gap-1.5 text-[10px]">
+                              {deck.new_count > 0 && <span className="text-[var(--color-brand-blue)] font-medium">{deck.new_count} new</span>}
+                              {deck.learning_count > 0 && <span className="text-[var(--color-warning)] font-medium">{deck.learning_count} learning</span>}
+                              {deck.due_count > 0 && <span className="text-[var(--color-success)] font-medium">{deck.due_count} due</span>}
+                            </span>
+                          )}
+                          {deck.description && <span className="text-xs text-[var(--color-text-muted)] truncate hidden sm:inline"> · {deck.description}</span>}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setRenamingDeckId(deck.id); setRenameDeckValue(deck.name); }}
+                        className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
+                        title="Rename deck"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
@@ -1296,82 +1458,47 @@ export function Flashcards() {
                         key={card.id}
                         className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-4 hover:border-[var(--color-border-hover)] transition-colors"
                       >
-                        {editingCardId === card.id ? (
-                          <div className="space-y-2">
-                            <textarea
-                              value={editFront}
-                              onChange={(e) => setEditFront(e.target.value)}
-                              rows={2}
-                              className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] resize-none"
-                            />
-                            <textarea
-                              value={editBack}
-                              onChange={(e) => setEditBack(e.target.value)}
-                              rows={2}
-                              className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] resize-none"
-                            />
-                            <div className="flex gap-2 pt-1">
-                              <button
-                                type="button"
-                                onClick={handleUpdateCard}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg btn-primary text-xs font-medium transition-all focus-ring"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                                Save
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setEditingCardId(null)}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] text-xs font-medium hover:bg-[var(--color-bg-hover)] focus-ring"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                                Cancel
-                              </button>
+                        <div className="flex items-start justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => openCardDetail(card)}
+                            className="min-w-0 flex-1 text-left"
+                          >
+                            <p className="text-sm font-medium text-[var(--color-text-primary)] break-words">
+                              {card.front}
+                            </p>
+                            <p className="text-xs text-[var(--color-text-tertiary)] mt-1 break-words">{card.back}</p>
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider ${
+                                card.state === 'new' ? 'bg-blue-500/10 text-blue-500' :
+                                card.state === 'learning' || card.state === 'relearning' ? 'bg-orange-500/10 text-orange-500' :
+                                'bg-green-500/10 text-green-500'
+                              }`}>{card.state}</span>
+                              {card.suspended && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider bg-red-500/10 text-red-500">Suspended</span>}
+                              {card.buried && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider bg-yellow-500/10 text-yellow-500">Buried</span>}
+                              {card.flagged && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider bg-red-500/10 text-red-400">Flagged</span>}
+                              {card.interval_days > 0 && <span className="text-[0.6rem] text-[var(--color-text-muted)]">{card.interval_days}d interval</span>}
                             </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-start justify-between gap-3">
+                          </button>
+                          <div className="flex items-center gap-0.5 shrink-0">
                             <button
                               type="button"
                               onClick={() => openCardDetail(card)}
-                              className="min-w-0 flex-1 text-left"
+                              className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
+                              title="Edit card details"
                             >
-                              <p className="text-sm font-medium text-[var(--color-text-primary)] break-words">
-                                {card.front}
-                              </p>
-                              <p className="text-xs text-[var(--color-text-tertiary)] mt-1 break-words">{card.back}</p>
-                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider ${
-                                  card.state === 'new' ? 'bg-blue-500/10 text-blue-500' :
-                                  card.state === 'learning' || card.state === 'relearning' ? 'bg-orange-500/10 text-orange-500' :
-                                  'bg-green-500/10 text-green-500'
-                                }`}>{card.state}</span>
-                                {card.suspended && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider bg-red-500/10 text-red-500">Suspended</span>}
-                                {card.buried && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider bg-yellow-500/10 text-yellow-500">Buried</span>}
-                                {card.flagged && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider bg-red-500/10 text-red-400">Flagged</span>}
-                                {card.interval_days > 0 && <span className="text-[0.6rem] text-[var(--color-text-muted)]">{card.interval_days}d interval</span>}
-                              </div>
+                              <Pencil className="w-4 h-4" />
                             </button>
-                            <div className="flex items-center gap-0.5 shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => startEditCard(card)}
-                                className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
-                                title="Edit"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteCard(card.id)}
-                                className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCard(card.id)}
+                              className="p-2.5 md:p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-error)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
-                        )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1410,6 +1537,14 @@ export function Flashcards() {
                       {Math.floor(cardTimerElapsed / 60)}:{String(cardTimerElapsed % 60).padStart(2, '0')}
                     </span>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => openCardDetail(currentCard, true)}
+                    className="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
+                    title="Card details (E)"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
                   <button
                     type="button"
                     onClick={handleToggleFlag}
@@ -1776,18 +1911,51 @@ export function Flashcards() {
               <div className="space-y-5 max-h-[calc(80vh-5rem)] overflow-y-auto">
                 {/* Content */}
                 <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)] mb-2">Content</h4>
-                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 space-y-2">
-                    <div>
-                      <span className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Front</span>
-                      <FlashcardHtml content={detailCard.front} className="text-sm text-[var(--color-text-primary)] mt-0.5" />
-                    </div>
-                    <hr className="border-[var(--color-border)]" />
-                    <div>
-                      <span className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Back</span>
-                      <FlashcardHtml content={detailCard.back} className="text-sm text-[var(--color-text-primary)] mt-0.5" />
-                    </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]">Content</h4>
+                    <button
+                      type="button"
+                      onClick={() => { setDetailEditingContent(!detailEditingContent); setDetailFront(detailCard.front); setDetailBack(detailCard.back); }}
+                      className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      {detailEditingContent ? 'Cancel' : 'Edit'}
+                    </button>
                   </div>
+                  {detailEditingContent ? (
+                    <div className="space-y-2">
+                      <div>
+                        <label className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Front</label>
+                        <textarea
+                          value={detailFront}
+                          onChange={(e) => setDetailFront(e.target.value)}
+                          rows={3}
+                          className="w-full mt-1 px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] resize-y"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Back</label>
+                        <textarea
+                          value={detailBack}
+                          onChange={(e) => setDetailBack(e.target.value)}
+                          rows={3}
+                          className="w-full mt-1 px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] resize-y"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 space-y-2">
+                      <div>
+                        <span className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Front</span>
+                        <FlashcardContent text={detailCard.front} className="text-sm text-[var(--color-text-primary)] mt-0.5" />
+                      </div>
+                      <hr className="border-[var(--color-border)]" />
+                      <div>
+                        <span className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Back</span>
+                        <FlashcardContent text={detailCard.back} className="text-sm text-[var(--color-text-primary)] mt-0.5" />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Notes */}
@@ -1819,7 +1987,7 @@ export function Flashcards() {
                 </div>
 
                 {/* Save notes/tags */}
-                {(detailNotes !== (detailCard.notes ?? '') || detailTags !== (detailCard.tags ?? '')) && (
+                {(detailNotes !== (detailCard.notes ?? '') || detailTags !== (detailCard.tags ?? '') || detailFront !== detailCard.front || detailBack !== detailCard.back) && (
                   <button
                     type="button"
                     onClick={handleDetailSave}
@@ -1827,7 +1995,7 @@ export function Flashcards() {
                     className="flex items-center gap-2 px-4 py-2 rounded-lg btn-primary text-sm font-medium transition-all focus-ring"
                   >
                     <Check className="w-4 h-4" />
-                    {detailSaving ? 'Saving...' : 'Save notes & tags'}
+                    {detailSaving ? 'Saving...' : 'Save changes'}
                   </button>
                 )}
 
@@ -1922,6 +2090,7 @@ export function Flashcards() {
                 { keys: [fcSettings?.hotkey_good ?? '3'], desc: 'Good' },
                 { keys: [fcSettings?.hotkey_easy ?? '4'], desc: 'Easy' },
                 { keys: [fcSettings?.hotkey_flag ?? 'f'], desc: 'Flag / unflag card' },
+                { keys: ['e'], desc: 'Card details / edit' },
                 { keys: [fcSettings?.hotkey_undo ?? 'z'], desc: 'Undo last review' },
                 { keys: ['?'], desc: 'Toggle this help' },
               ].map((s) => (

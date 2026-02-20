@@ -19,6 +19,7 @@ class AIExplainResponse(BaseModel):
 class AIFlashcardRequest(BaseModel):
     question_id: str
     selected_answer: Optional[str] = None
+    num_cards: int = Field(default=4, ge=1, le=10)
 
 
 class AIFlashcardCard(BaseModel):

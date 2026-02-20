@@ -48,7 +48,26 @@ def list_decks(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return db.query(FlashcardDeck).filter(FlashcardDeck.user_id == user.id).order_by(FlashcardDeck.updated_at.desc()).all()
+    decks = db.query(FlashcardDeck).filter(FlashcardDeck.user_id == user.id).order_by(FlashcardDeck.updated_at.desc()).all()
+    now = datetime.now(timezone.utc)
+    result = []
+    for deck in decks:
+        cards = db.query(Flashcard).filter(Flashcard.deck_id == deck.id, Flashcard.user_id == user.id).all()
+        new_count = sum(1 for c in cards if c.state == "new" and not c.suspended and not c.buried)
+        learning_count = sum(1 for c in cards if c.state == "learning" and not c.suspended and not c.buried)
+        due_count = sum(
+            1 for c in cards
+            if not c.suspended and not c.buried
+            and c.state not in ("new",)
+            and c.next_review is not None
+            and c.next_review <= now
+        )
+        d = FlashcardDeckResponse.model_validate(deck)
+        d.new_count = new_count
+        d.learning_count = learning_count
+        d.due_count = due_count
+        result.append(d)
+    return result
 
 
 @router.post("/decks", response_model=FlashcardDeckResponse, status_code=status.HTTP_201_CREATED)
@@ -524,7 +543,20 @@ def get_generation_sources(
         )
         systems = sorted([r[0] for r in sys_rows if r[0]])
 
-    return GenerationSourcesResponse(sessions=sessions, sections=sections, systems=systems)
+    # All available sections/systems (not limited to missed)
+    all_sec_rows = db.query(distinct(Question.section)).filter(Question.section.isnot(None)).all()
+    all_sections = sorted([r[0] for r in all_sec_rows if r[0]])
+
+    all_sys_rows = db.query(distinct(Question.system)).filter(Question.system.isnot(None)).all()
+    all_systems = sorted([r[0] for r in all_sys_rows if r[0]])
+
+    return GenerationSourcesResponse(
+        sessions=sessions,
+        sections=sections,
+        systems=systems,
+        all_sections=all_sections,
+        all_systems=all_systems,
+    )
 
 
 @router.post("/generation-questions", response_model=GenerationQuestionsResponse)
@@ -587,6 +619,28 @@ def get_generation_questions(
         } if missed_qids else set()
         target_qids = q_in_system
 
+    elif body.source == "all_section":
+        if not body.section:
+            raise HTTPException(status_code=400, detail="section is required for source=all_section")
+        all_qids = {
+            r[0]
+            for r in db.query(Question.id)
+            .filter(Question.section == body.section)
+            .all()
+        } - existing_qids
+        target_qids = all_qids
+
+    elif body.source == "all_system":
+        if not body.system:
+            raise HTTPException(status_code=400, detail="system is required for source=all_system")
+        all_qids = {
+            r[0]
+            for r in db.query(Question.id)
+            .filter(Question.system == body.system)
+            .all()
+        } - existing_qids
+        target_qids = all_qids
+
     else:
         # Default: "missed" — all incorrect questions without flashcards
         target_qids = {
@@ -603,7 +657,7 @@ def get_generation_questions(
         db.query(Question)
         .filter(Question.id.in_(target_qids))
         .order_by(Question.section, Question.id)
-        .limit(50)
+        .limit(body.limit)
         .all()
     )
 
