@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
@@ -17,6 +17,10 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { APP_NAME, getLogoUrl } from '../config/branding';
+
+const WaveCanvas = lazy(() =>
+  import('../components/landing/WaveCanvas').then((m) => ({ default: m.WaveCanvas }))
+);
 
 const SUBJECTS = ['Cardiology', 'Pulmonology', 'Neurology', 'GI', 'Renal', 'OB/GYN', 'Psych', 'Endocrine'];
 const TESTS = ['Step 2 CK', 'the SAT', 'the ACT', 'the MCAT', 'the GRE', 'the LSAT', 'the USMLE', 'the Bar'];
@@ -142,21 +146,21 @@ export function Landing() {
         aria-label="Main"
       >
         <div className="container h-16 flex items-center justify-between">
-          <Link
-            to="/"
-            className="group inline-flex items-center gap-3 focus-ring rounded-md px-1 py-1.5"
-            aria-label={`${APP_NAME} home`}
-          >
-            <img
-              src={getLogoUrl(theme)}
-              alt=""
-              className="w-7 h-7 rounded-md object-contain shrink-0"
-            />
-            <span className="text-base font-semibold tracking-[0.14em] uppercase text-[var(--color-text-primary)]">
-              {APP_NAME}
-            </span>
-          </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-6">
+            <Link
+              to="/"
+              className="group inline-flex items-center gap-3 focus-ring rounded-md px-1 py-1.5"
+              aria-label={`${APP_NAME} home`}
+            >
+              <img
+                src={getLogoUrl(theme)}
+                alt=""
+                className="w-7 h-7 rounded-md object-contain shrink-0"
+              />
+              <span className="text-base font-semibold tracking-[0.14em] uppercase text-[var(--color-text-primary)]">
+                {APP_NAME}
+              </span>
+            </Link>
             <a
               href="#features"
               className="hidden md:inline-flex text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] px-3 py-2 rounded-md transition-colors focus-ring"
@@ -169,6 +173,8 @@ export function Landing() {
             >
               Pricing
             </a>
+          </div>
+          <div className="flex items-center gap-2">
             <Link to="/login" className="btn btn-ghost text-sm px-4 py-2 rounded-md focus-ring">
               Sign in
             </Link>
@@ -185,7 +191,10 @@ export function Landing() {
 
       {/* ── Hero ── */}
       <section className="chiron-hero relative flex items-center min-h-[calc(100vh-4rem)]">
-        <div className="container grid gap-10 lg:gap-16 lg:grid-cols-[1fr_1fr] xl:grid-cols-[1.1fr_0.9fr] items-center w-full py-16 md:py-24">
+        <Suspense fallback={null}>
+          <WaveCanvas isDark={theme === 'dark'} />
+        </Suspense>
+        <div className="container relative z-10 grid gap-10 lg:gap-16 lg:grid-cols-[1fr_1fr] xl:grid-cols-[1.1fr_0.9fr] items-center w-full py-16 md:py-24">
           <div>
             <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.06] max-w-2xl chiron-entrance" style={{ '--entrance-order': 0 } as React.CSSProperties}>
               Prep for <span className="chiron-typewriter text-[var(--color-brand-blue)]">{typedText}<span className="chiron-cursor" /></span>

@@ -754,6 +754,120 @@ select:focus-visible {
     linear-gradient(160deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 44%, var(--color-bg-secondary) 100%);
 }
 
+/* ── Wave canvas (hero background — top-right diagonal) ── */
+.chiron-wave-canvas {
+  position: absolute;
+  top: -12%;
+  right: -8%;
+  width: 72%;
+  height: 115%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  animation: chiron-wave-fade-in 1.6s ease-out 0.3s forwards;
+  mask-image:
+    linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 15%, rgba(0,0,0,0.7) 32%, black 50%),
+    linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 10%, black 22%, black 72%, transparent 92%);
+  mask-composite: intersect;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 15%, rgba(0,0,0,0.7) 32%, black 50%),
+    linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 10%, black 22%, black 72%, transparent 92%);
+  -webkit-mask-composite: source-in;
+}
+
+.chiron-wave-canvas canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@keyframes chiron-wave-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1023px) {
+  .chiron-wave-canvas {
+    width: 90%;
+    right: -15%;
+    top: -5%;
+    opacity: 0;
+    animation: chiron-wave-fade-in 1.6s ease-out 0.3s forwards;
+  }
+
+  @keyframes chiron-wave-fade-in {
+    to {
+      opacity: 0.55;
+    }
+  }
+}
+
+@media (max-width: 639px) {
+  .chiron-wave-canvas {
+    width: 110%;
+    right: -20%;
+    top: 0;
+    height: 60%;
+  }
+}
+
+/* ── Pro usage bar (animated gradient) ── */
+@keyframes chiron-pro-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.chiron-pro-bar {
+  background: linear-gradient(
+    90deg,
+    var(--color-brand-blue) 0%,
+    #818cf8 20%,
+    #c084fc 40%,
+    var(--color-brand-blue) 60%,
+    #818cf8 80%,
+    #c084fc 100%
+  );
+  background-size: 200% 100%;
+  animation: chiron-pro-shimmer 3s linear infinite;
+}
+
+:root.dark .chiron-pro-bar {
+  background: linear-gradient(
+    90deg,
+    #60a5fa 0%,
+    #a78bfa 20%,
+    #e879f9 40%,
+    #60a5fa 60%,
+    #a78bfa 80%,
+    #e879f9 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Login page: wave fills entire background, centered */
+.chiron-login-page .chiron-wave-canvas {
+  top: -15%;
+  right: -15%;
+  left: -15%;
+  width: 130%;
+  height: 130%;
+  mask-image:
+    radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 75%);
+  -webkit-mask-image:
+    radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 75%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chiron-wave-canvas {
+    display: none;
+  }
+}
+
 /* ── Hero entrance animations ── */
 @keyframes chiron-entrance-in {
   0% {

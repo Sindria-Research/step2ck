@@ -76,23 +76,21 @@ export function Pricing() {
       return <span className="text-sm text-[var(--color-text-primary)]">{value}</span>;
     }
     return value ? (
-      <Check className="w-4 h-4 text-[var(--color-success)]" />
+      <Check className="w-4 h-4 text-[var(--color-success)] mx-auto" />
     ) : (
-      <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+      <X className="w-4 h-4 text-[var(--color-text-muted)] mx-auto" />
     );
   };
 
   return (
     <div className="flex-1 overflow-y-auto bg-[var(--color-bg-secondary)]">
       <div className="max-w-[960px] mx-auto px-6 py-10 md:py-16">
-        {user && (
-          <Link
-            to="/settings"
-            className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors mb-6"
-          >
-            <ChevronLeft className="w-4 h-4" /> Back to settings
-          </Link>
-        )}
+        <Link
+          to={user ? '/settings' : '/'}
+          className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors mb-6"
+        >
+          <ChevronLeft className="w-4 h-4" /> {user ? 'Back to settings' : 'Back to home'}
+        </Link>
 
         <div className="text-center mb-10">
           <p className="text-sm font-bold uppercase tracking-widest text-[var(--color-brand-blue)] mb-3">
