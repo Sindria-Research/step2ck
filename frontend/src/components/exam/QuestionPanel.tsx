@@ -1,6 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Highlighter, Wand2, Bookmark, Sparkles } from 'lucide-react';
-// Wand2 used in selection toolbar, Sparkles in selection explain popup
+import { Highlighter, Wand2, Bookmark, Flag, Sparkles } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { useExam } from '../../context/ExamContext';
 import { useToast } from '../../context/ToastContext';
@@ -14,6 +13,8 @@ export function QuestionPanel() {
     getHighlights,
     examType,
     examFinished,
+    flaggedQuestions,
+    toggleFlag,
   } = useExam();
   const isTestMode = examType === 'test' && !examFinished;
   const stemRef = useRef<HTMLDivElement>(null);
@@ -165,20 +166,35 @@ export function QuestionPanel() {
           {currentQuestion.system && currentQuestion.system !== 'Unknown' && (
             <span className="badge badge-success">{currentQuestion.system}</span>
           )}
-          <button
-            type="button"
-            onClick={handleBookmarkToggle}
-            disabled={bookmarkLoading}
-            className={`ml-auto p-2 rounded-md transition-colors focus-ring shrink-0 ${
-              bookmarked
-                ? 'text-[var(--color-accent)] bg-[var(--color-bg-active)]'
-                : 'text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'
-            }`}
-            title={bookmarked ? 'Remove bookmark' : 'Save to bookmarks'}
-            aria-label={bookmarked ? 'Remove bookmark' : 'Save to bookmarks'}
-          >
-            <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-current' : ''}`} />
-          </button>
+          <div className="ml-auto flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => currentQuestion && toggleFlag(currentQuestion.id)}
+              className={`p-2 rounded-md transition-colors focus-ring ${
+                currentQuestion && flaggedQuestions.has(currentQuestion.id)
+                  ? 'text-[var(--color-warning)] bg-[var(--color-warning)]/10'
+                  : 'text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-warning)]'
+              }`}
+              title={currentQuestion && flaggedQuestions.has(currentQuestion.id) ? 'Unflag question' : 'Flag for review'}
+              aria-label={currentQuestion && flaggedQuestions.has(currentQuestion.id) ? 'Unflag question' : 'Flag for review'}
+            >
+              <Flag className={`w-4 h-4 ${currentQuestion && flaggedQuestions.has(currentQuestion.id) ? 'fill-current' : ''}`} />
+            </button>
+            <button
+              type="button"
+              onClick={handleBookmarkToggle}
+              disabled={bookmarkLoading}
+              className={`p-2 rounded-md transition-colors focus-ring ${
+                bookmarked
+                  ? 'text-[var(--color-accent)] bg-[var(--color-bg-active)]'
+                  : 'text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'
+              }`}
+              title={bookmarked ? 'Remove bookmark' : 'Save to bookmarks'}
+              aria-label={bookmarked ? 'Remove bookmark' : 'Save to bookmarks'}
+            >
+              <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-current' : ''}`} />
+            </button>
+          </div>
         </div>
         <div
           ref={stemRef}

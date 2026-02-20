@@ -75,7 +75,7 @@ export function AppLayout({
                   <button
                     type="button"
                     onClick={() => setQuestionSidebarOpen(false)}
-                    className="absolute top-3 right-3 p-1.5 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring z-10"
+                    className="absolute top-[1.55rem] right-2 p-1 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring z-10"
                     title="Hide question list"
                   >
                     <PanelLeftClose className="w-4 h-4" />
