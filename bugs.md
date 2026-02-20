@@ -8,13 +8,13 @@
 - **Search is client-side filtered:** The search page fetches questions then filters in-browser. For large question banks, this should move to a backend full-text search endpoint.
 - **Flashcard deck card_count:** The `card_count` field on decks is manually incremented/decremented. Deleting cards outside the API (e.g., direct DB edit) can cause drift. Consider a computed field or periodic sync.
 - **Bookmark question hydration:** The Bookmarks page fetches each question individually. For many bookmarks, this creates N+1 requests. A batch endpoint would be better.
-- **No security headers:** Missing CSP, X-Frame-Options, HSTS, X-Content-Type-Options. Should be added as middleware before launch.
 - **Legal pages are placeholders:** ToS and Privacy Policy pages exist at /tos and /privacy but contain placeholder content.
-- **No 404 page:** Unknown routes redirect to /dashboard instead of showing a proper 404.
 - **Bundle size:** Frontend bundle is ~743KB. Should be profiled and reduced before launch.
 
 ## Resolved
 
+- ~~No security headers: SecurityHeadersMiddleware now sets X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy, and HSTS (production only)~~
+- ~~No 404 page: dedicated NotFound page now renders for unknown routes instead of silently redirecting~~
 - ~~Dashboard refetch: now refetches stats on navigation back (uses module flag for initial load)~~
 - ~~React hooks ordering violation in ExplanationPanel (fixed via optional chaining in deps)~~
 - ~~Goal card misalignment in dashboard stats row (fixed with consistent card heights)~~
