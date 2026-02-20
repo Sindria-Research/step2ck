@@ -15,6 +15,7 @@ export function ExamView() {
   const navigate = useNavigate();
   const initialLoadDone = useRef(false);
   const [initialLoadStarted, setInitialLoadStarted] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'question' | 'answer'>('question');
 
   // Reset load guard when exam state is cleared (e.g. retake)
   useEffect(() => {
@@ -109,7 +110,6 @@ export function ExamView() {
   }
 
   const isTestMode = examType === 'test';
-  const [mobileTab, setMobileTab] = useState<'question' | 'answer'>('question');
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">

@@ -274,7 +274,7 @@ export function ExamProvider({ children }: { children: React.ReactNode }) {
           const restoredAnswers = new Map<string, { selected: string; correct: boolean }>();
           const restoredTime = new Map<string, number>();
 
-          for (const a of detail.answers) {
+          for (const a of detail.answers ?? []) {
             if (a.answer_selected != null) {
               restoredAnswers.set(a.question_id, {
                 selected: a.answer_selected,
