@@ -92,13 +92,13 @@ export function PreviousTests() {
     <div className="chiron-dash flex-1 overflow-y-auto min-h-full">
       <div className="dash-glow" />
 
-      <section className="py-14 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>
+      <section className="py-8 md:py-14 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>
         <div className="container">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5 md:mb-8">
             <div>
               <p className="chiron-feature-label">Test</p>
               <h1 className="chiron-feature-heading">Previous Tests</h1>
-              <p className="chiron-feature-body mt-2">Review past test sessions. Only sessions started in Test mode appear here.</p>
+              <p className="chiron-feature-body mt-1 md:mt-2">Review past test sessions.</p>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -140,9 +140,9 @@ export function PreviousTests() {
                 const acc = session.accuracy != null ? Math.round(session.accuracy) : null;
                 return (
                   <div key={session.id} className="chiron-mockup hover:shadow-md transition-shadow">
-                    <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-bold uppercase tracking-wider ${
                             session.status === 'completed'
                               ? 'bg-[color-mix(in_srgb,var(--color-success)_12%,transparent)] text-[var(--color-success)]'
@@ -152,13 +152,27 @@ export function PreviousTests() {
                           </span>
                           <span className="text-xs text-[var(--color-text-muted)]">{formatDate(session.started_at)}</span>
                         </div>
-                        <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                          {session.subjects || 'Mixed'} &middot; {session.mode.replace(/^(practice|test):/, '')} mode &middot; {session.total_questions} questions
+                        <p className="text-sm font-medium text-[var(--color-text-primary)] line-clamp-2">
+                          {session.subjects || 'Mixed'} · {session.total_questions} questions
                         </p>
+
+                        {session.status === 'completed' && acc != null && (
+                          <div className="flex items-center gap-3 mt-2 sm:hidden">
+                            <div className="flex items-center gap-1 text-xs">
+                              <CheckCircle2 className="w-3 h-3 text-[var(--color-success)]" />
+                              <span className="text-[var(--color-text-secondary)]">{session.correct_count}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs">
+                              <XCircle className="w-3 h-3 text-[var(--color-error)]" />
+                              <span className="text-[var(--color-text-secondary)]">{session.incorrect_count}</span>
+                            </div>
+                            <span className="text-sm font-semibold tabular-nums text-[var(--color-text-primary)]">{acc}%</span>
+                          </div>
+                        )}
                       </div>
 
                       {session.status === 'completed' && acc != null && (
-                        <div className="flex items-center gap-4 shrink-0">
+                        <div className="hidden sm:flex items-center gap-4 shrink-0">
                           <div className="flex items-center gap-1.5 text-xs">
                             <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-success)]" />
                             <span className="text-[var(--color-text-secondary)]">{session.correct_count}</span>
@@ -174,7 +188,7 @@ export function PreviousTests() {
                         </div>
                       )}
 
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-0.5 shrink-0">
                         <button
                           type="button"
                           title={session.status === 'in_progress' ? 'Continue' : 'Review'}

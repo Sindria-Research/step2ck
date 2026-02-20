@@ -76,7 +76,7 @@ export function AnswerPanel() {
                     e.preventDefault();
                     if (canInteract) toggleStrikethrough(key);
                   }}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-colors duration-100 focus-ring ${
+                  className={`w-full text-left p-3.5 md:p-4 rounded-lg border-2 transition-colors duration-100 focus-ring answer-choice-mobile ${
                     showCorrect
                       ? 'choice-correct'
                       : showWrong
@@ -104,11 +104,11 @@ export function AnswerPanel() {
       </div>
 
       {showSubmitBar && (
-        <div className="shrink-0 px-4 py-3 md:px-6 md:py-4 border-t border-[var(--color-border)] bg-[var(--color-bg-primary)]">
+        <div className="shrink-0 px-4 py-3 md:px-6 md:py-4 border-t border-[var(--color-border)] bg-[var(--color-bg-primary)] answer-submit-bar">
           <button
             type="button"
             onClick={isTestMode ? lockAnswerAndAdvance : submit}
-            className="btn btn-primary w-full focus-ring py-3 rounded-lg"
+            className="btn btn-primary w-full focus-ring py-3 rounded-lg text-[0.9375rem] font-semibold"
           >
             {isTestMode ? 'Lock Answer & Next' : 'Submit Answer'}
           </button>

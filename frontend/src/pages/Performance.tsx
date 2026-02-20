@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Clock, Zap, TrendingUp } from 'lucide-react';
+import { Clock, Zap, TrendingUp, Layers, Flame } from 'lucide-react';
 import { api } from '../api/api';
-import type { ProgressStats, TimeStats, SectionTrend } from '../api/types';
+import type { ProgressStats, TimeStats, SectionTrend, FlashcardStatsResponse } from '../api/types';
 import { ProgressChart } from '../components/analytics/ProgressChart';
 import { SectionBreakdown } from '../components/analytics/SectionBreakdown';
 
@@ -21,6 +21,7 @@ export function Performance() {
   const [history, setHistory] = useState<Array<{ question_id: string; correct: boolean; section: string }>>([]);
   const [timeStats, setTimeStats] = useState<TimeStats | null>(null);
   const [trends, setTrends] = useState<SectionTrend[]>([]);
+  const [fcStats, setFcStats] = useState<FlashcardStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,12 +33,14 @@ export function Performance() {
       api.progress.list(),
       api.progress.timeStats().catch(() => null),
       api.progress.trends().catch(() => []),
+      api.flashcards.getStats().catch(() => null),
     ])
-      .then(([s, h, ts, tr]) => {
+      .then(([s, h, ts, tr, fc]) => {
         setStats(s);
         setHistory(h);
         if (ts) setTimeStats(ts);
         if (tr) setTrends(tr);
+        if (fc) setFcStats(fc);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load performance data'))
       .finally(() => setLoading(false));
@@ -59,9 +62,9 @@ export function Performance() {
     <div className="chiron-dash flex-1 overflow-y-auto min-h-full">
       <div className="dash-glow" />
 
-      <section className="py-14 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>
+      <section className="py-8 md:py-14 chiron-page-enter" style={{ '--page-enter-order': 0 } as React.CSSProperties}>
         <div className="container">
-          <div className="mb-8">
+          <div className="mb-5 md:mb-8">
             <p className="chiron-feature-label">QBank</p>
             <h1 className="chiron-feature-heading">Performance</h1>
             <p className="chiron-feature-body mt-2">Comprehensive analytics across all your question bank activity.</p>
@@ -77,15 +80,15 @@ export function Performance() {
           )}
 
           {/* Summary row */}
-          <div className="grid sm:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-5 md:mb-8">
             {([
               { label: 'Total Answered', value: total },
               { label: 'Correct', value: correct },
               { label: 'Accuracy', value: total > 0 ? `${accuracy}%` : '—' },
             ] as const).map((item) => (
-              <div key={item.label} className="chiron-mockup text-center py-6">
-                <p className="chiron-mockup-label mb-2">{item.label}</p>
-                <p className="text-3xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
+              <div key={item.label} className="chiron-mockup text-center py-4 md:py-6">
+                <p className="chiron-mockup-label mb-1 md:mb-2 text-[0.55rem] sm:text-[0.72rem]">{item.label}</p>
+                <p className="text-xl sm:text-3xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
                   {loading ? '—' : item.value}
                 </p>
               </div>
@@ -93,7 +96,7 @@ export function Performance() {
           </div>
 
           {/* Charts */}
-          <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid lg:grid-cols-2 gap-4 md:gap-6 mb-5 md:mb-8">
             <div className="chiron-mockup">
               <p className="chiron-mockup-label mb-4">Performance Trend</p>
               <ProgressChart history={history} />
@@ -253,6 +256,123 @@ export function Performance() {
           )}
         </div>
       </section>
+
+      {/* ── Flashcard Performance ── */}
+      {fcStats && fcStats.total_cards > 0 && (
+        <section className="py-8 md:py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 4 } as React.CSSProperties}>
+          <div className="container">
+            <div className="mb-5 md:mb-8">
+              <p className="chiron-feature-label">Retention</p>
+              <h2 className="chiron-feature-heading">Flashcard performance</h2>
+              <p className="chiron-feature-body mt-2">Review history and card maturity tracking.</p>
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 mb-5 md:mb-8">
+              {[
+                { label: 'Total cards', value: String(fcStats.total_cards) },
+                { label: 'Retention', value: `${fcStats.retention_rate}%` },
+                { label: 'Reviews today', value: String(fcStats.reviews_today) },
+                { label: 'Total reviews', value: String(fcStats.total_reviews) },
+                { label: 'Streak', value: fcStats.reviews_streak > 0 ? `${fcStats.reviews_streak}d` : '—' },
+              ].map((item) => (
+                <div key={item.label} className="chiron-mockup text-center py-4 md:py-6">
+                  <p className="chiron-mockup-label mb-1 md:mb-2 text-[0.55rem] sm:text-[0.72rem]">{item.label}</p>
+                  <p className="text-xl sm:text-3xl font-semibold font-display tabular-nums text-[var(--color-text-primary)]">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* 14-day review history */}
+            {fcStats.daily_reviews_history.length > 0 && (
+              <div className="chiron-mockup mb-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Layers className="w-4 h-4 text-[var(--color-text-tertiary)]" />
+                  <p className="chiron-mockup-label">Reviews per day (last 14 days)</p>
+                  {fcStats.reviews_streak > 0 && (
+                    <span className="flex items-center gap-1 ml-auto text-xs font-semibold text-orange-500">
+                      <Flame className="w-3.5 h-3.5" /> {fcStats.reviews_streak}d streak
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-end gap-1 h-28">
+                  {fcStats.daily_reviews_history.map((day) => {
+                    const maxCount = Math.max(...fcStats.daily_reviews_history.map((d) => d.count), 1);
+                    const height = day.count > 0 ? Math.max((day.count / maxCount) * 100, 4) : 2;
+                    return (
+                      <div
+                        key={day.date}
+                        className="flex-1 flex flex-col items-center justify-end"
+                        title={`${day.date}: ${day.count} reviews`}
+                      >
+                        <span className="text-[0.5rem] text-[var(--color-text-muted)] mb-0.5 tabular-nums">
+                          {day.count > 0 ? day.count : ''}
+                        </span>
+                        <div
+                          className="w-full rounded-t transition-all"
+                          style={{
+                            height: `${height}%`,
+                            backgroundColor: day.count > 0 ? 'var(--color-brand-blue)' : 'var(--color-bg-tertiary)',
+                            minHeight: '2px',
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-[0.55rem] text-[var(--color-text-muted)]">
+                    {fcStats.daily_reviews_history[0]?.date.slice(5)}
+                  </span>
+                  <span className="text-[0.55rem] text-[var(--color-text-muted)]">
+                    {fcStats.daily_reviews_history[fcStats.daily_reviews_history.length - 1]?.date.slice(5)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Card state distribution */}
+            <div className="chiron-mockup">
+              <p className="chiron-mockup-label mb-4">Card maturity</p>
+              {(() => {
+                const segments = [
+                  { label: 'New', count: fcStats.cards_new, color: 'var(--color-brand-blue)' },
+                  { label: 'Young', count: fcStats.cards_young, color: '#fbbf24' },
+                  { label: 'Mature', count: fcStats.cards_mature, color: 'var(--color-success)' },
+                  ...(fcStats.cards_suspended > 0 ? [{ label: 'Suspended', count: fcStats.cards_suspended, color: 'var(--color-error)' }] : []),
+                ].filter((s) => s.count > 0);
+                return (
+                  <>
+                    {/* Bar */}
+                    <div className="flex rounded-lg overflow-hidden h-6 mb-3">
+                      {segments.map((s) => (
+                        <div
+                          key={s.label}
+                          style={{ width: `${(s.count / fcStats.total_cards) * 100}%`, backgroundColor: s.color }}
+                          title={`${s.label}: ${s.count}`}
+                        />
+                      ))}
+                    </div>
+                    {/* Legend */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      {segments.map((s) => (
+                        <div key={s.label} className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                          <span className="text-xs text-[var(--color-text-secondary)]">
+                            {s.label} ({s.count})
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

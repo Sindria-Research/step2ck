@@ -187,6 +187,10 @@ export interface FlashcardResponse {
   state: string;
   learning_step: number;
   flagged: boolean;
+  suspended: boolean;
+  buried: boolean;
+  notes: string | null;
+  tags: string | null;
   next_review: string | null;
   last_review: string | null;
   created_at: string;
@@ -411,6 +415,28 @@ export interface FlashcardSettingsUpdate {
   auto_advance?: boolean;
   show_remaining_count?: boolean;
   show_timer?: boolean;
+}
+
+// ── Flashcard Stats ──
+
+export interface FlashcardStatsDayHistory {
+  date: string;
+  count: number;
+}
+
+export interface FlashcardStatsResponse {
+  total_cards: number;
+  cards_new: number;
+  cards_young: number;
+  cards_mature: number;
+  cards_suspended: number;
+  cards_buried: number;
+  reviews_today: number;
+  reviews_streak: number;
+  retention_rate: number;
+  average_ease: number;
+  total_reviews: number;
+  daily_reviews_history: FlashcardStatsDayHistory[];
 }
 
 // ── Bookmarks ──

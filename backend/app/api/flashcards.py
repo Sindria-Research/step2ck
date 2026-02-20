@@ -22,6 +22,8 @@ from app.schemas.flashcard import (
     FlashcardResponse,
     FlashcardReview,
     FlashcardReviewResponse,
+    FlashcardStatsDayHistory,
+    FlashcardStatsResponse,
     FlashcardUpdate,
     GenerationQuestionItem,
     GenerationQuestionsRequest,
@@ -128,6 +130,7 @@ def get_deck_review_cards(
     if not deck:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Deck not found")
     q = db.query(Flashcard).filter(Flashcard.deck_id == deck_id, Flashcard.user_id == user.id)
+    q = q.filter(Flashcard.suspended == False, Flashcard.buried == False)  # noqa: E712
     if mode == "due":
         now = datetime.now(timezone.utc)
         q = q.filter((Flashcard.next_review == None) | (Flashcard.next_review <= now))  # noqa: E711
@@ -144,6 +147,7 @@ def get_due_cards(
     return (
         db.query(Flashcard)
         .filter(Flashcard.user_id == user.id)
+        .filter(Flashcard.suspended == False, Flashcard.buried == False)  # noqa: E712
         .filter((Flashcard.next_review == None) | (Flashcard.next_review <= now))  # noqa: E711
         .limit(limit)
         .all()
@@ -309,6 +313,98 @@ def delete_card(
 
     db.delete(card)
     db.commit()
+
+
+@router.post("/cards/unbury-all", status_code=status.HTTP_200_OK)
+def unbury_all_cards(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Reset buried status on all user's cards."""
+    count = (
+        db.query(Flashcard)
+        .filter(Flashcard.user_id == user.id, Flashcard.buried == True)  # noqa: E712
+        .update({Flashcard.buried: False})
+    )
+    db.commit()
+    return {"unburied": count}
+
+
+# ── Stats ──
+
+@router.get("/stats", response_model=FlashcardStatsResponse)
+def get_flashcard_stats(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Aggregate flashcard stats for the current user."""
+    from datetime import timedelta, date as date_type
+
+    cards = db.query(Flashcard).filter(Flashcard.user_id == user.id).all()
+    total = len(cards)
+    cards_new = sum(1 for c in cards if c.state == "new" and not c.suspended)
+    cards_suspended = sum(1 for c in cards if c.suspended)
+    cards_buried = sum(1 for c in cards if c.buried)
+    cards_mature = sum(1 for c in cards if c.interval_days >= 21 and not c.suspended)
+    cards_young = total - cards_new - cards_mature - cards_suspended
+
+    today = datetime.now(timezone.utc).date()
+
+    # Reviews today and streak: count reviews by last_review date
+    review_dates: dict[date_type, int] = {}
+    total_reviews = 0
+    good_easy_count = 0
+    ease_sum = 0.0
+    reviewed_cards = 0
+    for c in cards:
+        if c.last_review:
+            d = c.last_review.date() if hasattr(c.last_review, 'date') else c.last_review
+            review_dates[d] = review_dates.get(d, 0) + 1
+        if c.repetitions > 0:
+            total_reviews += c.repetitions
+            ease_sum += c.ease_factor
+            reviewed_cards += 1
+            if c.state == "review" and c.interval_days >= 1:
+                good_easy_count += 1
+
+    reviews_today = review_dates.get(today, 0)
+
+    # Streak: consecutive days ending today (or yesterday) with at least 1 review
+    streak = 0
+    check_date = today
+    if check_date not in review_dates and (check_date - timedelta(days=1)) in review_dates:
+        check_date = check_date - timedelta(days=1)
+    while check_date in review_dates:
+        streak += 1
+        check_date -= timedelta(days=1)
+
+    # Retention rate: proportion of cards currently in review state vs total reviewed
+    retention_rate = (good_easy_count / reviewed_cards * 100) if reviewed_cards > 0 else 0.0
+    average_ease = (ease_sum / reviewed_cards) if reviewed_cards > 0 else 2.5
+
+    # Daily history for last 14 days
+    daily_history: list[FlashcardStatsDayHistory] = []
+    for i in range(13, -1, -1):
+        d = today - timedelta(days=i)
+        daily_history.append(FlashcardStatsDayHistory(
+            date=d.isoformat(),
+            count=review_dates.get(d, 0),
+        ))
+
+    return FlashcardStatsResponse(
+        total_cards=total,
+        cards_new=cards_new,
+        cards_young=max(0, cards_young),
+        cards_mature=cards_mature,
+        cards_suspended=cards_suspended,
+        cards_buried=cards_buried,
+        reviews_today=reviews_today,
+        reviews_streak=streak,
+        retention_rate=round(retention_rate, 1),
+        average_ease=round(average_ease, 2),
+        total_reviews=total_reviews,
+        daily_reviews_history=daily_history,
+    )
 
 
 # ── Settings ──

@@ -184,7 +184,7 @@ export function AppSidebar() {
         to={to}
         end={hasQuery}
         className={() =>
-          `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors focus-ring ${
+          `flex items-center gap-3 px-3 py-2.5 md:py-2 rounded-md text-sm transition-colors focus-ring ${
             isItemActive
               ? 'bg-[var(--color-bg-active)] text-[var(--color-accent-text)]'
               : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]'
@@ -212,7 +212,7 @@ export function AppSidebar() {
     <>
     {mobileOpen && (
       <div
-        className="fixed inset-0 z-40 bg-black/40 md:hidden"
+        className="fixed inset-0 z-40 bg-black/40 md:hidden mobile-sidebar-overlay backdrop-blur-sm"
         onClick={() => setMobileOpen(false)}
         aria-hidden="true"
       />
@@ -222,8 +222,8 @@ export function AppSidebar() {
       className={`shrink-0 flex flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-primary)] transition-[width,transform] duration-200 ease-in-out overflow-hidden ${
         collapsed ? 'w-14' : 'w-56'
       } fixed inset-y-0 left-0 z-50 md:relative md:z-auto ${
-        mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-      }`}
+        mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'
+      } max-md:w-[17rem]`}
       aria-label="Main navigation"
       {...(mobileOpen ? { role: 'dialog' as const, 'aria-modal': true } : {})}
     >

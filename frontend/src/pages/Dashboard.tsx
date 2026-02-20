@@ -10,9 +10,12 @@ import {
   AlertTriangle,
   Activity,
   Filter,
+  Layers,
+  Play,
+  Flame,
 } from 'lucide-react';
 import { api } from '../api/api';
-import type { ProgressStats, ProgressRecord, DailySummary } from '../api/types';
+import type { ProgressStats, ProgressRecord, DailySummary, FlashcardStatsResponse } from '../api/types';
 import { Skeleton, SkeletonCard, EmptyState, CircularProgress } from '../components/common';
 import { QuestionGoalModal } from '../components/dashboard/QuestionGoalModal';
 import { useQuestionGoal } from '../hooks/useQuestionGoal';
@@ -61,6 +64,7 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
+  const [fcStats, setFcStats] = useState<FlashcardStatsResponse | null>(null);
   const dashRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -82,12 +86,14 @@ export function Dashboard() {
       api.progress.stats(),
       api.progress.list(),
       api.progress.dailySummary().catch(() => null),
+      api.flashcards.getStats().catch(() => null),
     ])
-      .then(([statsData, historyData, daily]) => {
+      .then(([statsData, historyData, daily, fc]) => {
         if (!cancelled) {
           setStats(statsData);
           setHistory(historyData);
           if (daily) setDailySummary(daily);
+          if (fc) setFcStats(fc);
           dashboardHasLoadedOnce = true;
         }
       })
@@ -193,7 +199,7 @@ export function Dashboard() {
 
       {/* ── Hero Stripe ── */}
       <section
-        className="relative z-[1] pt-10 pb-8 md:pt-14 md:pb-10 chiron-page-enter"
+        className="relative z-[1] pt-6 pb-5 md:pt-14 md:pb-10 chiron-page-enter"
         style={{
           '--page-enter-order': 0,
           backgroundColor: 'var(--color-bg-secondary)',
@@ -202,13 +208,13 @@ export function Dashboard() {
       >
         <div className="container">
           <div className="max-w-4xl">
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-[0.7rem] font-bold tracking-wider text-[var(--color-text-secondary)] uppercase mb-4 shadow-sm">
+            <span className="hidden md:inline-flex items-center px-3 py-1 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-[0.7rem] font-bold tracking-wider text-[var(--color-text-secondary)] uppercase mb-4 shadow-sm">
               Dashboard
             </span>
-            <h1 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.08]">
+            <h1 className="text-2xl md:text-4xl lg:text-[2.75rem] font-semibold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.08]">
               Your Performance Dashboard
             </h1>
-            <p className="mt-3 text-base text-[var(--color-text-secondary)] max-w-xl leading-relaxed">
+            <p className="mt-2 md:mt-3 text-sm md:text-base text-[var(--color-text-secondary)] max-w-xl leading-relaxed">
               {hasData
                 ? dailySummary
                   ? dailySummary.today_count > 0
@@ -218,11 +224,11 @@ export function Dashboard() {
                 : 'Start a test to track your Step 2 CK preparation.'}
             </p>
 
-            <div className="flex flex-wrap items-center gap-3 mt-6">
+            <div className="flex flex-wrap items-center gap-2.5 mt-5 md:mt-6">
               <button
                 type="button"
                 onClick={() => navigate('/exam/config')}
-                className="chiron-btn chiron-btn-primary px-6 py-3 rounded-md focus-ring inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold"
+                className="chiron-btn chiron-btn-primary px-5 py-2.5 md:px-6 md:py-3 rounded-md focus-ring inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold"
               >
                 New test
                 <ArrowRight className="w-4 h-4" />
@@ -230,7 +236,7 @@ export function Dashboard() {
               <button
                 type="button"
                 onClick={() => navigate('/lab-values')}
-                className="px-5 py-2.5 rounded-md focus-ring whitespace-nowrap text-sm font-medium border border-[var(--color-border)] text-[var(--color-text-secondary)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+                className="px-4 py-2.5 rounded-md focus-ring whitespace-nowrap text-sm font-medium border border-[var(--color-border)] text-[var(--color-text-secondary)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
               >
                 Lab values
               </button>
@@ -240,13 +246,13 @@ export function Dashboard() {
       </section>
 
       {/* ── Stats Stripe ── */}
-      <section className="py-12 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 1 } as React.CSSProperties}>
+      <section className="py-8 md:py-12 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 1 } as React.CSSProperties}>
         <div className="container">
-          <div className="mb-8">
+          <div className="mb-5 md:mb-8">
             <p className="chiron-feature-label">Overview</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid md:grid-cols-2 gap-4 md:gap-5">
             {/* Today's Progress — dominant card */}
             <div
               className="chiron-mockup flex flex-col"
@@ -358,9 +364,9 @@ export function Dashboard() {
 
 
       {/* ── Analytics Stripe ── */}
-      <section className="py-12 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 3 } as React.CSSProperties}>
+      <section className="py-8 md:py-12 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_94%,transparent)] chiron-page-enter" style={{ '--page-enter-order': 3 } as React.CSSProperties}>
         <div className="container">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 md:mb-8">
             <div>
               <p className="chiron-feature-label">Analytics</p>
             </div>
@@ -373,7 +379,7 @@ export function Dashboard() {
                 <select
                   value={sectionFilter}
                   onChange={(e) => setSectionFilter(e.target.value)}
-                  className="pl-9 pr-8 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm font-medium text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] appearance-none cursor-pointer hover:border-[var(--color-border-hover)] min-w-[180px]"
+                  className="w-full sm:w-auto pl-9 pr-8 py-2.5 sm:py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm font-medium text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] appearance-none cursor-pointer hover:border-[var(--color-border-hover)] sm:min-w-[180px]"
                 >
                   <option value="all">All Sections</option>
                   {availableSections.map(s => (
@@ -387,7 +393,7 @@ export function Dashboard() {
             )}
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
             <div className="chiron-mockup" style={{ padding: filteredHistory.length < 10 ? undefined : '1rem 1rem 0.75rem' }}>
               <p className="chiron-mockup-label mb-3">Performance Trend</p>
               {filteredHistory.length < 10 ? (
@@ -414,9 +420,9 @@ export function Dashboard() {
 
       {/* ── Readiness Score Stripe ── */}
       {hasData && stats && (
-        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 4 } as React.CSSProperties}>
+        <section className="py-8 md:py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 4 } as React.CSSProperties}>
           <div className="container">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-4 md:gap-6">
               <div
                 className="chiron-mockup flex flex-col items-center text-center py-8"
                 style={{
@@ -500,9 +506,9 @@ export function Dashboard() {
 
       {/* ── Section Performance Stripe ── */}
       {hasData && bySection.length > 0 && (
-        <section className="py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 5 } as React.CSSProperties}>
+        <section className="py-8 md:py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 5 } as React.CSSProperties}>
           <div className="container">
-            <div className="grid md:grid-cols-[0.35fr_0.65fr] gap-12 items-start">
+            <div className="grid md:grid-cols-[0.35fr_0.65fr] gap-6 md:gap-12 items-start">
               <div>
                 <p className="chiron-feature-label">Breakdown</p>
                 <h2 className="chiron-feature-heading">Performance by section</h2>
@@ -565,6 +571,120 @@ export function Dashboard() {
                     );
                   })}
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Flashcard Progress Stripe ── */}
+      {fcStats && fcStats.total_cards > 0 && (
+        <section className="py-8 md:py-14 border-t border-[var(--color-border)] chiron-page-enter" style={{ '--page-enter-order': 6 } as React.CSSProperties}>
+          <div className="container">
+            <div className="grid md:grid-cols-[0.35fr_0.65fr] gap-6 md:gap-12 items-start">
+              <div>
+                <p className="chiron-feature-label">Retention</p>
+                <h2 className="chiron-feature-heading">Flashcard progress</h2>
+                <p className="chiron-feature-body mt-4">
+                  Spaced repetition drives long-term retention. Review your cards daily to build and maintain streaks.
+                </p>
+                {fcStats.reviews_streak > 0 && (
+                  <div className="flex items-center gap-2 mt-6 px-4 py-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                    <Flame className="w-5 h-5 text-orange-500" />
+                    <span className="text-sm font-semibold text-orange-500">{fcStats.reviews_streak} day streak</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => navigate('/flashcards')}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg btn-primary text-sm font-medium transition-all focus-ring mt-6"
+                >
+                  <Play className="w-4 h-4" />
+                  Review cards
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Stats grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: 'Today', value: String(fcStats.reviews_today), color: 'var(--color-brand-blue)' },
+                    { label: 'Retention', value: `${fcStats.retention_rate}%`, color: 'var(--color-success)' },
+                    { label: 'Total reviews', value: String(fcStats.total_reviews), color: 'var(--color-text-secondary)' },
+                    { label: 'Avg ease', value: fcStats.average_ease.toFixed(2), color: 'var(--color-text-secondary)' },
+                  ].map((s) => (
+                    <div key={s.label} className="chiron-mockup text-center" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+                      <p className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">{s.label}</p>
+                      <p className="text-xl font-semibold tabular-nums mt-1" style={{ color: s.color }}>{s.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Card distribution */}
+                <div className="chiron-mockup" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Layers className="w-4 h-4 text-[var(--color-text-tertiary)]" />
+                    <p className="chiron-mockup-label">Card breakdown</p>
+                  </div>
+                  <div className="space-y-2.5">
+                    {[
+                      { label: 'New', count: fcStats.cards_new, color: 'var(--color-brand-blue)' },
+                      { label: 'Young', count: fcStats.cards_young, color: 'var(--color-success)' },
+                      { label: 'Mature', count: fcStats.cards_mature, color: '#10b981' },
+                      ...(fcStats.cards_suspended > 0 ? [{ label: 'Suspended', count: fcStats.cards_suspended, color: 'var(--color-error)' }] : []),
+                    ].map((item) => {
+                      const pct = fcStats.total_cards > 0 ? Math.round((item.count / fcStats.total_cards) * 100) : 0;
+                      return (
+                        <div key={item.label}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-[var(--color-text-primary)]">{item.label}</span>
+                            <span className="text-xs tabular-nums text-[var(--color-text-muted)]">{item.count} ({pct}%)</span>
+                          </div>
+                          <div className="chiron-meter-track">
+                            <div className="chiron-meter-fill" style={{ width: `${Math.max(pct, 1)}%`, backgroundColor: item.color }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 14-day review history */}
+                {fcStats.daily_reviews_history.length > 0 && (
+                  <div className="chiron-mockup" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+                    <p className="chiron-mockup-label mb-3">Reviews (last 14 days)</p>
+                    <div className="flex items-end gap-1 h-24">
+                      {fcStats.daily_reviews_history.map((day) => {
+                        const maxCount = Math.max(...fcStats.daily_reviews_history.map((d) => d.count), 1);
+                        const height = day.count > 0 ? Math.max((day.count / maxCount) * 100, 4) : 2;
+                        return (
+                          <div
+                            key={day.date}
+                            className="flex-1 flex flex-col items-center justify-end gap-1"
+                            title={`${day.date}: ${day.count} reviews`}
+                          >
+                            <div
+                              className="w-full rounded-t transition-all"
+                              style={{
+                                height: `${height}%`,
+                                backgroundColor: day.count > 0 ? 'var(--color-brand-blue)' : 'var(--color-bg-tertiary)',
+                                minHeight: '2px',
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-[0.55rem] text-[var(--color-text-muted)]">
+                        {fcStats.daily_reviews_history[0]?.date.slice(5)}
+                      </span>
+                      <span className="text-[0.55rem] text-[var(--color-text-muted)]">
+                        {fcStats.daily_reviews_history[fcStats.daily_reviews_history.length - 1]?.date.slice(5)}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

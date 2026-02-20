@@ -13,6 +13,8 @@ import {
   Users,
   Shield,
   Zap,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -43,6 +45,7 @@ export function Landing() {
     () => new Set(['Cardiology', 'Neurology', 'GI'])
   );
   const [activeReviewTab, setActiveReviewTab] = useState<'incorrect' | 'unused'>('incorrect');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [typedText, setTypedText] = useState('');
   const [testIndex, setTestIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -145,11 +148,11 @@ export function Landing() {
         className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-primary)_86%,transparent)] backdrop-blur-xl"
         aria-label="Main"
       >
-        <div className="container h-16 flex items-center justify-between">
+        <div className="container h-14 md:h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link
               to="/"
-              className="group inline-flex items-center gap-3 focus-ring rounded-md px-1 py-1.5"
+              className="group inline-flex items-center gap-2.5 focus-ring rounded-md px-1 py-1.5"
               aria-label={`${APP_NAME} home`}
             >
               <img
@@ -157,7 +160,7 @@ export function Landing() {
                 alt=""
                 className="w-7 h-7 rounded-md object-contain shrink-0"
               />
-              <span className="text-base font-semibold tracking-[0.14em] uppercase text-[var(--color-text-primary)]">
+              <span className="text-sm md:text-base font-semibold tracking-[0.14em] uppercase text-[var(--color-text-primary)]">
                 {APP_NAME}
               </span>
             </Link>
@@ -174,7 +177,7 @@ export function Landing() {
               Pricing
             </a>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2">
             <Link to="/login" className="btn btn-ghost text-sm px-4 py-2 rounded-md focus-ring">
               Sign in
             </Link>
@@ -186,35 +189,78 @@ export function Landing() {
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
+          <button
+            type="button"
+            className="sm:hidden p-2 rounded-md text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring"
+            onClick={() => setMobileNavOpen((o) => !o)}
+            aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+          >
+            {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
+        {mobileNavOpen && (
+          <div className="sm:hidden mobile-nav-menu border-t border-[var(--color-border)] bg-[var(--color-bg-primary)] px-4 py-3 space-y-1">
+            <a
+              href="#features"
+              onClick={() => setMobileNavOpen(false)}
+              className="block px-3 py-2.5 rounded-md text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              Features
+            </a>
+            <a
+              href="#pricing"
+              onClick={() => setMobileNavOpen(false)}
+              className="block px-3 py-2.5 rounded-md text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              Pricing
+            </a>
+            <div className="pt-2 border-t border-[var(--color-border)] flex flex-col gap-2">
+              <Link
+                to="/login"
+                onClick={() => setMobileNavOpen(false)}
+                className="block px-3 py-2.5 rounded-md text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] text-center"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/login"
+                onClick={() => setMobileNavOpen(false)}
+                className="chiron-btn chiron-btn-primary text-sm px-4 py-2.5 rounded-md focus-ring inline-flex items-center justify-center gap-2"
+              >
+                Get started
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* ── Hero ── */}
-      <section className="chiron-hero relative flex items-center min-h-[calc(100vh-4rem)]">
+      <section className="chiron-hero relative flex items-center min-h-[calc(100vh-3.5rem)] md:min-h-[calc(100vh-4rem)]">
         <Suspense fallback={null}>
           <WaveCanvas isDark={theme === 'dark'} />
         </Suspense>
-        <div className="container relative z-10 grid gap-10 lg:gap-16 lg:grid-cols-[1fr_1fr] xl:grid-cols-[1.1fr_0.9fr] items-center w-full py-16 md:py-24">
+        <div className="container relative z-10 grid gap-8 lg:gap-16 lg:grid-cols-[1fr_1fr] xl:grid-cols-[1.1fr_0.9fr] items-center w-full py-10 md:py-24">
           <div>
-            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.06] max-w-2xl chiron-entrance" style={{ '--entrance-order': 0 } as React.CSSProperties}>
+            <h1 className="text-3xl md:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.06] max-w-2xl chiron-entrance" style={{ '--entrance-order': 0 } as React.CSSProperties}>
               Prep for <span className="chiron-typewriter text-[var(--color-brand-blue)]">{typedText}<span className="chiron-cursor" /></span>
             </h1>
-            <p className="mt-6 text-base md:text-lg lg:text-xl text-[var(--color-text-secondary)] max-w-xl leading-relaxed chiron-entrance" style={{ '--entrance-order': 1 } as React.CSSProperties}>
+            <p className="mt-4 md:mt-6 text-sm md:text-lg lg:text-xl text-[var(--color-text-secondary)] max-w-xl leading-relaxed chiron-entrance" style={{ '--entrance-order': 1 } as React.CSSProperties}>
               Practice, track, and adapt in one clean workspace.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 chiron-entrance" style={{ '--entrance-order': 3 } as React.CSSProperties}>
+            <div className="mt-6 md:mt-8 flex flex-col sm:flex-row gap-3 chiron-entrance" style={{ '--entrance-order': 3 } as React.CSSProperties}>
               <Link
                 to="/login"
-                className="chiron-btn chiron-btn-primary px-6 py-3 rounded-lg focus-ring inline-flex items-center gap-2 text-base"
+                className="chiron-btn chiron-btn-primary px-6 py-3 rounded-lg focus-ring inline-flex items-center justify-center gap-2 text-base"
               >
                 Start studying
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <a href="#features" className="chiron-btn chiron-btn-subtle px-6 py-3 rounded-lg focus-ring text-base">
+              <a href="#features" className="chiron-btn chiron-btn-subtle px-6 py-3 rounded-lg focus-ring text-base text-center">
                 See how it works
               </a>
             </div>
-            <div className="mt-8 flex flex-wrap items-center gap-2.5 chiron-entrance" style={{ '--entrance-order': 4 } as React.CSSProperties}>
+            <div className="mt-6 md:mt-8 flex flex-wrap items-center gap-2 md:gap-2.5 chiron-entrance" style={{ '--entrance-order': 4 } as React.CSSProperties}>
               <span className="chiron-stat-pill"><Clock3 className="w-3.5 h-3.5" /> Timed sets</span>
               <span className="chiron-stat-pill"><Target className="w-3.5 h-3.5" /> Adaptive review</span>
               <span className="chiron-stat-pill"><Activity className="w-3.5 h-3.5" /> Live progress</span>
@@ -464,13 +510,13 @@ export function Landing() {
       </section>
 
       {/* ── Pricing ── */}
-      <section id="pricing" className="py-14 md:py-16 border-t border-[var(--color-border)]">
+      <section id="pricing" className="py-10 md:py-16 border-t border-[var(--color-border)]">
         <div className="container">
-          <div className="text-center mb-10 chiron-reveal" data-reveal>
+          <div className="text-center mb-8 md:mb-10 chiron-reveal" data-reveal>
             <p className="text-sm font-bold uppercase tracking-widest text-[var(--color-brand-blue)] mb-3">
               Pricing
             </p>
-            <h2 className="text-3xl md:text-4xl font-semibold font-display tracking-tight text-[var(--color-text-primary)]">
+            <h2 className="text-2xl md:text-4xl font-semibold font-display tracking-tight text-[var(--color-text-primary)]">
               Start free. Upgrade when ready.
             </h2>
             <p className="mt-3 text-base text-[var(--color-text-secondary)] max-w-lg mx-auto">
@@ -545,16 +591,16 @@ export function Landing() {
       </section>
 
       {/* ── Social Proof ── */}
-      <section className="py-12 border-t border-[var(--color-border)] chiron-reveal" data-reveal>
+      <section className="py-10 md:py-12 border-t border-[var(--color-border)] chiron-reveal" data-reveal>
         <div className="container">
-          <div className="flex flex-col items-center text-center gap-6">
+          <div className="flex flex-col items-center text-center gap-4 md:gap-6">
             <p className="text-sm font-bold uppercase tracking-widest text-[var(--color-brand-blue)]">
               Trusted by students
             </p>
-            <h2 className="text-3xl md:text-4xl font-semibold font-display tracking-tight text-[var(--color-text-primary)]">
+            <h2 className="text-2xl md:text-4xl font-semibold font-display tracking-tight text-[var(--color-text-primary)]">
               Join students preparing smarter
             </h2>
-            <div className="flex flex-wrap justify-center gap-8 mt-4">
+            <div className="flex flex-wrap justify-center gap-3 md:gap-8 mt-2 md:mt-4">
               <div className="flex items-center gap-3 px-5 py-3 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-xl shadow-sm">
                 <Users className="w-5 h-5 text-[var(--color-brand-blue)]" />
                 <div className="text-left">
@@ -582,20 +628,20 @@ export function Landing() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-14 md:py-16">
+      <section className="py-10 md:py-16">
         <div className="container">
           <div className="chiron-cta-wrap chiron-reveal" data-reveal>
             <div>
-              <h2 className="text-2xl md:text-3xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight">
+              <h2 className="text-xl md:text-3xl font-semibold text-[var(--color-text-primary)] font-display tracking-tight">
                 Enter Chiron.
               </h2>
-              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+              <p className="mt-1.5 md:mt-2 text-sm text-[var(--color-text-secondary)]">
                 Try it out today - start learning now.
               </p>
             </div>
             <Link
               to="/login"
-              className="chiron-btn chiron-btn-primary px-6 py-2.5 rounded-md focus-ring inline-flex items-center gap-2"
+              className="chiron-btn chiron-btn-primary px-6 py-2.5 rounded-md focus-ring inline-flex items-center gap-2 w-full sm:w-auto justify-center"
             >
               Continue
               <ArrowRight className="w-4 h-4" />

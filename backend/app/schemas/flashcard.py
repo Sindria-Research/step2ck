@@ -40,6 +40,10 @@ class FlashcardUpdate(BaseModel):
     front: Optional[str] = None
     back: Optional[str] = None
     flagged: Optional[bool] = None
+    suspended: Optional[bool] = None
+    buried: Optional[bool] = None
+    notes: Optional[str] = None
+    tags: Optional[str] = None
 
 
 class FlashcardReview(BaseModel):
@@ -62,6 +66,10 @@ class FlashcardResponse(BaseModel):
     state: str
     learning_step: int = 0
     flagged: bool
+    suspended: bool = False
+    buried: bool = False
+    notes: Optional[str] = None
+    tags: Optional[str] = None
     next_review: Optional[datetime] = None
     last_review: Optional[datetime] = None
     created_at: datetime
@@ -127,3 +135,25 @@ class GenerationQuestionItem(BaseModel):
 
 class GenerationQuestionsResponse(BaseModel):
     questions: list[GenerationQuestionItem]
+
+
+# ── Flashcard Stats ──
+
+class FlashcardStatsDayHistory(BaseModel):
+    date: str
+    count: int
+
+
+class FlashcardStatsResponse(BaseModel):
+    total_cards: int = 0
+    cards_new: int = 0
+    cards_young: int = 0
+    cards_mature: int = 0
+    cards_suspended: int = 0
+    cards_buried: int = 0
+    reviews_today: int = 0
+    reviews_streak: int = 0
+    retention_rate: float = 0.0
+    average_ease: float = 0.0
+    total_reviews: int = 0
+    daily_reviews_history: list[FlashcardStatsDayHistory] = []

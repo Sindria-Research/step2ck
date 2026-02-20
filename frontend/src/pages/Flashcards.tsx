@@ -19,6 +19,12 @@ import {
   Keyboard,
   BarChart3,
   Settings,
+  Eye,
+  EyeOff,
+  Archive,
+  StickyNote,
+  Tag,
+  Info,
 } from 'lucide-react';
 import { api } from '../api/api';
 import type {
@@ -156,6 +162,12 @@ export function Flashcards() {
   const [editingCardId, setEditingCardId] = useState<number | null>(null);
   const [editFront, setEditFront] = useState('');
   const [editBack, setEditBack] = useState('');
+
+  // Card detail modal
+  const [detailCard, setDetailCard] = useState<FlashcardResponse | null>(null);
+  const [detailNotes, setDetailNotes] = useState('');
+  const [detailTags, setDetailTags] = useState('');
+  const [detailSaving, setDetailSaving] = useState(false);
 
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
@@ -358,6 +370,45 @@ export function Flashcards() {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const openCardDetail = (card: FlashcardResponse) => {
+    setDetailCard(card);
+    setDetailNotes(card.notes ?? '');
+    setDetailTags(card.tags ?? '');
+  };
+
+  const handleDetailSave = useCallback(async () => {
+    if (!detailCard) return;
+    setDetailSaving(true);
+    try {
+      const updated = await api.flashcards.updateCard(detailCard.id, {
+        notes: detailNotes,
+        tags: detailTags,
+      });
+      setDetailCard(updated);
+      setCards((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+    } catch {
+      addToast('Failed to save card', 'error');
+    }
+    setDetailSaving(false);
+  }, [detailCard, detailNotes, detailTags, addToast]);
+
+  const handleCardAction = useCallback(async (cardId: number, action: 'suspend' | 'unsuspend' | 'bury' | 'flag' | 'unflag') => {
+    const body: Record<string, boolean> = {};
+    if (action === 'suspend') body.suspended = true;
+    if (action === 'unsuspend') body.suspended = false;
+    if (action === 'bury') body.buried = true;
+    if (action === 'flag') body.flagged = true;
+    if (action === 'unflag') body.flagged = false;
+    try {
+      const updated = await api.flashcards.updateCard(cardId, body);
+      setCards((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+      setDetailCard((prev) => prev?.id === updated.id ? updated : prev);
+      setDueCards((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+    } catch {
+      addToast('Action failed', 'error');
+    }
+  }, [addToast]);
 
   const startReview = () => {
     if (dueCards.length === 0) return;
@@ -1280,12 +1331,27 @@ export function Flashcards() {
                           </div>
                         ) : (
                           <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
+                            <button
+                              type="button"
+                              onClick={() => openCardDetail(card)}
+                              className="min-w-0 flex-1 text-left"
+                            >
                               <p className="text-sm font-medium text-[var(--color-text-primary)] break-words">
                                 {card.front}
                               </p>
                               <p className="text-xs text-[var(--color-text-tertiary)] mt-1 break-words">{card.back}</p>
-                            </div>
+                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider ${
+                                  card.state === 'new' ? 'bg-blue-500/10 text-blue-500' :
+                                  card.state === 'learning' || card.state === 'relearning' ? 'bg-orange-500/10 text-orange-500' :
+                                  'bg-green-500/10 text-green-500'
+                                }`}>{card.state}</span>
+                                {card.suspended && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider bg-red-500/10 text-red-500">Suspended</span>}
+                                {card.buried && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider bg-yellow-500/10 text-yellow-500">Buried</span>}
+                                {card.flagged && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.6rem] font-semibold uppercase tracking-wider bg-red-500/10 text-red-400">Flagged</span>}
+                                {card.interval_days > 0 && <span className="text-[0.6rem] text-[var(--color-text-muted)]">{card.interval_days}d interval</span>}
+                              </div>
+                            </button>
                             <div className="flex items-center gap-0.5 shrink-0">
                               <button
                                 type="button"
@@ -1703,6 +1769,148 @@ export function Flashcards() {
               </div>
             );
           })()}
+
+          {/* Card detail modal */}
+          <Modal open={!!detailCard} onClose={() => setDetailCard(null)} title="Card Details" size="lg">
+            {detailCard && (
+              <div className="space-y-5 max-h-[calc(80vh-5rem)] overflow-y-auto">
+                {/* Content */}
+                <div>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)] mb-2">Content</h4>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 space-y-2">
+                    <div>
+                      <span className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Front</span>
+                      <FlashcardHtml content={detailCard.front} className="text-sm text-[var(--color-text-primary)] mt-0.5" />
+                    </div>
+                    <hr className="border-[var(--color-border)]" />
+                    <div>
+                      <span className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Back</span>
+                      <FlashcardHtml content={detailCard.back} className="text-sm text-[var(--color-text-primary)] mt-0.5" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)] mb-2">
+                    <StickyNote className="w-3.5 h-3.5" /> Notes
+                  </label>
+                  <textarea
+                    value={detailNotes}
+                    onChange={(e) => setDetailNotes(e.target.value)}
+                    placeholder="Add personal notes or mnemonics..."
+                    rows={3}
+                    className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)] resize-y"
+                  />
+                </div>
+
+                {/* Tags */}
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)] mb-2">
+                    <Tag className="w-3.5 h-3.5" /> Tags
+                  </label>
+                  <input
+                    type="text"
+                    value={detailTags}
+                    onChange={(e) => setDetailTags(e.target.value)}
+                    placeholder="Comma-separated, e.g. cardiology, murmurs"
+                    className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-blue)]"
+                  />
+                </div>
+
+                {/* Save notes/tags */}
+                {(detailNotes !== (detailCard.notes ?? '') || detailTags !== (detailCard.tags ?? '')) && (
+                  <button
+                    type="button"
+                    onClick={handleDetailSave}
+                    disabled={detailSaving}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg btn-primary text-sm font-medium transition-all focus-ring"
+                  >
+                    <Check className="w-4 h-4" />
+                    {detailSaving ? 'Saving...' : 'Save notes & tags'}
+                  </button>
+                )}
+
+                {/* Scheduling info */}
+                <div>
+                  <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)] mb-2">
+                    <Info className="w-3.5 h-3.5" /> Scheduling
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {[
+                      { label: 'State', value: detailCard.state },
+                      { label: 'Interval', value: `${detailCard.interval_days}d` },
+                      { label: 'Stability', value: detailCard.stability.toFixed(2) },
+                      { label: 'Difficulty', value: detailCard.difficulty.toFixed(2) },
+                      { label: 'Ease', value: detailCard.ease_factor.toFixed(2) },
+                      { label: 'Repetitions', value: String(detailCard.repetitions) },
+                      { label: 'Lapses', value: String(detailCard.lapses) },
+                      { label: 'Step', value: String(detailCard.learning_step) },
+                      { label: 'Next review', value: detailCard.next_review ? new Date(detailCard.next_review).toLocaleDateString() : 'N/A' },
+                      { label: 'Last review', value: detailCard.last_review ? new Date(detailCard.last_review).toLocaleDateString() : 'N/A' },
+                      { label: 'Created', value: new Date(detailCard.created_at).toLocaleDateString() },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-2">
+                        <p className="text-[0.6rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">{item.label}</p>
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)] mt-0.5">{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)] mb-3">Actions</h4>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleCardAction(detailCard.id, detailCard.suspended ? 'unsuspend' : 'suspend')}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors focus-ring ${
+                        detailCard.suspended
+                          ? 'border-green-500/30 bg-green-500/5 text-green-600 hover:bg-green-500/10'
+                          : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
+                      }`}
+                    >
+                      {detailCard.suspended ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                      {detailCard.suspended ? 'Unsuspend' : 'Suspend'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCardAction(detailCard.id, 'bury')}
+                      disabled={detailCard.buried}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--color-border)] text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors focus-ring disabled:opacity-50"
+                    >
+                      <Archive className="w-4 h-4" />
+                      {detailCard.buried ? 'Buried' : 'Bury'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCardAction(detailCard.id, detailCard.flagged ? 'unflag' : 'flag')}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors focus-ring ${
+                        detailCard.flagged
+                          ? 'border-red-500/30 bg-red-500/5 text-red-500 hover:bg-red-500/10'
+                          : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
+                      }`}
+                    >
+                      <Flag className="w-4 h-4" />
+                      {detailCard.flagged ? 'Unflag' : 'Flag'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleDeleteCard(detailCard.id);
+                        setDetailCard(null);
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--color-error)]/30 text-sm font-medium text-[var(--color-error)] hover:bg-[var(--color-error)]/5 transition-colors focus-ring"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Modal>
 
           {/* Keyboard shortcut help overlay */}
           <Modal open={showShortcutHelp} onClose={() => setShowShortcutHelp(false)} title="Keyboard Shortcuts" size="sm">

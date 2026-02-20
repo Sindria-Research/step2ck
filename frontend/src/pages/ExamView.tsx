@@ -127,7 +127,7 @@ export function ExamView() {
     <div className="flex-1 flex flex-col overflow-hidden">
       {isTestMode && <TimerBar />}
       {/* Mobile tab bar */}
-      <div className="md:hidden shrink-0 flex border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]" role="tablist" aria-label="Exam panels">
+      <div className="md:hidden shrink-0 mobile-tab-bar" role="tablist" aria-label="Exam panels">
         <button
           type="button"
           role="tab"
@@ -135,11 +135,6 @@ export function ExamView() {
           aria-selected={mobileTab === 'question'}
           aria-controls="panel-question"
           onClick={() => setMobileTab('question')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-colors ${
-            mobileTab === 'question'
-              ? 'text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]'
-              : 'text-[var(--color-text-secondary)]'
-          }`}
         >
           <FileText className="w-4 h-4" />
           Question
@@ -151,11 +146,6 @@ export function ExamView() {
           aria-selected={mobileTab === 'answer'}
           aria-controls="panel-answer"
           onClick={() => setMobileTab('answer')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-colors ${
-            mobileTab === 'answer'
-              ? 'text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]'
-              : 'text-[var(--color-text-secondary)]'
-          }`}
         >
           <ListChecks className="w-4 h-4" />
           Answer

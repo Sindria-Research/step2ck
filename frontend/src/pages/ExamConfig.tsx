@@ -139,7 +139,7 @@ export function ExamConfig() {
       <div className="relative z-[1]">
         {/* ── Hero header ── */}
         <section
-          className="pt-8 pb-6 md:pt-10 md:pb-8"
+          className="pt-5 pb-4 md:pt-10 md:pb-8"
           style={{ backgroundColor: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)' }}
         >
           <div className="container">
@@ -147,15 +147,15 @@ export function ExamConfig() {
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
+                className="group inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] mb-3 md:mb-4 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                Back to dashboard
+                Back
               </button>
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.08]">
+              <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.08]">
                 {examType === 'test' ? 'New test' : 'New practice'}
               </h1>
-              <p className="mt-3 text-sm md:text-base text-[var(--color-text-secondary)] max-w-lg leading-relaxed">
+              <p className="mt-2 md:mt-3 text-sm md:text-base text-[var(--color-text-secondary)] max-w-lg leading-relaxed">
                 Choose subjects, select a mode, and start.
               </p>
             </div>
@@ -359,9 +359,9 @@ export function ExamConfig() {
                   </>
                 )}
 
-                {/* Summary + CTA */}
+                {/* Summary + CTA — visible on desktop inline, hidden on mobile (sticky CTA below) */}
                 <div
-                  className="mt-5 pt-4 border-t border-[var(--color-border)] space-y-2 text-sm sticky bottom-0 bg-[var(--color-bg-primary)] rounded-b-xl"
+                  className="hidden md:block mt-5 pt-4 border-t border-[var(--color-border)] space-y-2 text-sm sticky bottom-0 bg-[var(--color-bg-primary)] rounded-b-xl"
                   style={{ boxShadow: '0 -4px 16px rgba(0,0,0,0.04)' }}
                 >
                   <div className="flex justify-between">
@@ -490,8 +490,29 @@ export function ExamConfig() {
           </div>
         )}
 
-        {/* bottom spacer */}
-        <div className="h-8" />
+        {/* bottom spacer — bigger on mobile to account for sticky CTA */}
+        <div className="h-24 md:h-8" />
+      </div>
+
+      {/* Mobile sticky CTA */}
+      <div className="md:hidden mobile-sticky-cta">
+        <div className="flex items-center justify-between text-xs text-[var(--color-text-tertiary)] mb-2">
+          <span>{selectedSubjects.size} subjects · {mode === 'all' ? 'All' : mode}</span>
+          <span className="font-semibold text-[var(--color-text-primary)]">{isPersonalized ? 'Adaptive' : `${finalCount} Qs`}</span>
+        </div>
+        <button
+          type="button"
+          onClick={handleStart}
+          disabled={!canStart}
+          className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-all focus-ring ${
+            canStart
+              ? 'chiron-btn chiron-btn-primary shadow-md'
+              : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)] cursor-not-allowed'
+          }`}
+        >
+          <Play className="w-4 h-4 fill-current" />
+          {isPersonalized ? 'Start Session' : examType === 'test' ? 'Start Test' : 'Start Practice'}
+        </button>
       </div>
     </div>
   );

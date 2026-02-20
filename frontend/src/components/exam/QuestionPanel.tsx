@@ -158,7 +158,7 @@ export function QuestionPanel() {
   return (
     <div className="flex-1 overflow-y-auto bg-[var(--color-bg-primary)] relative">
       <div className="p-4 md:p-8 max-w-2xl">
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <div className="flex items-center gap-1.5 md:gap-2 mb-3 md:mb-4 flex-wrap">
           <span className="badge badge-primary">{currentQuestion.section}</span>
           {currentQuestion.subsection && (
             <span className="badge">{currentQuestion.subsection}</span>

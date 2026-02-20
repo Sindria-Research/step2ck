@@ -22,6 +22,7 @@ import type {
   FlashcardReviewResponse,
   FlashcardSettingsResponse,
   FlashcardSettingsUpdate,
+  FlashcardStatsResponse,
   GenerationQuestionsRequest,
   GenerationQuestionsResponse,
   GenerationSourcesResponse,
@@ -196,7 +197,7 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    updateCard: (id: number, body: { front?: string; back?: string; flagged?: boolean }) =>
+    updateCard: (id: number, body: { front?: string; back?: string; flagged?: boolean; suspended?: boolean; buried?: boolean; notes?: string; tags?: string }) =>
       request<FlashcardResponse>(`/flashcards/cards/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(body),
@@ -224,6 +225,10 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify(body),
       }),
+    getStats: () =>
+      request<FlashcardStatsResponse>('/flashcards/stats', { cacheTtlMs: 30_000 }),
+    unburyAll: () =>
+      request<{ unburied: number }>('/flashcards/cards/unbury-all', { method: 'POST' }),
     importApkg: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);

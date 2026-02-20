@@ -32,16 +32,16 @@ export function ExamBar({
   return (
     <>
       <header
-        className="h-12 shrink-0 flex items-center justify-between px-4 border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]"
+        className="h-12 shrink-0 flex items-center justify-between px-2 sm:px-4 border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]"
         role="banner"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex rounded-md border border-[var(--color-border)] overflow-hidden">
             <button
               type="button"
               onClick={onPrev}
               disabled={atFirst}
-              className="p-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-ring"
+              className="p-2.5 sm:p-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-ring"
               title="Previous question"
               aria-label="Previous question"
             >
@@ -51,24 +51,24 @@ export function ExamBar({
             type="button"
             onClick={onNext}
             disabled={atLast}
-            className="p-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-ring border-l border-[var(--color-border)]"
+            className="p-2.5 sm:p-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-ring border-l border-[var(--color-border)]"
             title="Next question"
             aria-label="Next question"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
           </div>
-          <span className="text-xs text-[var(--color-text-tertiary)] font-medium tabular-nums">
-            {currentIndex + 1} / {total}
+          <span className="text-xs text-[var(--color-text-tertiary)] font-medium tabular-nums whitespace-nowrap">
+            {currentIndex + 1}<span className="text-[var(--color-text-muted)]">/</span>{total}
           </span>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {onExit && (
             <button
               type="button"
               onClick={() => setExitModalOpen(true)}
-              className="p-2 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring flex items-center gap-1.5 text-sm"
+              className="p-2.5 sm:p-2 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring flex items-center gap-1.5 text-sm"
               title="Exit exam"
               aria-label="Exit exam"
             >
@@ -80,7 +80,7 @@ export function ExamBar({
             <button
               type="button"
               onClick={() => setFinishModalOpen(true)}
-              className="p-2 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring flex items-center gap-1.5 text-sm"
+              className="p-2.5 sm:p-2 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring flex items-center gap-1.5 text-sm"
               title="Finish exam"
               aria-label="Finish exam"
             >
@@ -91,7 +91,7 @@ export function ExamBar({
           <button
             type="button"
             onClick={toggleTheme}
-            className="p-2 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
+            className="hidden sm:flex p-2 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring"
             title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
             aria-label={theme === 'dark' ? 'Light mode' : 'Dark mode'}
           >

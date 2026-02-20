@@ -5,6 +5,8 @@ import { AppSidebar } from './AppSidebar';
 import { ExamBar } from './ExamBar';
 import { Sidebar } from './Sidebar';
 import { useSidebar } from '../../context/SidebarContext';
+import { useTheme } from '../../context/ThemeContext';
+import { APP_NAME, getLogoUrl } from '../../config/branding';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -36,6 +38,8 @@ export function AppLayout({
   const isExamPage = location.pathname === '/exam';
   const [questionSidebarOpen, setQuestionSidebarOpen] = useState(true);
   const { mobileOpen, setMobileOpen } = useSidebar();
+  const { theme } = useTheme();
+  const logoUrl = getLogoUrl(theme);
 
   const shouldShowQuestionSidebar = showSidebar && isExamPage && examContext;
 
@@ -50,7 +54,7 @@ export function AppLayout({
       <AppSidebar />
       <div className="flex-1 flex flex-col min-w-0" {...(mobileOpen ? { inert: true, 'aria-hidden': true } : {})}>
         {!isExamPage && (
-          <div className="md:hidden shrink-0 flex items-center h-12 px-3 border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]">
+          <div className="md:hidden shrink-0 mobile-header-bar">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
@@ -59,6 +63,10 @@ export function AppLayout({
             >
               <Menu className="w-5 h-5" />
             </button>
+            <img src={logoUrl} alt="" className="w-6 h-6 rounded-md object-contain" />
+            <span className="text-sm font-semibold text-[var(--color-text-primary)] font-display truncate">
+              {APP_NAME}
+            </span>
           </div>
         )}
         {isExamPage && examContext && (
