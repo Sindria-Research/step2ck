@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Sun, Moon, LogOut, Flag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sun, Moon, LogOut, Flag, FlaskConical } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { Modal } from '../common/Modal';
+import { LabValuesModal } from '../exam/LabValuesModal';
 
 interface ExamBarProps {
   currentIndex: number;
@@ -25,6 +26,7 @@ export function ExamBar({
   const { theme, toggleTheme } = useTheme();
   const [exitModalOpen, setExitModalOpen] = useState(false);
   const [finishModalOpen, setFinishModalOpen] = useState(false);
+  const [labValuesOpen, setLabValuesOpen] = useState(false);
 
   const atLast = currentIndex >= total - 1;
   const atFirst = currentIndex <= 0;
@@ -64,6 +66,16 @@ export function ExamBar({
         </div>
 
         <div className="flex items-center gap-0.5 sm:gap-1">
+          <button
+            type="button"
+            onClick={() => setLabValuesOpen(true)}
+            className="p-2.5 sm:p-2 rounded-md text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors focus-ring flex items-center gap-1.5 text-sm"
+            title="Lab values"
+            aria-label="Lab values"
+          >
+            <FlaskConical className="w-4 h-4" />
+            <span className="hidden sm:inline">Lab values</span>
+          </button>
           {onExit && (
             <button
               type="button"
@@ -163,6 +175,8 @@ export function ExamBar({
           </div>
         </Modal>
       )}
+
+      <LabValuesModal open={labValuesOpen} onClose={() => setLabValuesOpen(false)} />
     </>
   );
 }
