@@ -242,7 +242,7 @@ export function Landing() {
         </Suspense>
         <div className="container relative z-10 grid gap-8 lg:gap-16 lg:grid-cols-[1fr_1fr] xl:grid-cols-[1.1fr_0.9fr] items-center w-full py-10 md:py-24">
           <div>
-            <h1 className="text-3xl md:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.06] max-w-2xl chiron-entrance" style={{ '--entrance-order': 0 } as React.CSSProperties}>
+            <h1 className="text-3xl md:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-bold text-[var(--color-text-primary)] font-display tracking-tight leading-[1.06] max-w-2xl min-w-0 chiron-entrance" style={{ '--entrance-order': 0 } as React.CSSProperties}>
               Prep for <span className="chiron-typewriter text-[var(--color-brand-blue)]">{typedText}<span className="chiron-cursor" /></span>
             </h1>
             <p className="mt-4 md:mt-6 text-sm md:text-lg lg:text-xl text-[var(--color-text-secondary)] max-w-xl leading-relaxed chiron-entrance" style={{ '--entrance-order': 1 } as React.CSSProperties}>

@@ -82,7 +82,7 @@ export function AppLayout({
         )}
         <div className="flex-1 flex min-w-0 overflow-hidden">
           {shouldShowQuestionSidebar && (
-            <>
+            <div className="hidden md:block">
               {questionSidebarOpen ? (
                 <div className="relative shrink-0">
                   <Sidebar examContext={examContext} />
@@ -107,7 +107,7 @@ export function AppLayout({
                   </button>
                 </div>
               )}
-            </>
+            </div>
           )}
           <main id="main-content" className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto" role="main">
             {children}
